@@ -1,0 +1,50 @@
+[
+  {
+    "name": "deadlift",
+    "date": "1/1/2001",
+    "output": 200,
+    "unit": "lbs",
+    "reps": 5,
+    "set": 1,
+    "notes": "2 rir",
+    "day": "lower",
+    "program": "5x5",
+    "tags": ""
+  },
+  {
+    "name": "deadlift",
+    "date": "1/1/2001",
+    "output": 200,
+    "unit": "lbs",
+    "reps": 5,
+    "set": 2,
+    "notes": "2 rir",
+    "day": "lower",
+    "program": "5x5",
+    "tags": ""
+  },
+  {
+    "name": "squat",
+    "date": "1/1/2001",
+    "output": 200,
+    "unit": "lbs",
+    "reps": 5,
+    "set": 1,
+    "notes": "2 rir",
+    "day": "lower",
+    "program": "5x5",
+    "tags": ""
+  },
+  {
+    "name": "squat",
+    "date": "1/1/2001",
+    "output": 200,
+    "unit": "lbs",
+    "reps": 5,
+    "set": 2,
+    "notes": "2 rir",
+    "day": "lower",
+    "program": "5x5",
+    "tags": ""
+  }
+]
