@@ -8,6 +8,7 @@ import (
 	"os"
 )
 
+// Set represents a performed set
 type Set struct {
 	Name    string
 	Date    string
@@ -21,6 +22,7 @@ type Set struct {
 	Tags    string
 }
 
+// readFile reads the contents of a file into a byte array
 func readFile(fp *string) []byte {
 	content, err := os.ReadFile(*fp)
 	if err != nil {
@@ -29,7 +31,8 @@ func readFile(fp *string) []byte {
 	return content
 }
 
-func prettyPrint(jsonContent []byte) {
+// prettyFormat formats the json data read from a file and returns it as a string
+func prettyFormat(jsonContent []byte) string {
 	var prettyJson bytes.Buffer
 	err := json.Indent(&prettyJson, jsonContent, "", "\t")
 	if err != nil {
@@ -38,7 +41,10 @@ func prettyPrint(jsonContent []byte) {
 	log.Println(string(prettyJson.Bytes()))
 }
 
+// unmarshalHistory parses the exercises json data and returns exercise history as an array of Sets
 func unmarshalHistory(jsonContent []byte) []Set {
+
+	// The history file should be an array of objects that match a Set struct
 	var history []Set
 
 	err := json.Unmarshal([]byte(jsonContent), &history)
