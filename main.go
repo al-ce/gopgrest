@@ -38,7 +38,7 @@ func prettyFormat(jsonContent []byte) string {
 	if err != nil {
 		panic(err)
 	}
-	log.Println(string(prettyJson.Bytes()))
+	return string(prettyJson.Bytes())
 }
 
 // unmarshalHistory parses the exercises json data and returns exercise history as an array of Sets
@@ -66,5 +66,6 @@ func main() {
 	jsonContent := readFile(*&fp)
 
 	// Pretty print the json file content
-	prettyPrint(jsonContent)
+	formatted := prettyFormat(jsonContent)
+	log.Println(formatted)
 }
