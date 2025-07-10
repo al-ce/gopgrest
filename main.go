@@ -7,22 +7,22 @@ import (
 
 // Set represents a performed set
 type Set struct {
-	Name    string
-	Date    string
-	Output  float32
-	Unit    string
-	Reps    int8
-	Set     int8
-	Notes   string
-	Day     string
-	Program string
-	Tags    string
+	Name    string  `json:"name"`
+	Date    string  `json:"date"`
+	Output  float32 `json:"output"`
+	Unit    string  `json:"unit"`
+	Reps    int8    `json:"reps"`
+	Set     int8    `json:"set"`
+	Notes   string  `json:"notes"`
+	Day     string  `json:"day"`
+	Program string  `json:"program"`
+	Tags    string  `json:"tags"`
 }
 
 func main() {
 	// Create server and routes
 	mux := http.NewServeMux()
-	mux.Handle("/history/", &HistoryHandler{})
+	mux.Handle("/", &HistoryHandler{})
 
 	// Run server
 	log.Println("Listening on port 8090...")
