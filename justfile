@@ -20,7 +20,6 @@ set quiet := true
 # service
 
 PROJECT_NAME := "ftrack"
-SERVICE_PORT := "8090"
 
 # db
 
@@ -39,7 +38,8 @@ SCHEMA := "database/schema.sql"
 [group('dev')]
 watch:
     #!/usr/bin/env sh
-    export SERVICE_PORT={{ SERVICE_PORT }}
+    export DB_NAME={{ DB_NAME }}
+    export DB_PASS={{ DB_PASS }}
     CompileDaemon \
     --build="go build -o {{ PROJECT_NAME }}" \
     --command="./{{ PROJECT_NAME }}"
