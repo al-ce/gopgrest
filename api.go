@@ -32,6 +32,7 @@ func (h *APIHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func (h *APIHandler) ListSets(w http.ResponseWriter, r *http.Request) {
 	log.Println(r.Method, r.URL.Path)
 
+	// Execute query
 	const listStmt = `
 		select * from exercise_sets
 	`
@@ -42,7 +43,28 @@ func (h *APIHandler) ListSets(w http.ResponseWriter, r *http.Request) {
 	}
 	defer rows.Close()
 
-	var sets []ExerciseSet
+	// Scan rows into struct slice
+	sets, err := scanExerciseSetRows(rows)
+	if err != nil {
+		log.Println(err)
+		InternalServerErrorHandler(w, r, fmt.Sprintf("%v", err))
+	}
+
+	// Encode to JSON
+	jsonData, err := json.Marshal(sets)
+	if err != nil {
+		InternalServerErrorHandler(w, r, fmt.Sprintf("%v", err))
+		return
+	}
+
+	// Write response
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(jsonData)
+}
+
+func scanExerciseSetRows(rows *sql.Rows) ([]ExerciseSet, error) {
+	sets := []ExerciseSet{}
 	for rows.Next() {
 		set := &ExerciseSet{}
 		err := rows.Scan(
@@ -58,21 +80,9 @@ func (h *APIHandler) ListSets(w http.ResponseWriter, r *http.Request) {
 			&set.Tags,
 		)
 		if err != nil {
-			log.Println(err)
-			InternalServerErrorHandler(w, r, fmt.Sprintf("%v", err))
-			return
+			return sets, err
 		}
 		sets = append(sets, *set)
 	}
-
-	jsonData, err := json.Marshal(sets)
-	if err != nil {
-		InternalServerErrorHandler(w, r, fmt.Sprintf("%v", err))
-		return
-	}
-
-	// Write response
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write(jsonData)
+	return sets, nil
 }
