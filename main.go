@@ -19,6 +19,7 @@ const (
 var (
 	dbname = os.Getenv("DB_NAME")
 	dbpass = os.Getenv("DB_PASS")
+	apiPort = os.Getenv("API_PORT")
 )
 
 func run() error {
@@ -48,8 +49,8 @@ func run() error {
 	mux.Handle("/", &APIHandler)
 
 	// Run server
-	log.Println("Listening on port 8090...")
-	err = http.ListenAndServe(":8090", mux)
+	log.Printf("Listening on port %s...\n", apiPort)
+	err = http.ListenAndServe(":" + apiPort, mux)
 	log.Fatal(err)
 
 	return nil
