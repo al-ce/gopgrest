@@ -6,7 +6,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"time"
 
 	_ "github.com/lib/pq"
 )
@@ -60,17 +59,4 @@ func main() {
 	if err := run(); err != nil {
 		log.Fatal(err)
 	}
-}
-
-type ExerciseSet struct {
-	Name        string
-	PerformedAt time.Time
-	Weight      float32
-	Unit        string
-	Reps        int
-	SetCount    int
-	Notes       string
-	SplitDay    string
-	Program     string
-	Tags        string
 }
