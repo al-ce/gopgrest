@@ -39,7 +39,6 @@ SCHEMA := "database/schema.sql"
 [group('dev')]
 watch:
     #!/usr/bin/env sh
-    just init
     export SERVICE_PORT={{ SERVICE_PORT }}
     CompileDaemon \
     --build="go build -o {{ PROJECT_NAME }}" \
