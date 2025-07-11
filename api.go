@@ -49,6 +49,7 @@ func (h *APIHandler) ListSets(w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 		InternalServerErrorHandler(w, r, fmt.Sprintf("%v", err))
 	}
+	log.Println("ListSets results length:", len(sets))
 
 	// Encode to JSON
 	jsonData, err := json.Marshal(sets)
