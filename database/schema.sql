@@ -1,12 +1,12 @@
-create table if not exists sets (
+create table if not exists exercise_sets (
     name varchar(50) unique not null,
-    performed_at timestamp not null default (now()),
+    performed_at timestamp default (now()),
     weight decimal not null default 0,
-    unit varchar(4) not null,
-    reps smallint not null,
-    set_count smallint not null,
-    notes text,
-    split_day varchar(20),
-    program varchar(50),
-    tags text
+    unit varchar(4) not null default 'lbs',
+    reps smallint not null default 0,
+    set_count smallint not null default 1,
+    notes text default '',
+    split_day varchar(20) default '',
+    program varchar(50) default '',
+    tags text default ''
 )
