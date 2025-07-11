@@ -28,7 +28,8 @@ DB_PASS := "ftrack"
 DB_NAME := "ftrack"
 DB_PORT := "5432"
 DB_USER := "postgres"
-INIT_DB := "scripts/init_db.sql"
+INIT_DB := "database/init_db.sql"
+SCHEMA := "database/schema.sql"
 
 ###############################################################################
 ## dev
@@ -65,6 +66,7 @@ rain:
 init:
     #!/usr/bin/env sh
     sudo -u postgres psql -f {{ INIT_DB }}
+    sudo -u postgres psql -d {{ DB_NAME}} -f {{ SCHEMA }}
 
 # Drop `sets` table from database
 [group('db')]
