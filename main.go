@@ -16,14 +16,11 @@ const (
 	user = "postgres"
 )
 
-var (
-	dbname = os.Getenv("DB_NAME")
-	dbpass = os.Getenv("DB_PASS")
-	apiPort = os.Getenv("API_PORT")
-)
-
 func run() error {
 	// Define connection params
+	dbname := lookupEnv("DB_NAME")
+	dbpass := lookupEnv("DB_PASS")
+	apiPort := lookupEnv("API_PORT")
 	dbParams := fmt.Sprintf(
 		"host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
 		host, port, user, dbpass, dbname,
@@ -50,7 +47,7 @@ func run() error {
 
 	// Run server
 	log.Printf("Listening on port %s...\n", apiPort)
-	err = http.ListenAndServe(":" + apiPort, mux)
+	err = http.ListenAndServe(":"+apiPort, mux)
 	log.Fatal(err)
 
 	return nil
@@ -60,4 +57,12 @@ func main() {
 	if err := run(); err != nil {
 		log.Fatal(err)
 	}
+}
+
+func lookupEnv(varName string) string {
+	varValue, exists := os.LookupEnv(varName)
+	if !exists {
+		panic(fmt.Sprintf("%s not found in environment", varName))
+	}
+	return varValue
 }
