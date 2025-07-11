@@ -30,7 +30,7 @@ func (h *APIHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 // ListSets retrieves the exercise set history from the database
 func (h *APIHandler) ListSets(w http.ResponseWriter, r *http.Request) {
-	log.Println(r.URL.Path)
+	log.Println(r.Method, r.URL.Path)
 
 	const listStmt = `
 		select * from exercise_sets
