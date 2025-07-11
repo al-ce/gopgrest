@@ -20,6 +20,7 @@ set quiet := true
 # service
 
 PROJECT_NAME := "ftrack"
+API_PORT := "8090"
 
 # db
 
@@ -38,6 +39,7 @@ SCHEMA := "database/schema.sql"
 [group('dev')]
 watch:
     #!/usr/bin/env sh
+    export API_PORT={{ API_PORT }}
     export DB_NAME={{ DB_NAME }}
     export DB_PASS={{ DB_PASS }}
     CompileDaemon \
@@ -78,3 +80,12 @@ drop:
 exec command flags="":
     sudo -u postgres psql -U {{ DB_USER }} -d {{ DB_NAME }} \
         {{ flags }} --command "{{ command }}"
+
+###############################################################################
+## api calls
+###############################################################################
+
+
+[group('api')]
+list:
+    curl -X GET -s http://localhost:{{ API_PORT }}/ | jq
