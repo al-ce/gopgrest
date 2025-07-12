@@ -69,3 +69,18 @@ func (r *Repository) CreateSet(setData *models.ExerciseSet) error {
 	}
 	return nil
 }
+
+// DeleteSet removes a set from the exercise_sets table by id
+func (r *Repository) DeleteSet(id string) error {
+	const deleteStmt = "delete from exercise_sets where id = $1"
+
+	// Execute delete query
+	result, err := r.db.Exec(deleteStmt, id)
+	if err != nil {
+		return err
+	}
+	if _, err = result.RowsAffected(); err != nil {
+		return err
+	}
+	return nil
+}
