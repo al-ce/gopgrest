@@ -36,9 +36,43 @@ func (h *APIHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		h.CreateSet(w, r)
 	case r.Method == http.MethodDelete && ReRequestWithId.MatchString(r.URL.Path):
 		h.DeleteSet(w, r)
+	case r.Method == http.MethodPut && ReRequestWithId.MatchString(r.URL.Path):
+		h.UpdateSet(w, r)
 	default:
 		NotFoundHandler(w, r)
 	}
+}
+
+// UpdateSet adds an exercise set to the database by id
+func (h *APIHandler) UpdateSet(w http.ResponseWriter, r *http.Request) {
+	log.Println(r.Method, r.URL.Path)
+
+	// Get id
+	matches := ReRequestWithId.FindStringSubmatch(r.URL.Path)
+	if len(matches) < 2 {
+		InternalServerErrorHandler(w, r, "Could not find id match")
+		return
+	}
+	setID := matches[1]
+
+	// Decode request body into map to dynamically update row
+	var updateData map[string]any
+	err := json.NewDecoder(r.Body).Decode(&updateData)
+	if err != nil {
+		log.Println(err)
+		InternalServerErrorHandler(w, r, fmt.Sprintf("%v", err))
+		return
+	}
+
+	// Update row with request data
+	if err := h.service.UpdateSet(setID, updateData); err != nil {
+		log.Println(err)
+		InternalServerErrorHandler(w, r, fmt.Sprintf("%v", err))
+		return
+	}
+
+	// Set response
+	w.WriteHeader(http.StatusOK)
 }
 
 // DeleteSet adds an exercise set to the database by id
@@ -53,6 +87,7 @@ func (h *APIHandler) DeleteSet(w http.ResponseWriter, r *http.Request) {
 	}
 	setID := matches[1]
 
+	// Delete row by id
 	if err := h.service.DeleteSet(setID); err != nil {
 		log.Println(err)
 		InternalServerErrorHandler(w, r, fmt.Sprintf("%v", err))
