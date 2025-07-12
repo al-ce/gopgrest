@@ -6,12 +6,15 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"regexp"
 	"time"
 )
 
 type APIHandler struct {
 	db *sql.DB
 }
+
+var ReRequestWithId = regexp.MustCompile(`^/sets/([0-9]+)$`)
 
 func NewAPIHandler(db *sql.DB) APIHandler {
 	return APIHandler{
@@ -26,9 +29,39 @@ func (h *APIHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		h.ListSets(w, r)
 	case r.Method == http.MethodPost && r.URL.Path == "/sets":
 		h.CreateSet(w, r)
+	case r.Method == http.MethodDelete && ReRequestWithId.MatchString(r.URL.Path):
+		h.DeleteSet(w, r)
 	default:
 		NotFoundHandler(w, r)
 	}
+}
+
+// DeleteSet adds an exercise set to the database by id
+func (h *APIHandler) DeleteSet(w http.ResponseWriter, r *http.Request) {
+	log.Println(r.Method, r.URL.Path)
+
+	// Get id
+	matches := ReRequestWithId.FindStringSubmatch(r.URL.Path)
+	if len(matches) < 2 {
+		InternalServerErrorHandler(w, r, "Could not find id match")
+		return
+	}
+	setID := matches[1]
+
+	// Execute delete query
+	const deleteStmt = `delete from exercise_sets where id = $1`
+
+	result, err := h.db.Exec(deleteStmt, setID)
+	if err != nil {
+		log.Println(err)
+	}
+	_, err = result.RowsAffected()
+	if err != nil {
+		log.Println(err)
+	}
+
+	// Set response
+	w.WriteHeader(http.StatusOK)
 }
 
 // CreateSet adds an exercise set to the database
@@ -60,7 +93,6 @@ func (h *APIHandler) CreateSet(w http.ResponseWriter, r *http.Request) {
 		)
 		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 	`
-
 
 	// Set time performed if not set
 	if setData.PerformedAt.IsZero() {

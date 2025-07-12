@@ -96,7 +96,12 @@ list:
 [group('api')]
 create:
     curl -X POST -s http://localhost:{{ API_PORT }}/sets --data \
-    '{ "name": "barbell row", "weight": 135, "reps": 12 }' \
-    | jq
+    '{ "name": "barbell row", "weight": 135, "reps": 12 }'
+
+
+# delete a set in the database by id
+[group('api')]
+delete id:
+    curl -X DELETE -s http://localhost:{{ API_PORT }}/sets/{{ id }}
 
 
