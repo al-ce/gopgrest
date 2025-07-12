@@ -2,6 +2,8 @@ package repository
 
 import (
 	"database/sql"
+
+	"ftrack/models"
 )
 
 // Repository handles database transactions
@@ -24,4 +26,46 @@ func (r *Repository) ListSets() (*sql.Rows, error) {
 		return nil, err
 	}
 	return rows, nil
+}
+
+// CreateSet inserts an exercise set in the exercise_sets table
+func (r *Repository) CreateSet(setData *models.ExerciseSet) error {
+	// Build create query
+	const createStmnt = `
+		insert into exercise_sets
+		(
+			name,
+			performed_at,
+			weight,
+			unit,
+			reps,
+			set_count,
+			notes,
+			split_day,
+			program,
+			tags
+		)
+		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+	`
+
+	// Execute create query
+	result, err := r.db.Exec(createStmnt,
+		setData.Name,
+		setData.PerformedAt,
+		setData.Weight,
+		setData.Unit,
+		setData.Reps,
+		setData.SetCount,
+		setData.Notes,
+		setData.SplitDay,
+		setData.Program,
+		setData.Tags,
+	)
+	if err != nil {
+		return err
+	}
+	if _, err = result.RowsAffected(); err != nil {
+		return err
+	}
+	return nil
 }
