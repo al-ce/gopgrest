@@ -48,6 +48,11 @@ func (s *Service) ListSets() ([]models.ExerciseSet, error) {
 	return sets, nil
 }
 
+// DeleteSet removes a set from the exercise_sets table by id
+func (s *Service) DeleteSet(id string) error {
+	return s.repo.DeleteSet(id)
+}
+
 // scanExerciseSetRows scans sql rows into a slice of ExerciseSet structs
 func scanExerciseSetRows(rows *sql.Rows) ([]models.ExerciseSet, error) {
 	sets := []models.ExerciseSet{}
