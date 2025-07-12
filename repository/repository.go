@@ -2,6 +2,7 @@ package repository
 
 import (
 	"database/sql"
+	"fmt"
 
 	"ftrack/models"
 )
@@ -65,6 +66,20 @@ func (r *Repository) CreateSet(setData *models.ExerciseSet) error {
 		return err
 	}
 	if _, err = result.RowsAffected(); err != nil {
+		return err
+	}
+	return nil
+}
+
+// UpdateSetField updates a field in an exercise set row
+func (r *Repository) UpdateSetField(id, field string, value any) error {
+	// Build update query
+	updateStmt := fmt.Sprintf(
+		"update exercise_sets set %s = $1 where id = $2",
+		field,
+	)
+
+	if _, err := r.db.Exec(updateStmt, value, id); err != nil {
 		return err
 	}
 	return nil
