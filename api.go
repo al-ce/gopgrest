@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 )
 
 type APIHandler struct {
@@ -60,6 +61,13 @@ func (h *APIHandler) CreateSet(w http.ResponseWriter, r *http.Request) {
 		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 	`
 
+
+	// Set time performed if not set
+	if setData.PerformedAt.IsZero() {
+		setData.PerformedAt = time.Now()
+	}
+	setData.PerformedAt = setData.PerformedAt.Round(time.Second)
+
 	result, err := h.db.Exec(createStmnt,
 		setData.Name,
 		setData.PerformedAt,
@@ -72,7 +80,6 @@ func (h *APIHandler) CreateSet(w http.ResponseWriter, r *http.Request) {
 		setData.Program,
 		setData.Tags,
 	)
-
 	if err != nil {
 		log.Println(err)
 	}
