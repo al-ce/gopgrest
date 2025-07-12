@@ -67,7 +67,7 @@ rain:
 init:
     #!/usr/bin/env sh
     sudo -u postgres psql -f {{ INIT_DB }}
-    sudo -u postgres psql -d {{ DB_NAME}} -f {{ SCHEMA }}
+    sudo -u postgres psql -d {{ DB_NAME }} -f {{ SCHEMA }}
 
 # Drop `sets` table from database
 [group('db')]
@@ -85,23 +85,26 @@ exec command flags="":
 ## api calls
 ###############################################################################
 
-
 # list all the sets in the database
 [group('api')]
 list:
     curl -X GET -s http://localhost:{{ API_PORT }}/sets | jq
 
-
 # create a set in the database
 [group('api')]
-create:
-    curl -X POST -s http://localhost:{{ API_PORT }}/sets --data \
-    '{ "name": "barbell row", "weight": 135, "reps": 12 }'
-
+create data:
+    curl -X POST -s http://localhost:{{ API_PORT }}/sets \
+    --header 'Content-Type: application/json' \
+    --data '{{ data }}'
 
 # delete a set in the database by id
 [group('api')]
 delete id:
     curl -X DELETE -s http://localhost:{{ API_PORT }}/sets/{{ id }}
 
-
+# delete a set in the database by id
+[group('api')]
+update id data:
+    curl -X PUT -s http://localhost:{{ API_PORT }}/sets/{{ id }} \
+    --header 'Content-Type: application/json' \
+    --data '{{ data }}'
