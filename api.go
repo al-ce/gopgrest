@@ -53,16 +53,10 @@ func (h *APIHandler) DeleteSet(w http.ResponseWriter, r *http.Request) {
 	}
 	setID := matches[1]
 
-	// Execute delete query
-	const deleteStmt = `delete from exercise_sets where id = $1`
-
-	result, err := h.db.Exec(deleteStmt, setID)
-	if err != nil {
+	if err := h.service.DeleteSet(setID); err != nil {
 		log.Println(err)
-	}
-	_, err = result.RowsAffected()
-	if err != nil {
-		log.Println(err)
+		InternalServerErrorHandler(w, r, fmt.Sprintf("%v", err))
+		return
 	}
 
 	// Set response
