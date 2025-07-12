@@ -2,6 +2,7 @@ package service
 
 import (
 	"database/sql"
+	"encoding/json"
 	"time"
 
 	"ftrack/models"
@@ -46,6 +47,26 @@ func (s *Service) ListSets() ([]models.ExerciseSet, error) {
 		return []models.ExerciseSet{}, err
 	}
 	return sets, nil
+}
+
+// UpdateSet updates any number of valid ExerciseSet fields with separate calls
+// to Repository.UpdateSetField
+func (s *Service) UpdateSet(id string, updateData map[string]any) error {
+	// Decode request body into a dummy ExerciseSet value to validate fields
+	var dummyExerciseSet models.ExerciseSet
+	b, _ := json.Marshal(updateData)
+	err := json.Unmarshal(b, &dummyExerciseSet)
+	if err != nil {
+		return err
+	}
+
+	// Call Repository.UpdateSetField for each field to update
+	for field, val := range updateData {
+		if err := s.repo.UpdateSetField(id, field, val); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // DeleteSet removes a set from the exercise_sets table by id
