@@ -7,18 +7,23 @@ import (
 	"log"
 	"net/http"
 	"regexp"
-	"time"
+
+	"ftrack/models"
+	"ftrack/repository"
+	"ftrack/service"
 )
 
 type APIHandler struct {
-	db *sql.DB
+	service service.Service
 }
 
 var ReRequestWithId = regexp.MustCompile(`^/sets/([0-9]+)$`)
 
 func NewAPIHandler(db *sql.DB) APIHandler {
+	sr := repository.NewRepository(db)
+	service := service.NewService(sr)
 	return APIHandler{
-		db: db,
+		service: service,
 	}
 }
 
