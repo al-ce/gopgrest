@@ -3,15 +3,15 @@ package main
 import "time"
 
 type ExerciseSet struct {
-	ID          int
-	Name        string
-	PerformedAt time.Time
-	Weight      float32
-	Unit        string
-	Reps        int
-	SetCount    int
-	Notes       string
-	SplitDay    string
-	Program     string
-	Tags        string
+	ID          int       `json:"id"`
+	Name        string    `json:"name"`
+	PerformedAt time.Time `json:"performed_at"`
+	Weight      float32   `json:"weight"`
+	Unit        string    `json:"unit"`
+	Reps        int       `json:"reps"`
+	SetCount    int       `json:"set_count"`
+	Notes       string    `json:"notes"`
+	SplitDay    string    `json:"split_day"`
+	Program     string    `json:"program"`
+	Tags        string    `json:"tags"`
 }
