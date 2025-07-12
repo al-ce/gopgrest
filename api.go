@@ -133,28 +133,18 @@ func (h *APIHandler) CreateSet(w http.ResponseWriter, r *http.Request) {
 func (h *APIHandler) ListSets(w http.ResponseWriter, r *http.Request) {
 	log.Println(r.Method, r.URL.Path)
 
-	// Execute query
-	const listStmt = `
-		select * from exercise_sets
-	`
-	rows, err := h.db.Query(listStmt)
-	if err != nil {
-		InternalServerErrorHandler(w, r, fmt.Sprintf("%v", err))
-		return
-	}
-	defer rows.Close()
-
-	// Scan rows into struct slice
-	sets, err := scanExerciseSetRows(rows)
+	// Retrieve sets from database
+	sets, err := h.service.ListSets()
 	if err != nil {
 		log.Println(err)
 		InternalServerErrorHandler(w, r, fmt.Sprintf("%v", err))
+		return
 	}
-	log.Println("ListSets results length:", len(sets))
 
 	// Encode to JSON
 	jsonData, err := json.Marshal(sets)
 	if err != nil {
+		log.Println(err)
 		InternalServerErrorHandler(w, r, fmt.Sprintf("%v", err))
 		return
 	}
@@ -163,29 +153,4 @@ func (h *APIHandler) ListSets(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write(jsonData)
-}
-
-func scanExerciseSetRows(rows *sql.Rows) ([]ExerciseSet, error) {
-	sets := []ExerciseSet{}
-	for rows.Next() {
-		set := &ExerciseSet{}
-		err := rows.Scan(
-			&set.ID,
-			&set.Name,
-			&set.PerformedAt,
-			&set.Weight,
-			&set.Unit,
-			&set.Reps,
-			&set.SetCount,
-			&set.Notes,
-			&set.SplitDay,
-			&set.Program,
-			&set.Tags,
-		)
-		if err != nil {
-			return sets, err
-		}
-		sets = append(sets, *set)
-	}
-	return sets, nil
 }
