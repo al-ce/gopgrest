@@ -3,6 +3,7 @@ package main
 import "time"
 
 type ExerciseSet struct {
+	ID          int
 	Name        string
 	PerformedAt time.Time
 	Weight      float32

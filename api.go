@@ -126,6 +126,7 @@ func scanExerciseSetRows(rows *sql.Rows) ([]ExerciseSet, error) {
 	for rows.Next() {
 		set := &ExerciseSet{}
 		err := rows.Scan(
+			&set.ID,
 			&set.Name,
 			&set.PerformedAt,
 			&set.Weight,
