@@ -90,3 +90,13 @@ exec command flags="":
 [group('api')]
 list:
     curl -X GET -s http://localhost:{{ API_PORT }}/sets | jq
+
+
+# create a set in the database
+[group('api')]
+create:
+    curl -X POST -s http://localhost:{{ API_PORT }}/sets --data \
+    '{ "name": "barbell row", "weight": 135, "reps": 12 }' \
+    | jq
+
+

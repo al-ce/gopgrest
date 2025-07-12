@@ -23,9 +23,66 @@ func (h *APIHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	switch {
 	case r.Method == http.MethodGet && r.URL.Path == "/sets":
 		h.ListSets(w, r)
+	case r.Method == http.MethodPost && r.URL.Path == "/sets":
+		h.CreateSet(w, r)
 	default:
 		NotFoundHandler(w, r)
 	}
+}
+
+// CreateSet adds an exercise set to the database
+func (h *APIHandler) CreateSet(w http.ResponseWriter, r *http.Request) {
+	log.Println(r.Method, r.URL.Path)
+
+	// Decode request data
+	var setData ExerciseSet
+	err := json.NewDecoder(r.Body).Decode(&setData)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	// Execute create query
+	const createStmnt = `
+		insert into exercise_sets
+		(
+			name,
+			performed_at,
+			weight,
+			unit,
+			reps,
+			set_count,
+			notes,
+			split_day,
+			program,
+			tags
+		)
+		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+	`
+
+	result, err := h.db.Exec(createStmnt,
+		setData.Name,
+		setData.PerformedAt,
+		setData.Weight,
+		setData.Unit,
+		setData.Reps,
+		setData.SetCount,
+		setData.Notes,
+		setData.SplitDay,
+		setData.Program,
+		setData.Tags,
+	)
+
+	if err != nil {
+		log.Println(err)
+	}
+	_, err = result.RowsAffected()
+	if err != nil {
+		log.Println(err)
+	}
+
+	// Set response
+	w.WriteHeader(http.StatusOK)
 }
 
 // ListSets retrieves the exercise set history from the database
