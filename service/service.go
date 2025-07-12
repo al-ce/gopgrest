@@ -1,6 +1,9 @@
 package service
 
 import (
+	"time"
+
+	"ftrack/models"
 	"ftrack/repository"
 )
 
@@ -14,4 +17,16 @@ func NewService(r repository.Repository) Service {
 	return Service{
 		repo: r,
 	}
+}
+
+// CreateSet inserts an exercise set in the exercise_sets table
+func (s *Service) CreateSet(setData models.ExerciseSet) error {
+	// Set time performed if not set
+	if setData.PerformedAt.IsZero() {
+		setData.PerformedAt = time.Now()
+	}
+	// Round to nearest second
+	setData.PerformedAt = setData.PerformedAt.Round(time.Second)
+
+	return s.repo.CreateSet(&setData)
 }
