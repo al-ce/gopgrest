@@ -21,7 +21,7 @@ func NewAPIHandler(db *sql.DB) APIHandler {
 // ServeHTTP routes the request by method and path
 func (h *APIHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	switch {
-	case r.Method == http.MethodGet && r.URL.Path == "/":
+	case r.Method == http.MethodGet && r.URL.Path == "/sets":
 		h.ListSets(w, r)
 	default:
 		NotFoundHandler(w, r)

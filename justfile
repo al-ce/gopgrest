@@ -86,6 +86,7 @@ exec command flags="":
 ###############################################################################
 
 
+# list all the sets in the database
 [group('api')]
 list:
-    curl -X GET -s http://localhost:{{ API_PORT }}/ | jq
+    curl -X GET -s http://localhost:{{ API_PORT }}/sets | jq
