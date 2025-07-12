@@ -74,55 +74,19 @@ func (h *APIHandler) CreateSet(w http.ResponseWriter, r *http.Request) {
 	log.Println(r.Method, r.URL.Path)
 
 	// Decode request data
-	var setData ExerciseSet
+	var setData models.ExerciseSet
 	err := json.NewDecoder(r.Body).Decode(&setData)
 	if err != nil {
 		log.Println(err)
+		InternalServerErrorHandler(w, r, fmt.Sprintf("%v", err))
 		return
 	}
 
-	// Execute create query
-	const createStmnt = `
-		insert into exercise_sets
-		(
-			name,
-			performed_at,
-			weight,
-			unit,
-			reps,
-			set_count,
-			notes,
-			split_day,
-			program,
-			tags
-		)
-		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-	`
-
-	// Set time performed if not set
-	if setData.PerformedAt.IsZero() {
-		setData.PerformedAt = time.Now()
-	}
-	setData.PerformedAt = setData.PerformedAt.Round(time.Second)
-
-	result, err := h.db.Exec(createStmnt,
-		setData.Name,
-		setData.PerformedAt,
-		setData.Weight,
-		setData.Unit,
-		setData.Reps,
-		setData.SetCount,
-		setData.Notes,
-		setData.SplitDay,
-		setData.Program,
-		setData.Tags,
-	)
-	if err != nil {
+	// Insert new set into the database
+	if err = h.service.CreateSet(setData); err != nil {
 		log.Println(err)
-	}
-	_, err = result.RowsAffected()
-	if err != nil {
-		log.Println(err)
+		InternalServerErrorHandler(w, r, fmt.Sprintf("%v", err))
+		return
 	}
 
 	// Set response
