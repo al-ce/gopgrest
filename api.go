@@ -17,7 +17,10 @@ type APIHandler struct {
 	service service.Service
 }
 
-var ReRequestWithId = regexp.MustCompile(`^/sets/([0-9]+)$`)
+var (
+	ReRequestWithId = regexp.MustCompile(`^/sets/([0-9]+)$`)
+	ReListRequest   = regexp.MustCompile(`^/sets(\?[a-zA-Z]+\=[a-zA-Z0-9]+.*)?$`)
+)
 
 func NewAPIHandler(db *sql.DB) APIHandler {
 	sr := repository.NewRepository(db)
@@ -30,7 +33,9 @@ func NewAPIHandler(db *sql.DB) APIHandler {
 // ServeHTTP routes the request by method and path
 func (h *APIHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	switch {
-	case r.Method == http.MethodGet && r.URL.Path == "/sets":
+	case r.Method == http.MethodGet && ReListRequest.MatchString(r.URL.Path):
+		h.ListSets(w, r)
+	case r.Method == http.MethodGet && ReListRequest.MatchString(r.URL.Path):
 		h.ListSets(w, r)
 	case r.Method == http.MethodPost && r.URL.Path == "/sets":
 		h.CreateSet(w, r)

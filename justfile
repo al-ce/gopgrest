@@ -85,10 +85,11 @@ exec command flags="":
 ## api calls
 ###############################################################################
 
-# list all the sets in the database
+# list sets filtered by optional query params
 [group('api')]
-list:
-    curl -X GET -s http://localhost:{{ API_PORT }}/sets | jq
+list params='':
+    curl -X GET -s http://localhost:{{ API_PORT }}/sets{{ params }} \
+    | jq
 
 # create a set in the database
 [group('api')]
