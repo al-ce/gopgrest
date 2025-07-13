@@ -34,8 +34,8 @@ func (s *Service) CreateSet(setData models.ExerciseSet) error {
 }
 
 // ListSets retrieves the list of all sets from the exercise_sets table
-func (s *Service) ListSets() ([]models.ExerciseSet, error) {
-	rows, err := s.repo.ListSets()
+func (s *Service) ListSets(params map[string][]string) ([]models.ExerciseSet, error) {
+	rows, err := s.repo.ListSets(params)
 	if err != nil {
 		return []models.ExerciseSet{}, err
 	}

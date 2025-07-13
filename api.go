@@ -19,7 +19,7 @@ type APIHandler struct {
 
 var (
 	ReRequestWithId = regexp.MustCompile(`^/sets/([0-9]+)$`)
-	ReListRequest   = regexp.MustCompile(`^/sets(\?[a-zA-Z]+\=[a-zA-Z0-9]+.*)?$`)
+	ReListRequest   = regexp.MustCompile(`^/sets(\?.*)?$`)
 )
 
 func NewAPIHandler(db *sql.DB) APIHandler {
@@ -127,12 +127,13 @@ func (h *APIHandler) CreateSet(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-// ListSets retrieves the exercise set history from the database
+// ListSets retrieves the exercise set history from the database, optionally
+// filtering by query params
 func (h *APIHandler) ListSets(w http.ResponseWriter, r *http.Request) {
 	log.Println(r.Method, r.URL.Path)
 
 	// Retrieve sets from database
-	sets, err := h.service.ListSets()
+	sets, err := h.service.ListSets(r.URL.Query())
 	if err != nil {
 		log.Println(err)
 		InternalServerErrorHandler(w, r, fmt.Sprintf("%v", err))
