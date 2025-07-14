@@ -26,11 +26,11 @@ func NewRepository(db *sql.DB) Repository {
 	}
 }
 
-// ListSets retrieves the list of all sets from the exercise_sets table
-func (r *Repository) ListSets(params map[string][]string) (*sql.Rows, error) {
+// ListRows gets rows from a table with optional filter params
+func (r *Repository) ListRows(table string, params map[string][]string) (*sql.Rows, error) {
 	// Build list query with optional conditional filters
 	conditional, values := buildConditionalClause(params)
-	listStmt := "select * from exercise_sets" + conditional
+	listStmt := "select * from " + table + conditional
 
 	// Execute list query
 	rows, err := r.db.Query(listStmt, values...)
@@ -41,7 +41,7 @@ func (r *Repository) ListSets(params map[string][]string) (*sql.Rows, error) {
 }
 
 // InsertRow inserts a new row into a specified table
-func (r *Repository) InsertRow(newRow *map[string]any, table string) error {
+func (r *Repository) InsertRow(table string, newRow *map[string]any) error {
 	// Create keys/values/placeholders slices in consistent order
 	var keys []string
 	var values []any
@@ -72,12 +72,12 @@ func (r *Repository) InsertRow(newRow *map[string]any, table string) error {
 	return nil
 }
 
-// UpdateSetField updates a field in an exercise set row
-func (r *Repository) UpdateSetField(id, field string, value any) error {
+// UpdateRowCol updates a field in a table row by id
+func (r *Repository) UpdateRowCol(table, id, field string, value any) error {
 	// Build update query
 	updateStmt := fmt.Sprintf(
-		"update exercise_sets set %s = $1 where id = $2",
-		field,
+		"update %s set %s = $1 where id = $2",
+		table, field,
 	)
 
 	if _, err := r.db.Exec(updateStmt, value, id); err != nil {
@@ -86,9 +86,9 @@ func (r *Repository) UpdateSetField(id, field string, value any) error {
 	return nil
 }
 
-// DeleteSet removes a set from the exercise_sets table by id
-func (r *Repository) DeleteSet(id string) error {
-	const deleteStmt = "delete from exercise_sets where id = $1"
+// DeleteRow removes a row from a table by id
+func (r *Repository) DeleteRow(table, id string) error {
+	deleteStmt := fmt.Sprintf("delete from %s where id = $1", table)
 
 	// Execute delete query
 	result, err := r.db.Exec(deleteStmt, id)
