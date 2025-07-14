@@ -50,7 +50,7 @@ func (h *APIHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 // UpdateSet adds an exercise set to the database by id
 func (h *APIHandler) UpdateSet(w http.ResponseWriter, r *http.Request) {
-	log.Println(r.Method, r.URL.Path)
+	log.Println(r.Method, r.URL.Path, r.RemoteAddr)
 
 	// Get id
 	matches := ReRequestWithId.FindStringSubmatch(r.URL.Path)
@@ -82,7 +82,7 @@ func (h *APIHandler) UpdateSet(w http.ResponseWriter, r *http.Request) {
 
 // DeleteSet adds an exercise set to the database by id
 func (h *APIHandler) DeleteSet(w http.ResponseWriter, r *http.Request) {
-	log.Println(r.Method, r.URL.Path)
+	log.Println(r.Method, r.URL.Path, r.RemoteAddr)
 
 	// Get id
 	matches := ReRequestWithId.FindStringSubmatch(r.URL.Path)
@@ -105,7 +105,7 @@ func (h *APIHandler) DeleteSet(w http.ResponseWriter, r *http.Request) {
 
 // CreateSet adds an exercise set to the database
 func (h *APIHandler) CreateSet(w http.ResponseWriter, r *http.Request) {
-	log.Println(r.Method, r.URL.Path)
+	log.Println(r.Method, r.URL.Path, r.RemoteAddr)
 
 	// Decode request data
 	var setData models.ExerciseSet
@@ -130,7 +130,7 @@ func (h *APIHandler) CreateSet(w http.ResponseWriter, r *http.Request) {
 // ListSets retrieves the exercise set history from the database, optionally
 // filtering by query params
 func (h *APIHandler) ListSets(w http.ResponseWriter, r *http.Request) {
-	log.Println(r.Method, r.URL.Path)
+	log.Println(r.Method, r.URL.Path, r.RemoteAddr)
 
 	// Retrieve sets from database
 	sets, err := h.service.ListSets(r.URL.Query())
