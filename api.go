@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"regexp"
 
-	"ftrack/models"
 	"ftrack/repository"
 	"ftrack/service"
 )
@@ -35,10 +34,8 @@ func (h *APIHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	switch {
 	case r.Method == http.MethodGet && ReListRequest.MatchString(r.URL.Path):
 		h.ListSets(w, r)
-	case r.Method == http.MethodGet && ReListRequest.MatchString(r.URL.Path):
-		h.ListSets(w, r)
-	case r.Method == http.MethodPost && r.URL.Path == "/sets":
-		h.CreateSet(w, r)
+	case r.Method == http.MethodPost:
+		h.InsertRow(w, r)
 	case r.Method == http.MethodDelete && ReRequestWithId.MatchString(r.URL.Path):
 		h.DeleteSet(w, r)
 	case r.Method == http.MethodPut && ReRequestWithId.MatchString(r.URL.Path):
@@ -103,13 +100,16 @@ func (h *APIHandler) DeleteSet(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-// CreateSet adds an exercise set to the database
-func (h *APIHandler) CreateSet(w http.ResponseWriter, r *http.Request) {
+// InsertRow adds an exercise set to the database
+func (h *APIHandler) InsertRow(w http.ResponseWriter, r *http.Request) {
 	log.Println(r.Method, r.URL.Path, r.RemoteAddr)
 
-	// Decode request data
-	var setData models.ExerciseSet
-	err := json.NewDecoder(r.Body).Decode(&setData)
+	// Get table from URL path
+	table := r.URL.Path[1:]
+
+	// Decode request
+	var data *map[string]any
+	err := json.NewDecoder(r.Body).Decode(&data)
 	if err != nil {
 		log.Println(err)
 		InternalServerErrorHandler(w, r, fmt.Sprintf("%v", err))
@@ -117,7 +117,7 @@ func (h *APIHandler) CreateSet(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Insert new set into the database
-	if err = h.service.CreateSet(setData); err != nil {
+	if err = h.service.InsertRow(data, table); err != nil {
 		log.Println(err)
 		InternalServerErrorHandler(w, r, fmt.Sprintf("%v", err))
 		return
