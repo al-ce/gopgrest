@@ -4,18 +4,25 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"slices"
 	"strings"
 )
 
 // Repository handles database transactions
 type Repository struct {
-	db *sql.DB
+	db     *sql.DB
+	tables []string
 }
 
 // NewRepository returns a new Repository
 func NewRepository(db *sql.DB) Repository {
+	tables, err := getPublicTables(db)
+	if err != nil {
+		panic(err)
+	}
 	return Repository{
-		db: db,
+		db:     db,
+		tables: tables,
 	}
 }
 
@@ -94,15 +101,33 @@ func (r *Repository) DeleteSet(id string) error {
 	return nil
 }
 
+// getPublicTables gets the public tables in the database
+func getPublicTables(db *sql.DB) ([]string, error) {
+	rows, err := db.Query("select tablename from pg_catalog.pg_tables where schemaname='public'")
+	if err != nil {
+		return []string{}, err
+	}
+	defer rows.Close()
+	var tables []string
+	var t string
+	for rows.Next() {
+		err := rows.Scan(&t)
+		if err != nil {
+			return []string{}, err
+		}
+		tables = append(tables, t)
+	}
+	log.Println("Found tables in database:")
+	for _, table := range tables {
+		log.Printf("\t%s\n", table)
+	}
+	log.Println()
+	return tables, nil
+}
+
 // TableExists check if a table exists in the database
 func (r *Repository) TableExists(table string) bool {
-	rows, err := r.db.Query("select $1::regclass;", table)
-	if err == nil {
-		defer rows.Close()
-	} else {
-		log.Println("TableExists error:", table, err)
-	}
-	return err == nil
+	return slices.Contains(r.tables, table)
 }
 
 // buildConditionalClause builds a SQL WHERE clause to select a row. Ex: when
