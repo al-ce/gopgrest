@@ -32,28 +32,36 @@ func NewAPIHandler(db *sql.DB) APIHandler {
 	}
 }
 
-// ServeHTTP routes the request by method and path
+// ServeHTTP routes the request by method and path, where the path begins with
+// an existing table name
 func (h *APIHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-
+	exists, err := h.tableExists(r)
 	switch {
-	case !h.tableExists(r):
+	case !exists || err != nil:
+		log.Println(r.URL.Path, "not found")
 		NotFoundHandler(w, r)
 	case r.Method == http.MethodGet && ReListRequest.MatchString(r.URL.Path):
-		h.ListSets(w, r)
+		h.Read(w, r)
 	case r.Method == http.MethodPost:
-		h.InsertRow(w, r)
+		h.Create(w, r)
 	case r.Method == http.MethodDelete && ReRequestWithId.MatchString(r.URL.Path):
-		h.DeleteSet(w, r)
+		h.Delete(w, r)
 	case r.Method == http.MethodPut && ReRequestWithId.MatchString(r.URL.Path):
-		h.UpdateSet(w, r)
+		h.Update(w, r)
 	default:
 		NotFoundHandler(w, r)
 	}
 }
 
-// UpdateSet adds an exercise set to the database by id
-func (h *APIHandler) UpdateSet(w http.ResponseWriter, r *http.Request) {
+// Update updates a row in the table by id
+func (h *APIHandler) Update(w http.ResponseWriter, r *http.Request) {
 	log.Println(r.Method, r.URL.Path, r.RemoteAddr)
+
+	// Get table from URL path
+	table, err := h.extractTable(r)
+	if err != nil {
+		InternalServerErrorHandler(w, r, err.Error())
+	}
 
 	// Get id
 	matches := ReRequestWithId.FindStringSubmatch(r.URL.Path)
@@ -65,7 +73,7 @@ func (h *APIHandler) UpdateSet(w http.ResponseWriter, r *http.Request) {
 
 	// Decode request body into map to dynamically update row
 	var updateData map[string]any
-	err := json.NewDecoder(r.Body).Decode(&updateData)
+	err = json.NewDecoder(r.Body).Decode(&updateData)
 	if err != nil {
 		log.Println(err)
 		InternalServerErrorHandler(w, r, fmt.Sprintf("%v", err))
@@ -73,7 +81,7 @@ func (h *APIHandler) UpdateSet(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Update row with request data
-	if err := h.service.UpdateSet(setID, updateData); err != nil {
+	if err := h.service.UpdateRow(table, setID, updateData); err != nil {
 		log.Println(err)
 		InternalServerErrorHandler(w, r, fmt.Sprintf("%v", err))
 		return
@@ -83,9 +91,15 @@ func (h *APIHandler) UpdateSet(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-// DeleteSet adds an exercise set to the database by id
-func (h *APIHandler) DeleteSet(w http.ResponseWriter, r *http.Request) {
+// Delete adds removes a row from a table by id
+func (h *APIHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	log.Println(r.Method, r.URL.Path, r.RemoteAddr)
+
+	// Get table from URL path
+	table, err := h.extractTable(r)
+	if err != nil {
+		InternalServerErrorHandler(w, r, err.Error())
+	}
 
 	// Get id
 	matches := ReRequestWithId.FindStringSubmatch(r.URL.Path)
@@ -96,7 +110,7 @@ func (h *APIHandler) DeleteSet(w http.ResponseWriter, r *http.Request) {
 	setID := matches[1]
 
 	// Delete row by id
-	if err := h.service.DeleteSet(setID); err != nil {
+	if err := h.service.DeleteRow(table, setID); err != nil {
 		log.Println(err)
 		InternalServerErrorHandler(w, r, fmt.Sprintf("%v", err))
 		return
@@ -106,16 +120,19 @@ func (h *APIHandler) DeleteSet(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-// InsertRow adds an exercise set to the database
-func (h *APIHandler) InsertRow(w http.ResponseWriter, r *http.Request) {
+// Create adds a row to a table
+func (h *APIHandler) Create(w http.ResponseWriter, r *http.Request) {
 	log.Println(r.Method, r.URL.Path, r.RemoteAddr)
 
 	// Get table from URL path
-	table := r.URL.Path[1:]
+	table, err := h.extractTable(r)
+	if err != nil {
+		InternalServerErrorHandler(w, r, err.Error())
+	}
 
 	// Decode request
 	var data *map[string]any
-	err := json.NewDecoder(r.Body).Decode(&data)
+	err = json.NewDecoder(r.Body).Decode(&data)
 	if err != nil {
 		log.Println(err)
 		InternalServerErrorHandler(w, r, fmt.Sprintf("%v", err))
@@ -133,13 +150,19 @@ func (h *APIHandler) InsertRow(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-// ListSets retrieves the exercise set history from the database, optionally
-// filtering by query params
-func (h *APIHandler) ListSets(w http.ResponseWriter, r *http.Request) {
+// Read gets rows from a table in the database, optionally filtering by query
+// params
+func (h *APIHandler) Read(w http.ResponseWriter, r *http.Request) {
 	log.Println(r.Method, r.URL.Path, r.RemoteAddr)
 
-	// Retrieve sets from database
-	sets, err := h.service.ListSets(r.URL.Query())
+	// Get table from URL path
+	table, err := h.extractTable(r)
+	if err != nil {
+		InternalServerErrorHandler(w, r, err.Error())
+	}
+
+	// Retrieve listQueryResults from database
+	listQueryResults, err := h.service.ListRows(table, r.URL.Query())
 	if err != nil {
 		log.Println(err)
 		InternalServerErrorHandler(w, r, fmt.Sprintf("%v", err))
@@ -147,7 +170,7 @@ func (h *APIHandler) ListSets(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Encode to JSON
-	jsonData, err := json.Marshal(sets)
+	jsonData, err := json.Marshal(listQueryResults)
 	if err != nil {
 		log.Println(err)
 		InternalServerErrorHandler(w, r, fmt.Sprintf("%v", err))
@@ -161,7 +184,20 @@ func (h *APIHandler) ListSets(w http.ResponseWriter, r *http.Request) {
 }
 
 // tableExists checks if a resource references an existing table
-func (h *APIHandler) tableExists(r *http.Request) bool {
-	table := r.URL.Path[1:]
-	return h.repo.TableExists(table)
+func (h *APIHandler) tableExists(r *http.Request) (bool, error) {
+	// Get table from URL path
+	table, err := h.extractTable(r)
+	if err != nil {
+		return false, err
+	}
+	return h.repo.TableExists(table), nil
+}
+
+// extractTable gets the table from the URL
+func (h *APIHandler) extractTable(r *http.Request) (string, error) {
+	matches := ReTable.FindStringSubmatch(r.URL.Path)
+	if len(matches) < 2 {
+		return "", fmt.Errorf("could not extract table from %s", r.URL.Path)
+	}
+	return matches[1], nil
 }
