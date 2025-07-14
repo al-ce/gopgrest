@@ -3,8 +3,7 @@ package repository
 import (
 	"database/sql"
 	"fmt"
-
-	"ftrack/models"
+	"strings"
 )
 
 // Repository handles database transactions
@@ -33,39 +32,29 @@ func (r *Repository) ListSets(params map[string][]string) (*sql.Rows, error) {
 	return rows, nil
 }
 
-// CreateSet inserts an exercise set in the exercise_sets table
-func (r *Repository) CreateSet(setData *models.ExerciseSet) error {
+// InsertRow inserts a new row into a specified table
+func (r *Repository) InsertRow(newRow *map[string]any, table string) error {
+	// Create keys/values/placeholders slices in consistent order
+	var keys []string
+	var values []any
+	var placeholders []string
+	var i int
+	for k, v := range *newRow {
+		keys = append(keys, k)
+		values = append(values, v)
+		placeholders = append(placeholders, fmt.Sprintf("$%d", i+1))
+		i++
+	}
+
 	// Build create query
-	const createStmnt = `
-		insert into exercise_sets
-		(
-			name,
-			performed_at,
-			weight,
-			unit,
-			reps,
-			set_count,
-			notes,
-			split_day,
-			program,
-			tags
-		)
-		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-	`
+	createStmnt := fmt.Sprintf("insert into %s (", table) +
+		strings.Join(keys, ", ") +
+		") values (" +
+		strings.Join(placeholders, ",") +
+		")"
 
 	// Execute create query
-	result, err := r.db.Exec(createStmnt,
-		setData.Name,
-		setData.PerformedAt,
-		setData.Weight,
-		setData.Unit,
-		setData.Reps,
-		setData.SetCount,
-		setData.Notes,
-		setData.SplitDay,
-		setData.Program,
-		setData.Tags,
-	)
+	result, err := r.db.Exec(createStmnt, values...)
 	if err != nil {
 		return err
 	}
