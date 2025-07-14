@@ -90,8 +90,8 @@ exec command flags="":
 
 # list sets filtered by optional query params
 [group('api')]
-list params='':
-    curl -X GET -s http://localhost:{{ API_PORT }}/sets{{ params }} | jq
+list table params='':
+    curl -X GET -s http://localhost:{{ API_PORT }}/{{ table }}{{ params }} | jq
 
 # insert a row in the specified table
 [group('api')]
@@ -102,12 +102,12 @@ insert table data:
 
 # delete a set in the database by id
 [group('api')]
-delete id:
-    curl -X DELETE -s http://localhost:{{ API_PORT }}/sets/{{ id }}
+delete table id:
+    curl -X DELETE -s http://localhost:{{ API_PORT }}/{{ table }}/{{ id }}
 
 # delete a set in the database by id
 [group('api')]
-update id data:
-    curl -X PUT -s http://localhost:{{ API_PORT }}/sets/{{ id }} \
+update table id data:
+    curl -X PUT -s http://localhost:{{ API_PORT }}/{{ table }}/{{ id }} \
     --header 'Content-Type: application/json' \
     --data '{{ data }}'
