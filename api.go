@@ -14,24 +14,30 @@ import (
 
 type APIHandler struct {
 	service service.Service
+	repo    repository.Repository
 }
 
 var (
-	ReRequestWithId = regexp.MustCompile(`^/sets/([0-9]+)$`)
-	ReListRequest   = regexp.MustCompile(`^/sets(\?.*)?$`)
+	ReRequestWithId = regexp.MustCompile(`^/\w+/([0-9]+)$`)
+	ReListRequest   = regexp.MustCompile(`^/\w+(\?.*)?$`)
+	ReTable         = regexp.MustCompile(`^/(\w+).*$`)
 )
 
 func NewAPIHandler(db *sql.DB) APIHandler {
-	sr := repository.NewRepository(db)
-	service := service.NewService(sr)
+	repo := repository.NewRepository(db)
+	service := service.NewService(repo)
 	return APIHandler{
 		service: service,
+		repo:    repo,
 	}
 }
 
 // ServeHTTP routes the request by method and path
 func (h *APIHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+
 	switch {
+	case !h.tableExists(r):
+		NotFoundHandler(w, r)
 	case r.Method == http.MethodGet && ReListRequest.MatchString(r.URL.Path):
 		h.ListSets(w, r)
 	case r.Method == http.MethodPost:
@@ -152,4 +158,10 @@ func (h *APIHandler) ListSets(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write(jsonData)
+}
+
+// tableExists checks if a resource references an existing table
+func (h *APIHandler) tableExists(r *http.Request) bool {
+	table := r.URL.Path[1:]
+	return h.repo.TableExists(table)
 }
