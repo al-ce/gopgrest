@@ -3,7 +3,7 @@ package service
 import (
 	"database/sql"
 	"encoding/json"
-	"time"
+	"fmt"
 
 	"ftrack/models"
 	"ftrack/repository"
@@ -21,16 +21,12 @@ func NewService(r repository.Repository) Service {
 	}
 }
 
-// CreateSet inserts an exercise set in the exercise_sets table
-func (s *Service) CreateSet(setData models.ExerciseSet) error {
-	// Set time performed if not set
-	if setData.PerformedAt.IsZero() {
-		setData.PerformedAt = time.Now()
+// InsertRow inserts a new row in a specified table
+func (s *Service) InsertRow(newRow *map[string]any, table string) error {
+	if !s.repo.TableExists(table) {
+		return fmt.Errorf("table %s does not exist", table)
 	}
-	// Round to nearest second
-	setData.PerformedAt = setData.PerformedAt.Round(time.Second)
-
-	return s.repo.CreateSet(&setData)
+	return s.repo.InsertRow(newRow, table)
 }
 
 // ListSets retrieves the list of all sets from the exercise_sets table
