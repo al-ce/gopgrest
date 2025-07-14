@@ -3,6 +3,7 @@ package repository
 import (
 	"database/sql"
 	"fmt"
+	"log"
 	"strings"
 )
 
@@ -91,6 +92,17 @@ func (r *Repository) DeleteSet(id string) error {
 		return err
 	}
 	return nil
+}
+
+// TableExists check if a table exists in the database
+func (r *Repository) TableExists(table string) bool {
+	rows, err := r.db.Query("select $1::regclass;", table)
+	if err == nil {
+		defer rows.Close()
+	} else {
+		log.Println("TableExists error:", table, err)
+	}
+	return err == nil
 }
 
 // buildConditionalClause builds a SQL WHERE clause to select a row. Ex: when
