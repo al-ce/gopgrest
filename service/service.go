@@ -1,9 +1,9 @@
 package service
 
 import (
-	"database/sql"
 	"encoding/json"
-	"reflect"
+	"maps"
+	"slices"
 
 	"ftrack/repository"
 )
@@ -22,17 +22,22 @@ func NewService(r repository.Repository) Service {
 
 // InsertRow inserts a new row in a specified table
 func (s *Service) InsertRow(newRow *map[string]any, tableName string) error {
-	if _, err := s.repo.GetTable(tableName); err != nil {
+	// Each column in the insert data must exist in the table
+	cols := slices.Collect(maps.Keys(*newRow))
+	if err := s.verifyColumns(tableName, cols); err != nil {
 		return err
 	}
-	// TODO: verify new row cols are in the table
 
 	return s.repo.InsertRow(tableName, newRow)
 }
 
 // ListRows gets rows from a table with optional filter params
 func (s *Service) ListRows(tableName string, params map[string][]string) ([]map[string]any, error) {
-	// TODO: verify param cols are in the table
+	// Each column in the query params must exist in the table
+	cols := slices.Collect(maps.Keys(params))
+	if err := s.verifyColumns(tableName, cols); err != nil {
+		return []map[string]any{}, err
+	}
 
 	rows, err := s.repo.ListRows(tableName, params)
 	if err != nil {
@@ -51,7 +56,11 @@ func (s *Service) ListRows(tableName string, params map[string][]string) ([]map[
 // UpdateRow updates any number of valid fields with separate calls to
 // Repository.UpdateRowCol
 func (s *Service) UpdateRow(tableName, id string, updateData map[string]any) error {
-	// TODO: verify update cols are in the table
+	// Each column in the update data must exist in the table
+	cols := slices.Collect(maps.Keys(updateData))
+	if err := s.verifyColumns(tableName, cols); err != nil {
+		return err
+	}
 
 	// Decode request body into a dummy row value to validate fields
 	var dummyRow map[string]any
@@ -73,41 +82,4 @@ func (s *Service) UpdateRow(tableName, id string, updateData map[string]any) err
 // DeleteRow removes a row from the table by id
 func (s *Service) DeleteRow(tableName, id string) error {
 	return s.repo.DeleteRow(tableName, id)
-}
-
-// scanRows scans rows from a query into a map
-func (s *Service) scanRows(tableName string, rows *sql.Rows) ([]map[string]any, error) {
-	// Get Table from Repository
-	table, err := s.repo.GetTable(tableName)
-	if err != nil {
-		return []map[string]any{}, err
-	}
-
-	// Create slice to hold pointers of type/size equivalent to column type
-	rowValues := make([]any, len(table.Columns))
-	rowPtrs := make([]any, len(table.Columns))
-	for i := range rowValues {
-		rowValues[i] = reflect.Zero(table.Columns[i].Datatype.ScanType())
-		rowPtrs[i] = &rowValues[i]
-	}
-
-	listQueryResults := []map[string]any{}
-
-	// Scan column values into pointer slice
-	for rows.Next() {
-		err := rows.Scan(rowPtrs...)
-		if err != nil {
-			return []map[string]any{}, err
-		}
-		// Create map of column names and column values
-		scannedRow := map[string]any{}
-		for i := range len(table.Columns) {
-			col := table.Columns[i].Name
-			scannedRow[col] = rowValues[i]
-
-		}
-		listQueryResults = append(listQueryResults, scannedRow)
-	}
-
-	return listQueryResults, nil
 }
