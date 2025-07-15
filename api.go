@@ -58,7 +58,7 @@ func (h *APIHandler) Update(w http.ResponseWriter, r *http.Request) {
 	log.Println(r.Method, r.URL.Path, r.RemoteAddr)
 
 	// Get table from URL path
-	table, err := h.extractTable(r)
+	table, err := h.extractTableName(r)
 	if err != nil {
 		InternalServerErrorHandler(w, r, err.Error())
 	}
@@ -96,7 +96,7 @@ func (h *APIHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	log.Println(r.Method, r.URL.Path, r.RemoteAddr)
 
 	// Get table from URL path
-	table, err := h.extractTable(r)
+	table, err := h.extractTableName(r)
 	if err != nil {
 		InternalServerErrorHandler(w, r, err.Error())
 	}
@@ -125,7 +125,7 @@ func (h *APIHandler) Create(w http.ResponseWriter, r *http.Request) {
 	log.Println(r.Method, r.URL.Path, r.RemoteAddr)
 
 	// Get table from URL path
-	table, err := h.extractTable(r)
+	table, err := h.extractTableName(r)
 	if err != nil {
 		InternalServerErrorHandler(w, r, err.Error())
 	}
@@ -156,7 +156,7 @@ func (h *APIHandler) Read(w http.ResponseWriter, r *http.Request) {
 	log.Println(r.Method, r.URL.Path, r.RemoteAddr)
 
 	// Get table from URL path
-	table, err := h.extractTable(r)
+	table, err := h.extractTableName(r)
 	if err != nil {
 		InternalServerErrorHandler(w, r, err.Error())
 	}
@@ -185,19 +185,20 @@ func (h *APIHandler) Read(w http.ResponseWriter, r *http.Request) {
 
 // tableExists checks if a resource references an existing table
 func (h *APIHandler) tableExists(r *http.Request) (bool, error) {
-	// Get table from URL path
-	table, err := h.extractTable(r)
+	// Get tableName from URL path
+	tableName, err := h.extractTableName(r)
 	if err != nil {
 		return false, err
 	}
-	return h.repo.TableExists(table), nil
+	table, err := h.repo.GetTable(tableName)
+	return table != nil, err
 }
 
-// extractTable gets the table from the URL
-func (h *APIHandler) extractTable(r *http.Request) (string, error) {
+// extractTableName gets the table name from the URL
+func (h *APIHandler) extractTableName(r *http.Request) (string, error) {
 	matches := ReTable.FindStringSubmatch(r.URL.Path)
 	if len(matches) < 2 {
-		return "", fmt.Errorf("could not extract table from %s", r.URL.Path)
+		return "", fmt.Errorf("could not extract table name from %s", r.URL.Path)
 	}
 	return matches[1], nil
 }

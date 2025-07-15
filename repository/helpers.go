@@ -4,14 +4,14 @@ import (
 	"fmt"
 )
 
-// TableExists check if a table exists in the database
-func (r *Repository) TableExists(table string) bool {
+// GetTable gets a table from the tables slice by name
+func (r *Repository) GetTable(tableName string) (*Table, error) {
 	for _, t := range r.tables {
-		if t.name == table {
-			return true
+		if t.Name == tableName {
+			return &t, nil
 		}
 	}
-	return false
+	return nil, fmt.Errorf("table does not exist")
 }
 
 // buildConditionalClause builds a SQL WHERE clause to select a row. Ex: when

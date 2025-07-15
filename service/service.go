@@ -3,7 +3,6 @@ package service
 import (
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	"reflect"
 
 	"ftrack/repository"
@@ -22,23 +21,27 @@ func NewService(r repository.Repository) Service {
 }
 
 // InsertRow inserts a new row in a specified table
-func (s *Service) InsertRow(newRow *map[string]any, table string) error {
-	if !s.repo.TableExists(table) {
-		return fmt.Errorf("table %s does not exist", table)
+func (s *Service) InsertRow(newRow *map[string]any, tableName string) error {
+	if _, err := s.repo.GetTable(tableName); err != nil {
+		return err
 	}
-	return s.repo.InsertRow(table, newRow)
+	// TODO: verify new row cols are in the table
+
+	return s.repo.InsertRow(tableName, newRow)
 }
 
 // ListRows gets rows from a table with optional filter params
-func (s *Service) ListRows(table string, params map[string][]string) ([]map[string]any, error) {
-	rows, err := s.repo.ListRows(table, params)
+func (s *Service) ListRows(tableName string, params map[string][]string) ([]map[string]any, error) {
+	// TODO: verify param cols are in the table
+
+	rows, err := s.repo.ListRows(tableName, params)
 	if err != nil {
 		return []map[string]any{}, err
 	}
 	defer rows.Close()
 
 	// Scan rows into struct slice
-	listQueryResults, err := scanRows(rows)
+	listQueryResults, err := s.scanRows(tableName, rows)
 	if err != nil {
 		return []map[string]any{}, err
 	}
@@ -47,7 +50,9 @@ func (s *Service) ListRows(table string, params map[string][]string) ([]map[stri
 
 // UpdateRow updates any number of valid fields with separate calls to
 // Repository.UpdateRowCol
-func (s *Service) UpdateRow(table, id string, updateData map[string]any) error {
+func (s *Service) UpdateRow(tableName, id string, updateData map[string]any) error {
+	// TODO: verify update cols are in the table
+
 	// Decode request body into a dummy row value to validate fields
 	var dummyRow map[string]any
 	b, _ := json.Marshal(updateData)
@@ -58,37 +63,31 @@ func (s *Service) UpdateRow(table, id string, updateData map[string]any) error {
 
 	// Update individual columns in the row
 	for field, val := range updateData {
-		if err := s.repo.UpdateRowCol(table, id, field, val); err != nil {
+		if err := s.repo.UpdateRowCol(tableName, id, field, val); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-// DeleteRow removes a row form the table by id
-func (s *Service) DeleteRow(table, id string) error {
-	return s.repo.DeleteRow(table, id)
+// DeleteRow removes a row from the table by id
+func (s *Service) DeleteRow(tableName, id string) error {
+	return s.repo.DeleteRow(tableName, id)
 }
 
 // scanRows scans rows from a query into a map
-func scanRows(rows *sql.Rows) ([]map[string]any, error) {
-	// Get column names
-	cols, err := rows.Columns()
-	if err != nil {
-		return []map[string]any{}, err
-	}
-
-	// Get column types
-	coltypes, err := rows.ColumnTypes()
+func (s *Service) scanRows(tableName string, rows *sql.Rows) ([]map[string]any, error) {
+	// Get Table from Repository
+	table, err := s.repo.GetTable(tableName)
 	if err != nil {
 		return []map[string]any{}, err
 	}
 
 	// Create slice to hold pointers of type/size equivalent to column type
-	rowValues := make([]any, len(cols))
-	rowPtrs := make([]any, len(cols))
+	rowValues := make([]any, len(table.Columns))
+	rowPtrs := make([]any, len(table.Columns))
 	for i := range rowValues {
-		rowValues[i] = reflect.Zero(coltypes[i].ScanType())
+		rowValues[i] = reflect.Zero(table.Columns[i].Datatype.ScanType())
 		rowPtrs[i] = &rowValues[i]
 	}
 
@@ -102,8 +101,8 @@ func scanRows(rows *sql.Rows) ([]map[string]any, error) {
 		}
 		// Create map of column names and column values
 		scannedRow := map[string]any{}
-		for i := range len(cols) {
-			col := cols[i]
+		for i := range len(table.Columns) {
+			col := table.Columns[i].Name
 			scannedRow[col] = rowValues[i]
 
 		}

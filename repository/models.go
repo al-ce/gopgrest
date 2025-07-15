@@ -8,14 +8,14 @@ import (
 
 // TableColumn represents a column in a table
 type TableColumn struct {
-	name     string
-	datatype sql.ColumnType
+	Name     string
+	Datatype sql.ColumnType
 }
 
 // Table represents a table in the database
 type Table struct {
-	name    string
-	columns []TableColumn
+	Name    string
+	Columns []TableColumn
 }
 
 // Repository handles database transactions
@@ -110,9 +110,9 @@ func getPublicTables(db *sql.DB) ([]Table, error) {
 	// Log the tables
 	log.Println("Found tables in database:")
 	for _, table := range tables {
-		log.Printf("\t%s\n", table.name)
-		for _, col := range table.columns {
-			log.Printf("\t\t%-15s\t%s", col.name, col.datatype.ScanType())
+		log.Printf("\t%s\n", table.Name)
+		for _, col := range table.Columns {
+			log.Printf("\t\t%-15s\t%s", col.Name, col.Datatype.ScanType())
 		}
 	}
 	log.Println()

@@ -7,10 +7,10 @@ import (
 )
 
 // ListRows gets rows from a table with optional filter params
-func (r *Repository) ListRows(table string, params map[string][]string) (*sql.Rows, error) {
+func (r *Repository) ListRows(tableName string, params map[string][]string) (*sql.Rows, error) {
 	// Build list query with optional conditional filters
 	conditional, values := buildConditionalClause(params)
-	listStmt := "select * from " + table + conditional
+	listStmt := "select * from " + tableName + conditional
 
 	// Execute list query
 	rows, err := r.db.Query(listStmt, values...)
@@ -21,7 +21,7 @@ func (r *Repository) ListRows(table string, params map[string][]string) (*sql.Ro
 }
 
 // InsertRow inserts a new row into a specified table
-func (r *Repository) InsertRow(table string, newRow *map[string]any) error {
+func (r *Repository) InsertRow(tableName string, newRow *map[string]any) error {
 	// Create cols/values/placeholders slices in consistent order
 	var cols []string
 	var values []any
@@ -35,7 +35,7 @@ func (r *Repository) InsertRow(table string, newRow *map[string]any) error {
 	}
 
 	// Build create query
-	createStmnt := fmt.Sprintf("insert into %s (", table) +
+	createStmnt := fmt.Sprintf("insert into %s (", tableName) +
 		strings.Join(cols, ", ") +
 		") values (" +
 		strings.Join(placeholders, ",") +
@@ -53,11 +53,11 @@ func (r *Repository) InsertRow(table string, newRow *map[string]any) error {
 }
 
 // UpdateRowCol updates a field in a table row by id
-func (r *Repository) UpdateRowCol(table, id, field string, value any) error {
+func (r *Repository) UpdateRowCol(tableName, id, field string, value any) error {
 	// Build update query
 	updateStmt := fmt.Sprintf(
 		"update %s set %s = $1 where id = $2",
-		table, field,
+		tableName, field,
 	)
 
 	if _, err := r.db.Exec(updateStmt, value, id); err != nil {
@@ -67,8 +67,8 @@ func (r *Repository) UpdateRowCol(table, id, field string, value any) error {
 }
 
 // DeleteRow removes a row from a table by id
-func (r *Repository) DeleteRow(table, id string) error {
-	deleteStmt := fmt.Sprintf("delete from %s where id = $1", table)
+func (r *Repository) DeleteRow(tableName, id string) error {
+	deleteStmt := fmt.Sprintf("delete from %s where id = $1", tableName)
 
 	// Execute delete query
 	result, err := r.db.Exec(deleteStmt, id)
