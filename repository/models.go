@@ -13,9 +13,12 @@ type TableColumn struct {
 }
 
 // Table represents a table in the database
+// The Columns slice preserves the column order.
+// The ColumnMap is used for fast lookup to check if a column exists
 type Table struct {
-	Name    string
-	Columns []TableColumn
+	Name      string
+	Columns   []TableColumn
+	ColumnMap map[string]struct{}
 }
 
 // Repository handles database transactions
@@ -48,6 +51,7 @@ func NewTable(db *sql.DB, tableName string) (*Table, error) {
 	defer rows.Close()
 
 	var tableColumns []TableColumn
+	columnMap := make(map[string]struct{})
 
 	// Get column names
 	colnames, err := rows.Columns()
@@ -70,11 +74,13 @@ func NewTable(db *sql.DB, tableName string) (*Table, error) {
 				*coltypes[i],
 			},
 		)
+		columnMap[name] = struct{}{}
 	}
 
 	return &Table{
 		tableName,
 		tableColumns,
+		columnMap,
 	}, nil
 }
 
