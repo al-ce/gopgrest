@@ -33,18 +33,24 @@ func GetTestDB(t *testing.T) *TestDB {
 	if err != nil {
 		t.Fatalf("could not connect to db: %v", err)
 	}
-	tx, err := db.Begin()
-	if err != nil {
-		t.Fatalf("could not begin transaction: %v", err)
-	}
 
 	t.Cleanup(func() {
-		tx.Rollback()
 		db.Close()
 	})
 
 	return &TestDB{
 		db,
-		tx,
+		nil,
 	}
+}
+
+func (tdb *TestDB) BeginTX(t *testing.T) *sql.Tx {
+	tx, err := tdb.DB.Begin()
+	if err != nil {
+		t.Fatalf("could not begin transaction: %v", err)
+	}
+	t.Cleanup(func() {
+		tx.Rollback()
+	})
+	return tx
 }
