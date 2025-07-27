@@ -21,11 +21,11 @@ func NewService(r repository.Repository) Service {
 }
 
 // InsertRow inserts a new row in a specified table
-func (s *Service) InsertRow(newRow *map[string]any, tableName string) error {
+func (s *Service) InsertRow(newRow *map[string]any, tableName string) (int64, error) {
 	// Each column in the insert data must exist in the table
 	cols := slices.Collect(maps.Keys(*newRow))
 	if err := s.verifyColumns(tableName, cols); err != nil {
-		return err
+		return 0, err
 	}
 
 	return s.repo.InsertRow(tableName, newRow)

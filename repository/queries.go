@@ -21,7 +21,7 @@ func (r *Repository) ListRows(tableName string, params map[string][]string) (*sq
 }
 
 // InsertRow inserts a new row into a specified table
-func (r *Repository) InsertRow(tableName string, newRow *map[string]any) error {
+func (r *Repository) InsertRow(tableName string, newRow *map[string]any) (int64, error) {
 	// Create cols/values/placeholders slices in consistent order
 	var cols []string
 	var values []any
@@ -44,12 +44,9 @@ func (r *Repository) InsertRow(tableName string, newRow *map[string]any) error {
 	// Execute create query
 	result, err := r.db.Exec(createStmnt, values...)
 	if err != nil {
-		return err
+		return 0, err
 	}
-	if _, err = result.RowsAffected(); err != nil {
-		return err
-	}
-	return nil
+	return result.RowsAffected()
 }
 
 // UpdateRowCol updates a field in a table row by id

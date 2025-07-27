@@ -140,7 +140,8 @@ func (h *APIHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Insert new set into the database
-	if err = h.service.InsertRow(data, table); err != nil {
+	rowsCreated, err := h.service.InsertRow(data, table)
+	if err != nil {
 		log.Println(err)
 		InternalServerErrorHandler(w, r, fmt.Sprintf("%v", err))
 		return
@@ -148,6 +149,7 @@ func (h *APIHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 	// Set response
 	w.WriteHeader(http.StatusOK)
+	fmt.Fprintf(w, "%d rows created", rowsCreated)
 }
 
 // Read gets rows from a table in the database, optionally filtering by query

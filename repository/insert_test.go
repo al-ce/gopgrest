@@ -16,9 +16,10 @@ func TestInsertRow(t *testing.T) {
 	repo := repository.NewRepository(tdb.DB)
 
 	insertTests := []struct {
-		name   string
-		newRow map[string]any
-		expect any
+		name       string
+		newRow     map[string]any
+		expectRows int64
+		expectErr  any
 	}{
 		{
 			"ins row with valid col names/values",
@@ -27,6 +28,7 @@ func TestInsertRow(t *testing.T) {
 				"weight": 200,
 				"reps":   10,
 			},
+			1,
 			nil,
 		},
 		{
@@ -35,6 +37,7 @@ func TestInsertRow(t *testing.T) {
 				"weight": 200,
 				"reps":   10,
 			},
+			0,
 			"pq: null value in column \"name\" of relation \"exercise_sets\" violates not-null constraint",
 		},
 		{
@@ -42,6 +45,7 @@ func TestInsertRow(t *testing.T) {
 			map[string]any{
 				"weight": "not int",
 			},
+			0,
 			"pq: invalid input syntax for type smallint: \"not int\"",
 		},
 		{
@@ -49,6 +53,7 @@ func TestInsertRow(t *testing.T) {
 			map[string]any{
 				"not_a_col": 10,
 			},
+			0,
 			fmt.Sprintf(
 				"pq: column \"not_a_col\" of relation \"%s\" does not exist",
 				tests.TABLE1),
@@ -57,10 +62,13 @@ func TestInsertRow(t *testing.T) {
 
 	for _, tt := range insertTests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := repo.InsertRow(tests.TABLE1, &tt.newRow)
-			if (tt.expect == nil && err != nil) ||
-				(err != nil && err.Error() != tt.expect) {
-				t.Errorf("Expected error: %v\nGot %v", tt.expect, err)
+			rowsCreated, err := repo.InsertRow(tests.TABLE1, &tt.newRow)
+			if rowsCreated != tt.expectRows {
+				t.Errorf("Expected rows: %d\nGot: %v", rowsCreated, tt.expectRows)
+			}
+			if (tt.expectErr == nil && err != nil) ||
+				(err != nil && err.Error() != tt.expectErr) {
+				t.Errorf("Expected error: %v\nGot %v", tt.expectErr, err)
 			}
 		})
 	}
