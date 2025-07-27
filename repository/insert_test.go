@@ -66,8 +66,7 @@ func TestInsertRow(t *testing.T) {
 			if rowsCreated != tt.expectRows {
 				t.Errorf("Expected rows: %d\nGot: %v", rowsCreated, tt.expectRows)
 			}
-			if (tt.expectErr == nil && err != nil) ||
-				(err != nil && err.Error() != tt.expectErr) {
+			if tests.CheckExpectedErr(tt.expectErr, err) {
 				t.Errorf("Expected error: %v\nGot %v", tt.expectErr, err)
 			}
 		})
