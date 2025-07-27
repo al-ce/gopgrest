@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"testing"
+	"time"
 
 	_ "github.com/lib/pq"
 )
@@ -24,6 +25,23 @@ type TestDB struct {
 	TX *sql.Tx
 }
 
+// ExerciseSet matches the exercise_set table in the test database so that rows
+// can be scanned into fields of appropriate size
+type ExerciseSet struct {
+	ID          int       `json:"id"`
+	Name        string    `json:"name"`
+	PerformedAt time.Time `json:"performed_at"`
+	Weight      float32   `json:"weight"`
+	Unit        string    `json:"unit"`
+	Reps        int       `json:"reps"`
+	SetCount    int       `json:"set_count"`
+	Notes       string    `json:"notes"`
+	SplitDay    string    `json:"split_day"`
+	Program     string    `json:"program"`
+	Tags        string    `json:"tags"`
+}
+
+// GetTestDB returns a test database
 func GetTestDB(t *testing.T) *TestDB {
 	testParams := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
 		host, port, user, password, testDbName,
@@ -44,6 +62,8 @@ func GetTestDB(t *testing.T) *TestDB {
 	}
 }
 
+// BeginTX begins a transaction on the test database with a rollback to be
+// performed during the test cleanup
 func (tdb *TestDB) BeginTX(t *testing.T) *sql.Tx {
 	tx, err := tdb.DB.Begin()
 	if err != nil {
