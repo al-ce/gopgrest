@@ -8,6 +8,7 @@ import (
 
 	"ftrack/repository"
 	"ftrack/tests"
+	"ftrack/types"
 )
 
 func TestInsertRow(t *testing.T) {
@@ -15,13 +16,13 @@ func TestInsertRow(t *testing.T) {
 
 	insertTests := []struct {
 		name       string
-		newRow     map[string]any
+		newRow     types.RowDataMap
 		expectRows int64
 		expectErr  any
 	}{
 		{
 			"ins row with valid col names/values",
-			map[string]any{
+			types.RowDataMap{
 				"name":   "deadlift",
 				"weight": 200,
 				"reps":   10,
@@ -31,7 +32,7 @@ func TestInsertRow(t *testing.T) {
 		},
 		{
 			"ins row with missing req cols",
-			map[string]any{
+			types.RowDataMap{
 				"weight": 200,
 				"reps":   10,
 			},
@@ -40,7 +41,7 @@ func TestInsertRow(t *testing.T) {
 		},
 		{
 			"ins row with invalid values",
-			map[string]any{
+			types.RowDataMap{
 				"weight": "not int",
 			},
 			0,
@@ -48,7 +49,7 @@ func TestInsertRow(t *testing.T) {
 		},
 		{
 			"ins with invalid col names",
-			map[string]any{
+			types.RowDataMap{
 				"not_a_col": 10,
 			},
 			0,
@@ -60,7 +61,6 @@ func TestInsertRow(t *testing.T) {
 
 	for _, tt := range insertTests {
 		t.Run(tt.name, func(t *testing.T) {
-
 			// Need new transaction for each subtest since some will be aborted
 			// when they fail
 			tx := tdb.BeginTX(t)

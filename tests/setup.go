@@ -8,6 +8,8 @@ import (
 	"time"
 
 	_ "github.com/lib/pq"
+
+	"ftrack/types"
 )
 
 var (
@@ -42,7 +44,7 @@ type ExerciseSet struct {
 }
 
 // SampleRows are used to populate the test database
-var SampleRows = []map[string]any{
+var SampleRows = []types.RowDataMap{
 	{
 		"Name":   "deadlift",
 		"Weight": 300,

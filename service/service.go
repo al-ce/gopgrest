@@ -22,7 +22,7 @@ func NewService(r repository.Repository) Service {
 }
 
 // InsertRow inserts a new row in a specified table
-func (s *Service) InsertRow(newRow *map[string]any, tableName string) (int64, error) {
+func (s *Service) InsertRow(newRow *types.RowDataMap, tableName string) (int64, error) {
 	// Each column in the insert data must exist in the table
 	cols := slices.Collect(maps.Keys(*newRow))
 	if err := s.verifyColumns(tableName, cols); err != nil {
@@ -33,30 +33,30 @@ func (s *Service) InsertRow(newRow *map[string]any, tableName string) (int64, er
 }
 
 // ListRows gets rows from a table with optional filter params
-func (s *Service) ListRows(tableName string, qf types.QueryFilters) ([]map[string]any, error) {
+func (s *Service) ListRows(tableName string, qf types.QueryFilters) ([]types.RowDataMap, error) {
 	// Each column in the query params must exist in the table
 	cols := slices.Collect(maps.Keys(qf))
 	if err := s.verifyColumns(tableName, cols); err != nil {
-		return []map[string]any{}, err
+		return []types.RowDataMap{}, err
 	}
 
 	rows, err := s.repo.ListRows(tableName, qf)
 	if err != nil {
-		return []map[string]any{}, err
+		return []types.RowDataMap{}, err
 	}
 	defer rows.Close()
 
 	// Scan rows into struct slice
 	listQueryResults, err := s.scanRows(tableName, rows)
 	if err != nil {
-		return []map[string]any{}, err
+		return []types.RowDataMap{}, err
 	}
 	return listQueryResults, nil
 }
 
 // UpdateRow updates any number of valid fields with separate calls to
 // Repository.UpdateRowCol
-func (s *Service) UpdateRow(tableName, id string, updateData map[string]any) error {
+func (s *Service) UpdateRow(tableName, id string, updateData types.RowDataMap) error {
 	// Each column in the update data must exist in the table
 	cols := slices.Collect(maps.Keys(updateData))
 	if err := s.verifyColumns(tableName, cols); err != nil {
@@ -64,7 +64,7 @@ func (s *Service) UpdateRow(tableName, id string, updateData map[string]any) err
 	}
 
 	// Decode request body into a dummy row value to validate fields
-	var dummyRow map[string]any
+	var dummyRow types.RowDataMap
 	b, _ := json.Marshal(updateData)
 	err := json.Unmarshal(b, &dummyRow)
 	if err != nil {

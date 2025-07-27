@@ -4,10 +4,12 @@ import (
 	"database/sql"
 	"fmt"
 	"strings"
+
+	"ftrack/types"
 )
 
 // ListRows gets rows from a table with optional filter params
-func (r *Repository) ListRows(tableName string, qf QueryFilters) (*sql.Rows, error) {
+func (r *Repository) ListRows(tableName string, qf types.QueryFilters) (*sql.Rows, error) {
 	// Build list query with optional conditional filters
 	conditional, values := buildConditionalClause(qf)
 	listStmt := "select * from " + tableName + conditional
@@ -21,7 +23,7 @@ func (r *Repository) ListRows(tableName string, qf QueryFilters) (*sql.Rows, err
 }
 
 // InsertRow inserts a new row into a specified table
-func (r *Repository) InsertRow(tableName string, newRow *map[string]any) (int64, error) {
+func (r *Repository) InsertRow(tableName string, newRow *types.RowDataMap) (int64, error) {
 	// Create cols/values/placeholders slices in consistent order
 	var cols []string
 	var values []any

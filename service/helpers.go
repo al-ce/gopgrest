@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"fmt"
 	"reflect"
+
+	"ftrack/types"
 )
 
 // verifyColumns checks that all keys in a slice of cols, representing columns
@@ -22,11 +24,11 @@ func (s *Service) verifyColumns(tableName string, cols []string) error {
 }
 
 // scanRows scans rows from a query into a map
-func (s *Service) scanRows(tableName string, rows *sql.Rows) ([]map[string]any, error) {
+func (s *Service) scanRows(tableName string, rows *sql.Rows) ([]types.RowDataMap, error) {
 	// Get Table from Repository
 	table, err := s.repo.GetTable(tableName)
 	if err != nil {
-		return []map[string]any{}, err
+		return []types.RowDataMap{}, err
 	}
 
 	// Create slice to hold pointers of type/size equivalent to column type
@@ -37,16 +39,16 @@ func (s *Service) scanRows(tableName string, rows *sql.Rows) ([]map[string]any, 
 		rowPtrs[i] = &rowValues[i]
 	}
 
-	listQueryResults := []map[string]any{}
+	listQueryResults := []types.RowDataMap{}
 
 	// Scan column values into pointer slice
 	for rows.Next() {
 		err := rows.Scan(rowPtrs...)
 		if err != nil {
-			return []map[string]any{}, err
+			return []types.RowDataMap{}, err
 		}
 		// Create map of column names and column values
-		scannedRow := map[string]any{}
+		scannedRow := types.RowDataMap{}
 		for i := range len(table.Columns) {
 			col := table.Columns[i].Name
 			scannedRow[col] = rowValues[i]

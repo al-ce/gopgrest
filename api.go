@@ -10,6 +10,7 @@ import (
 
 	"ftrack/repository"
 	"ftrack/service"
+	"ftrack/types"
 )
 
 type APIHandler struct {
@@ -72,7 +73,7 @@ func (h *APIHandler) Update(w http.ResponseWriter, r *http.Request) {
 	setID := matches[1]
 
 	// Decode request body into map to dynamically update row
-	var updateData map[string]any
+	var updateData types.RowDataMap
 	err = json.NewDecoder(r.Body).Decode(&updateData)
 	if err != nil {
 		log.Println(err)
@@ -131,7 +132,7 @@ func (h *APIHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Decode request
-	var data *map[string]any
+	var data *types.RowDataMap
 	err = json.NewDecoder(r.Body).Decode(&data)
 	if err != nil {
 		log.Println(err)
@@ -164,7 +165,7 @@ func (h *APIHandler) Read(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Retrieve listQueryResults from database
-	listQueryResults, err := h.service.ListRows(table, r.URL.Query())
+	listQueryResults, err := h.service.ListRows(table, types.QueryFilters(r.URL.Query()))
 	if err != nil {
 		log.Println(err)
 		InternalServerErrorHandler(w, r, fmt.Sprintf("%v", err))
