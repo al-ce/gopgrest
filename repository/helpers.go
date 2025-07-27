@@ -17,9 +17,9 @@ func (r *Repository) GetTable(tableName string) (*Table, error) {
 // buildConditionalClause builds a SQL WHERE clause to select a row. Ex: when
 // params == `[name:[bob alice] age:[45]]`, the name in the row must be either
 // bob or alice and the age must be 45.
-func buildConditionalClause(params map[string][]string) (string, []any) {
+func buildConditionalClause(qf QueryFilters) (string, []any) {
 	// If no params were passed, there should not be a WHERE clause
-	if len(params) == 0 {
+	if len(qf) == 0 {
 		return "", []any{}
 	}
 
@@ -28,7 +28,7 @@ func buildConditionalClause(params map[string][]string) (string, []any) {
 
 	// n is the number of the placeholder in the statement e.g. $1
 	n := 1
-	for k, vals := range params {
+	for k, vals := range qf {
 		// Join all values for this key with OR, allow any match
 		for _, v := range vals {
 			clause += fmt.Sprintf("%s = $%d OR ", k, n)

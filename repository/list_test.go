@@ -10,20 +10,21 @@ import (
 
 	"ftrack/repository"
 	"ftrack/tests"
+	"ftrack/types"
 )
 
 type filterTest struct {
 	testName  string
-	params    map[string][]string
+	filters   types.QueryFilters
 	rowCount  int
 	expectErr any
 }
 
-func makeFilterTest(testName string, params map[string][]string, expectErr any) filterTest {
+func makeFilterTest(testName string, qf types.QueryFilters, expectErr any) filterTest {
 	return filterTest{
 		testName,
-		params,
-		len(tests.FilterSampleRows(params)),
+		qf,
+		len(tests.FilterSampleRows(qf)),
 		expectErr,
 	}
 }
@@ -36,7 +37,7 @@ func TestListRows_NoFilters(t *testing.T) {
 		tests.InsertSampleRows(repo)
 
 		// List all rows in the table
-		rows, err := repo.ListRows(tests.TABLE1, map[string][]string{})
+		rows, err := repo.ListRows(tests.TABLE1, types.QueryFilters{})
 		if tests.CheckExpectedErr(nil, err) {
 			t.Errorf("Expected error: %v\nGot %v", nil, err)
 		}
@@ -93,41 +94,41 @@ func TestListRows_ValidFilters(t *testing.T) {
 
 	filterTests := []struct {
 		testName  string
-		params    map[string][]string
+		filters   types.QueryFilters
 		rowCount  int
 		expectErr any
 	}{
 		makeFilterTest(
 			"list deadlifts",
-			map[string][]string{
+			types.QueryFilters{
 				"Name": {"deadlift"},
 			},
 			nil,
 		),
 		makeFilterTest(
 			"list deadlifts or squats",
-			map[string][]string{
+			types.QueryFilters{
 				"Name": {"deadlift", "squat"},
 			},
 			nil,
 		),
 		makeFilterTest(
 			"list weights of 100",
-			map[string][]string{
+			types.QueryFilters{
 				"Weight": {"100"},
 			},
 			nil,
 		),
 		makeFilterTest(
 			"list weights of 100 or 200",
-			map[string][]string{
+			types.QueryFilters{
 				"Weight": {"100", "200"},
 			},
 			nil,
 		),
 		makeFilterTest(
 			"list squats of weight 200",
-			map[string][]string{
+			types.QueryFilters{
 				"Name":   {"squat"},
 				"Weight": {"200"},
 			},
@@ -135,7 +136,7 @@ func TestListRows_ValidFilters(t *testing.T) {
 		),
 		makeFilterTest(
 			"list squats of weight 101 or 201",
-			map[string][]string{
+			types.QueryFilters{
 				"Name":   {"squat"},
 				"Weight": {"100", "200"},
 			},
@@ -146,7 +147,7 @@ func TestListRows_ValidFilters(t *testing.T) {
 		makeFilterTest(
 			// non-existent exercise name
 			"list presses",
-			map[string][]string{
+			types.QueryFilters{
 				"Name": {"press"},
 			},
 			nil,
@@ -154,7 +155,7 @@ func TestListRows_ValidFilters(t *testing.T) {
 		makeFilterTest(
 			// valid exercise with no matching weight
 			"list squats of weight 50",
-			map[string][]string{
+			types.QueryFilters{
 				"Name":   {"squat"},
 				"Weight": {"50"},
 			},
@@ -165,14 +166,14 @@ func TestListRows_ValidFilters(t *testing.T) {
 	// doNotFilter contains filters we will never look for, but also values
 	// that we used in our sample rows. This allows us to test that our query
 	// params exclude rows we didn't filter for
-	doNotFilter := map[string][]string{
+	doNotFilter := types.QueryFilters{
 		"Name":   {"bench press"},
 		"Weight": {"300"},
 	}
 
 	for _, tt := range filterTests {
 		t.Run(tt.testName, func(t *testing.T) {
-			rows, err := repo.ListRows(tests.TABLE1, tt.params)
+			rows, err := repo.ListRows(tests.TABLE1, tt.filters)
 			if tests.CheckExpectedErr(tt.expectErr, err) {
 				t.Errorf("Expected error: %v\nGot %v", tt.expectErr, err)
 			}
@@ -188,7 +189,7 @@ func TestListRows_ValidFilters(t *testing.T) {
 				}
 
 				val := reflect.ValueOf(scannedRow)
-				for fieldName, fieldFilters := range tt.params {
+				for fieldName, fieldFilters := range tt.filters {
 					gotVal := fmt.Sprintf("%v", val.FieldByName(fieldName))
 					// Rows should include values we filtered for we know exist
 					if !slices.Contains(fieldFilters, gotVal) {

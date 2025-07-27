@@ -7,9 +7,9 @@ import (
 )
 
 // ListRows gets rows from a table with optional filter params
-func (r *Repository) ListRows(tableName string, params map[string][]string) (*sql.Rows, error) {
+func (r *Repository) ListRows(tableName string, qf QueryFilters) (*sql.Rows, error) {
 	// Build list query with optional conditional filters
-	conditional, values := buildConditionalClause(params)
+	conditional, values := buildConditionalClause(qf)
 	listStmt := "select * from " + tableName + conditional
 
 	// Execute list query

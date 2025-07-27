@@ -6,6 +6,7 @@ import (
 	"slices"
 
 	"ftrack/repository"
+	"ftrack/types"
 )
 
 // Service handles business logic with retrieved repository data
@@ -32,14 +33,14 @@ func (s *Service) InsertRow(newRow *map[string]any, tableName string) (int64, er
 }
 
 // ListRows gets rows from a table with optional filter params
-func (s *Service) ListRows(tableName string, params map[string][]string) ([]map[string]any, error) {
+func (s *Service) ListRows(tableName string, qf types.QueryFilters) ([]map[string]any, error) {
 	// Each column in the query params must exist in the table
-	cols := slices.Collect(maps.Keys(params))
+	cols := slices.Collect(maps.Keys(qf))
 	if err := s.verifyColumns(tableName, cols); err != nil {
 		return []map[string]any{}, err
 	}
 
-	rows, err := s.repo.ListRows(tableName, params)
+	rows, err := s.repo.ListRows(tableName, qf)
 	if err != nil {
 		return []map[string]any{}, err
 	}

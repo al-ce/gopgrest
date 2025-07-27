@@ -6,6 +6,7 @@ import (
 	"slices"
 
 	"ftrack/repository"
+	"ftrack/types"
 )
 
 // InsertSampleRows inserts sample rows into a repo
@@ -42,12 +43,12 @@ func ScanExerciseSetRow(toScan *ExerciseSet, rows *sql.Rows) error {
 }
 
 // FilterSampleRows filters the sample rows by a map of params
-func FilterSampleRows(params map[string][]string) []map[string]any {
+func FilterSampleRows(qf types.QueryFilters) []map[string]any {
 	m := []map[string]any{}
 	for _, row := range SampleRows {
 		match := true
 		for k := range row {
-			filterValue, exists := params[k]
+			filterValue, exists := qf[k]
 			if exists && !slices.Contains(filterValue, fmt.Sprintf("%v", row[k])) {
 				match = false
 				break
