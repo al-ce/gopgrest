@@ -12,43 +12,84 @@ import (
 	"ftrack/tests"
 )
 
-func TestListRows_ValidQueries(t *testing.T) {
+type filterTest struct {
+	testName  string
+	params    map[string][]string
+	rowCount  int
+	expectErr any
+}
+
+func makeFilterTest(testName string, params map[string][]string, expectErr any) filterTest {
+	return filterTest{
+		testName,
+		params,
+		len(tests.FilterSampleRows(params)),
+		expectErr,
+	}
+}
+
+func TestListRows_NoFilters(t *testing.T) {
+	t.Run("list all", func(t *testing.T) {
+		tdb := tests.GetTestDB(t)
+		tx := tdb.BeginTX(t)
+		repo := repository.NewRepository(tx)
+		tests.InsertSampleRows(repo)
+
+		// List all rows in the table
+		rows, err := repo.ListRows(tests.TABLE1, map[string][]string{})
+		if tests.CheckExpectedErr(nil, err) {
+			t.Errorf("Expected error: %v\nGot %v", nil, err)
+		}
+
+		// Track how many rows we got
+		gotCount := 0
+		scannedRow := tests.ExerciseSet{}
+		for rows.Next() {
+
+			// Scan rows into struct
+			err := tests.ScanExerciseSetRow(&scannedRow, rows)
+			if err != nil {
+				t.Errorf("Scan err: %v", err)
+			}
+
+			// Confirm each column in the row matches the sample we inserted
+			rowVal := reflect.ValueOf(scannedRow)
+			sampleRow := tests.SampleRows[gotCount]
+			for idx := range rowVal.Type().NumField() {
+				fieldName := rowVal.Type().Field(idx).Name
+				expectedVal := fmt.Sprintf("%v", sampleRow[fieldName])
+				gotVal := fmt.Sprintf("%v", rowVal.Field(idx))
+				if expectedVal != "<nil>" && expectedVal != gotVal {
+					t.Errorf(
+						"Expected %s: %v\nGot %v",
+						fieldName,
+						expectedVal,
+						gotVal,
+					)
+				}
+			}
+			gotCount++
+		}
+
+		// Confirm we got the same amount of rows we inserted
+		expectedCount := len(tests.SampleRows)
+		if expectedCount != gotCount {
+			t.Errorf(
+				"Expected %d rows\nGot %d\n",
+				len(tests.SampleRows),
+				gotCount,
+			)
+		}
+	})
+}
+
+func TestListRows_ValidFilters(t *testing.T) {
 	tdb := tests.GetTestDB(t)
 
 	tx := tdb.BeginTX(t)
 	repo := repository.NewRepository(tx)
 
-	tests.InsertSampleRows(repo, []map[string]any{
-		{
-			"name":   "deadlift",
-			"weight": 300,
-		},
-		{
-			"name":   "deadlift",
-			"weight": 200,
-		},
-		{
-			"name":   "deadlift",
-			"weight": 100,
-		},
-		{
-			"name":   "squat",
-			"weight": 300,
-		},
-		{
-			"name":   "squat",
-			"weight": 200,
-		},
-		{
-			"name":   "squat",
-			"weight": 100,
-		},
-		// Entries we will NOT filter for
-		{
-			"name":   "bench press",
-			"weight": 300,
-		},
-	})
+	tests.InsertSampleRows(repo)
 
 	filterTests := []struct {
 		testName  string
@@ -56,77 +97,69 @@ func TestListRows_ValidQueries(t *testing.T) {
 		rowCount  int
 		expectErr any
 	}{
-		{
+		makeFilterTest(
 			"list deadlifts",
 			map[string][]string{
 				"Name": {"deadlift"},
 			},
-			3,
 			nil,
-		},
-		{
+		),
+		makeFilterTest(
 			"list deadlifts or squats",
 			map[string][]string{
 				"Name": {"deadlift", "squat"},
 			},
-			6,
 			nil,
-		},
-		{
+		),
+		makeFilterTest(
 			"list weights of 100",
 			map[string][]string{
 				"Weight": {"100"},
 			},
-			2,
 			nil,
-		},
-		{
+		),
+		makeFilterTest(
 			"list weights of 100 or 200",
 			map[string][]string{
 				"Weight": {"100", "200"},
 			},
-			4,
 			nil,
-		},
-		{
+		),
+		makeFilterTest(
 			"list squats of weight 200",
 			map[string][]string{
 				"Name":   {"squat"},
 				"Weight": {"200"},
 			},
-			1,
 			nil,
-		},
-		{
+		),
+		makeFilterTest(
 			"list squats of weight 101 or 201",
 			map[string][]string{
 				"Name":   {"squat"},
 				"Weight": {"100", "200"},
 			},
-			2,
 			nil,
-		},
+		),
 
 		// Queries that should return 0 results
-		{
+		makeFilterTest(
 			// non-existent exercise name
 			"list presses",
 			map[string][]string{
 				"Name": {"press"},
 			},
-			0,
 			nil,
-		},
-		{
+		),
+		makeFilterTest(
 			// valid exercise with no matching weight
 			"list squats of weight 50",
 			map[string][]string{
 				"Name":   {"squat"},
 				"Weight": {"50"},
 			},
-			0,
 			nil,
-		},
+		),
 	}
 
 	// doNotFilter contains filters we will never look for, but also values

@@ -2,14 +2,19 @@ package tests
 
 import (
 	"database/sql"
+	"fmt"
+	"slices"
 
 	"ftrack/repository"
 )
 
 // InsertSampleRows inserts sample rows into a repo
-func InsertSampleRows(repo repository.Repository, sampleRows []map[string]any) {
-	for _, sample := range sampleRows {
-		repo.InsertRow(TABLE1, &sample)
+func InsertSampleRows(repo repository.Repository) {
+	for _, sample := range SampleRows {
+		_, err := repo.InsertRow(TABLE1, &sample)
+		if err != nil {
+			panic("Failed to insert row, update insert tests")
+		}
 	}
 }
 
@@ -34,4 +39,23 @@ func ScanExerciseSetRow(toScan *ExerciseSet, rows *sql.Rows) error {
 		&toScan.Tags,
 	)
 	return err
+}
+
+// FilterSampleRows filters the sample rows by a map of params
+func FilterSampleRows(params map[string][]string) []map[string]any {
+	m := []map[string]any{}
+	for _, row := range SampleRows {
+		match := true
+		for k := range row {
+			filterValue, exists := params[k]
+			if exists && !slices.Contains(filterValue, fmt.Sprintf("%v", row[k])) {
+				match = false
+				break
+			}
+		}
+		if match {
+			m = append(m, row)
+		}
+	}
+	return m
 }

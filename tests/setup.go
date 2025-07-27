@@ -41,6 +41,39 @@ type ExerciseSet struct {
 	Tags        string    `json:"tags"`
 }
 
+// SampleRows are used to populate the test database
+var SampleRows = []map[string]any{
+	{
+		"Name":   "deadlift",
+		"Weight": 300,
+	},
+	{
+		"Name":   "deadlift",
+		"Weight": 200,
+	},
+	{
+		"Name":   "deadlift",
+		"Weight": 100,
+	},
+	{
+		"Name":   "squat",
+		"Weight": 300,
+	},
+	{
+		"Name":   "squat",
+		"Weight": 200,
+	},
+	{
+		"Name":   "squat",
+		"Weight": 100,
+	},
+	// Entries we will NOT filter for
+	{
+		"Name":   "bench press",
+		"Weight": 300,
+	},
+}
+
 // GetTestDB returns a test database
 func GetTestDB(t *testing.T) *TestDB {
 	testParams := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
