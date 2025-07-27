@@ -21,14 +21,21 @@ type Table struct {
 	ColumnMap map[string]struct{}
 }
 
+// QueryExecutor is an interface that can be satisfied by both *sql.DB and *sql.Tx
+type QueryExecutor interface {
+	Exec(query string, args ...any) (sql.Result, error)
+	Query(query string, args ...any) (*sql.Rows, error)
+	QueryRow(query string, args ...any) *sql.Row
+}
+
 // Repository handles database transactions
 type Repository struct {
-	db     *sql.DB
+	db     QueryExecutor
 	tables []Table
 }
 
 // NewRepository returns a new Repository
-func NewRepository(db *sql.DB) Repository {
+func NewRepository(db QueryExecutor) Repository {
 	tables, err := getPublicTables(db)
 	if err != nil {
 		panic(err)
@@ -41,7 +48,7 @@ func NewRepository(db *sql.DB) Repository {
 
 // NewTable returns a new Table struct if tableName is a valid table in the
 // database
-func NewTable(db *sql.DB, tableName string) (*Table, error) {
+func NewTable(db QueryExecutor, tableName string) (*Table, error) {
 	// Get a dummy row of the table with `limit 0`
 	query := fmt.Sprintf(`select * from %s limit 0;`, tableName)
 	rows, err := db.Query(query)
@@ -86,7 +93,7 @@ func NewTable(db *sql.DB, tableName string) (*Table, error) {
 
 // getPublicTables gets the public tables in the database and builds a slice of
 // Table structs to assign to the table field of the Repository
-func getPublicTables(db *sql.DB) ([]Table, error) {
+func getPublicTables(db QueryExecutor) ([]Table, error) {
 	// Get table names with query
 	rows, err := db.Query(
 		`select tablename from pg_catalog.pg_tables where schemaname='public'`,
