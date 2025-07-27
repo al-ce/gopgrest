@@ -107,7 +107,7 @@ test path="":
     # Clean start for test db
     just tstop
     just tstart && echo "Test db started" || exit 1
-    sleep 2;
+    sleep 1;
     # Create tables
     PGHOST=localhost PGPORT={{ TEST_DB_PORT }} PGUSER={{ TEST_DB_USER }} PGPASSWORD={{ TEST_DB_PASS }} \
         psql -f {{ TEST_SCHEMA }}
