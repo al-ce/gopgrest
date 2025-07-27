@@ -26,5 +26,3 @@ grant all privileges on all tables in schema public to ftrack;
 grant all privileges on all sequences in schema public to ftrack;
 
 grant all privileges on schema public to ftrack;
-
-drop table if exists exercise_sets;
