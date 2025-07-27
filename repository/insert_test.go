@@ -16,7 +16,7 @@ func TestInsertRow(t *testing.T) {
 	repo := repository.NewRepository(tdb.DB)
 
 	insertTests := []struct {
-		name       string
+		testName       string
 		newRow     map[string]any
 		expectRows int64
 		expectErr  any
@@ -61,7 +61,7 @@ func TestInsertRow(t *testing.T) {
 	}
 
 	for _, tt := range insertTests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.testName, func(t *testing.T) {
 			rowsCreated, err := repo.InsertRow(tests.TABLE1, &tt.newRow)
 			if rowsCreated != tt.expectRows {
 				t.Errorf("Expected rows: %d\nGot: %v", rowsCreated, tt.expectRows)
