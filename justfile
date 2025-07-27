@@ -11,9 +11,10 @@
 # - gotestsum https://github.com/gotestyourself/gotestsum
 # - gotestfmt https://github.com/GoTestTools/gotestfmt
 # Set this here:
-# test_parser := ```
-#     which tparse || which gotestsum || which gotestfmt || which cat
-# ```
+
+test_parser := ```
+    which gotestsum || which tparse || which gotestfmt || which cat
+```
 
 set quiet := true
 
@@ -21,15 +22,25 @@ set quiet := true
 
 PROJECT_NAME := "ftrack"
 API_PORT := "8090"
+HOST := "localhost"
 
 # db
 
-DB_PASS := "ftrack"
 DB_NAME := "ftrack"
 DB_PORT := "5432"
 DB_USER := "postgres"
+DB_PASS := "ftrack"
 INIT_DB := "database/init_db.sql"
 SCHEMA := "database/schema.sql"
+TEST_SCHEMA := "database/test_schema.sql"
+
+# test db
+
+TEST_DB_NAME := "ftrack_test"
+TEST_DB_PORT := "5433"
+TEST_DB_USER := "ftrack_test"
+TEST_DB_PASS := "ftrack_test"
+TEST_DB_CONTAINER := "ftrack-test-db"
 
 default:
     @just --list
@@ -45,6 +56,7 @@ watch:
     export API_PORT={{ API_PORT }}
     export DB_NAME={{ DB_NAME }}
     export DB_PASS={{ DB_PASS }}
+    export HOST={{ HOST }}
     CompileDaemon \
     --build="go build -o {{ PROJECT_NAME }}" \
     --command="./{{ PROJECT_NAME }}"
@@ -83,6 +95,67 @@ drop:
 exec command flags="":
     sudo -u postgres psql -U {{ DB_USER }} -d {{ DB_NAME }} \
         {{ flags }} --command "{{ command }}"
+
+###############################################################################
+## test
+###############################################################################
+
+# Run tests
+[group('test')]
+test path="":
+    #!/usr/bin/env sh
+    # Clean start for test db
+    just tstop
+    just tstart && echo "Test db started" || exit 1
+    sleep 2;
+    # Create tables
+    PGHOST=localhost PGPORT={{ TEST_DB_PORT }} PGUSER={{ TEST_DB_USER }} PGPASSWORD={{ TEST_DB_PASS }} \
+        psql -f {{ TEST_SCHEMA }}
+
+    export HOST={{ HOST }}
+    export TEST_DB_PORT={{ TEST_DB_PORT }}
+    export TEST_DB_USER={{ TEST_DB_USER }}
+    export TEST_DB_PASS={{ TEST_DB_PASS }}
+    export TEST_DB_NAME={{ TEST_DB_NAME }}
+    go clean -testcache | exit 1
+    if [ -z "{{ path }}" ]; then
+        go test -p 1 -v -cover -json ./... | {{ test_parser }}
+    else
+        go test -v -cover -json ./{{ path }} | {{ test_parser }}
+    fi
+    TEST_RESULT=$?
+    just tstop
+    exit $TEST_RESULT
+
+# Start test database container
+[group('test')]
+tstart:
+    #!/usr/bin/env sh
+    if ! docker ps --format json | jq -r .Names | grep -q "^{{ TEST_DB_CONTAINER }}$"; then
+        echo "Starting test database..."
+        docker run --rm -d --name {{ TEST_DB_CONTAINER }} \
+            -e POSTGRES_DB={{ TEST_DB_NAME }} \
+            -e POSTGRES_USER={{ TEST_DB_USER }} \
+            -e POSTGRES_PASSWORD={{ TEST_DB_PASS }} \
+            -p {{ TEST_DB_PORT }}:5432 \
+            postgres:15 \
+        && exit 0 \
+        || exit 1
+    else
+        echo "Test database already running"
+    fi
+
+# Stop test database container
+[group('test')]
+tstop:
+    #!/usr/bin/env sh
+    if docker ps --format json | jq -r .Names | grep -q "^{{ TEST_DB_CONTAINER }}$"; then
+        echo "Stopping test database..."
+        docker stop {{ TEST_DB_CONTAINER }}
+        echo "Test database stopped"
+    else
+        echo "Test database not running"
+    fi
 
 ###############################################################################
 ## api calls
