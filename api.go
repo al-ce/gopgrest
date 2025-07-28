@@ -72,7 +72,7 @@ func (h *APIHandler) Update(w http.ResponseWriter, r *http.Request) {
 		InternalServerErrorHandler(w, r, "Could not find id match")
 		return
 	}
-	setID := matches[1]
+	id := matches[1]
 
 	// Decode request body into map to dynamically update row
 	var updateData types.RowDataMap
@@ -84,7 +84,7 @@ func (h *APIHandler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Update row with request data
-	if err := h.service.UpdateRow(table, setID, updateData); err != nil {
+	if err := h.service.UpdateRow(table, id, updateData); err != nil {
 		log.Println(err)
 		InternalServerErrorHandler(w, r, fmt.Sprintf("%v", err))
 		return
@@ -110,10 +110,10 @@ func (h *APIHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		InternalServerErrorHandler(w, r, "Could not find id match")
 		return
 	}
-	setID := matches[1]
+	id := matches[1]
 
 	// Delete row by id
-	if err := h.service.DeleteRow(table, setID); err != nil {
+	if err := h.service.DeleteRow(table, id); err != nil {
 		log.Println(err)
 		InternalServerErrorHandler(w, r, fmt.Sprintf("%v", err))
 		return
