@@ -10,13 +10,16 @@ import (
 )
 
 // InsertSampleRows inserts sample rows into a repo
-func InsertSampleRows(repo repository.Repository) {
+func InsertSampleRows(repo repository.Repository) map[int64]types.RowDataMap {
+	insertedRows := make(map[int64]types.RowDataMap)
 	for _, sample := range SampleRows {
 		result := repo.InsertRow(TABLE1, &sample)
 		if result.Error != nil {
 			panic("Failed to insert row, update insert tests")
 		}
+		insertedRows[result.ID] = sample
 	}
+	return insertedRows
 }
 
 func CheckExpectedErr(expectedErr any, err error) bool {
