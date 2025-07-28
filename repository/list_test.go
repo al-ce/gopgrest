@@ -29,6 +29,48 @@ func makeFilterTest(testName string, qf types.QueryFilters, expectErr any) filte
 	}
 }
 
+func TestListRows_InvalidFilters(t *testing.T) {
+	tdb := tests.GetTestDB(t)
+
+	invalidQueryTests := []filterTest{
+		{
+			"empty filter value",
+			types.QueryFilters{
+				"name": {},
+			},
+			0,
+			"attempt to filter on key name with no values",
+		},
+		{
+			"invalid column names",
+			types.QueryFilters{
+				"not_a_col": {"value"},
+			},
+			0,
+			"pq: column \"not_a_col\" does not exist",
+		},
+		{
+			"invalid column values",
+			types.QueryFilters{
+				"weight": {"not int"},
+			},
+			0,
+			"pq: invalid input syntax for type smallint: \"not int\"",
+		},
+	}
+
+	for _, tt := range invalidQueryTests {
+		t.Run(tt.testName, func(t *testing.T) {
+			tx := tdb.BeginTX(t)
+			repo := repository.NewRepository(tx)
+			_, err := repo.ListRows(tests.TABLE1, tt.filters)
+			if tests.CheckExpectedErr(tt.expectErr, err) {
+				t.Errorf("Expected error: %v\nGot %v", tt.expectErr, err)
+			}
+		})
+	}
+}
+
 func TestListRows_NoFilters(t *testing.T) {
 	t.Run("list all", func(t *testing.T) {
 		tdb := tests.GetTestDB(t)
