@@ -129,7 +129,7 @@ func getPublicTables(db QueryExecutor) ([]Table, error) {
 	// Log the tables
 	log.Println("Found tables in database:")
 	for _, table := range tables {
-		log.Printf("\t%s\n", table.Name)
+		log.Printf("\t%s : %d cols", table.Name, len(table.Columns))
 		for _, col := range table.Columns {
 			log.Printf("\t\t%-15s\t%s", col.Name, col.Datatype.ScanType())
 		}
