@@ -12,7 +12,7 @@ import (
 )
 
 func TestInsertRow(t *testing.T) {
-	tdb := tests.GetTestDB(t)
+	tdb := tests.NewTestDB(t)
 
 	insertTests := []struct {
 		name       string

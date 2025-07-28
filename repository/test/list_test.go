@@ -30,7 +30,7 @@ func makeFilterTest(testName string, qf types.QueryFilters, expectErr any) filte
 }
 
 func TestListRows_InvalidFilters(t *testing.T) {
-	tdb := tests.GetTestDB(t)
+	tdb := tests.NewTestDB(t)
 
 	invalidQueryTests := []filterTest{
 		{
@@ -73,7 +73,7 @@ func TestListRows_InvalidFilters(t *testing.T) {
 
 func TestListRows_NoFilters(t *testing.T) {
 	t.Run("list all", func(t *testing.T) {
-		tdb := tests.GetTestDB(t)
+		tdb := tests.NewTestDB(t)
 		tx := tdb.BeginTX(t)
 		repo := repository.NewRepository(tx)
 		tests.InsertSampleRows(repo)
@@ -127,7 +127,7 @@ func TestListRows_NoFilters(t *testing.T) {
 }
 
 func TestListRows_ValidFilters(t *testing.T) {
-	tdb := tests.GetTestDB(t)
+	tdb := tests.NewTestDB(t)
 
 	tx := tdb.BeginTX(t)
 	repo := repository.NewRepository(tx)

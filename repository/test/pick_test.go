@@ -10,7 +10,7 @@ import (
 )
 
 func TestGetRowByID(t *testing.T) {
-	tdb := tests.GetTestDB(t)
+	tdb := tests.NewTestDB(t)
 	tx := tdb.BeginTX(t)
 	repo := repository.NewRepository(tx)
 	insertedSampleRows := tests.InsertSampleRows(repo)

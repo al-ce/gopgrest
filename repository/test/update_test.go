@@ -19,7 +19,7 @@ type updateTest struct {
 }
 
 func TestUpdateRowCol(t *testing.T) {
-	tdb := tests.GetTestDB(t)
+	tdb := tests.NewTestDB(t)
 
 	tx := tdb.BeginTX(t)
 	repo := repository.NewRepository(tx)

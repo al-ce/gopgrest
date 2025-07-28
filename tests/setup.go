@@ -76,8 +76,8 @@ var SampleRows = []types.RowDataMap{
 	},
 }
 
-// GetTestDB returns a test database
-func GetTestDB(t *testing.T) *TestDB {
+// NewTestDB returns a test database
+func NewTestDB(t *testing.T) *TestDB {
 	testParams := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
 		host, port, user, password, testDbName,
 	)
@@ -109,3 +109,5 @@ func (tdb *TestDB) BeginTX(t *testing.T) *sql.Tx {
 	})
 	return tx
 }
+
+//
