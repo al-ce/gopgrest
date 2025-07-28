@@ -42,29 +42,42 @@ func TestUpdateRowCol(t *testing.T) {
 			"hack squat",
 			nil,
 		},
+		{
+			"update invalid field",
+			fmt.Sprintf("%d", insertResult.ID),
+			"not_a_col",
+			"hack squat",
+			"pq: column \"not_a_col\" of relation \"exercise_sets\" does not exist",
+		},
 	}
 
 	for _, tt := range updateTests {
-		// Exec update query
-		err := repo.UpdateRowCol(tests.TABLE1, tt.id, tt.field, tt.value)
-		if err != tt.expectErr {
-			t.Errorf("Expected err: %s\nGot %s", tt.expectErr, err)
-		}
-		// Get updated row
-		updatedRow := tests.ExerciseSet{}
-		err = tests.ScanExerciseSetRow(
-			&updatedRow,
-			repo.GetRowByID(tests.TABLE1, int(insertResult.ID)),
-		)
-		if err != nil {
-			t.Errorf("Scan err: %s", err)
-		}
-		// Confirm update
-		rowVal := reflect.ValueOf(updatedRow)
-		gotVal := fmt.Sprintf("%v", rowVal.FieldByName(tt.field))
-		if tt.value != gotVal {
-			t.Errorf("Expected %s: %s\nGot %s", tt.field, tt.value, gotVal)
-		}
+		t.Run(tt.testName, func(t *testing.T) {
+			// Exec update query
+			err := repo.UpdateRowCol(tests.TABLE1, tt.id, tt.field, tt.value)
+			if tests.CheckExpectedErr(tt.expectErr, err) {
+				t.Errorf("\nExp: %s\nGot: %s", tt.expectErr, err)
+			}
+			// Go to next test if this is an invalid update query
+			if err != nil {
+				return
+			}
 
+			// Get updated row
+			updatedRow := tests.ExerciseSet{}
+			err = tests.ScanExerciseSetRow(
+				&updatedRow,
+				repo.GetRowByID(tests.TABLE1, int(insertResult.ID)),
+			)
+			if err != nil {
+				t.Errorf("Scan err: %s", err)
+			}
+			// Confirm update
+			rowVal := reflect.ValueOf(updatedRow)
+			gotVal := fmt.Sprintf("%v", rowVal.FieldByName(tt.field))
+			if tt.value != gotVal {
+				t.Errorf("Expected %s: %s\nGot %s", tt.field, tt.value, gotVal)
+			}
+		})
 	}
 }
