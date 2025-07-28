@@ -164,7 +164,7 @@ tstop:
 # list sets filtered by optional query params
 [group('api')]
 list table params='':
-    curl -X GET -s http://localhost:{{ API_PORT }}/{{ table }}{{ params }} | jq
+    curl -X GET -s http://localhost:{{ API_PORT }}/{{ table }}?{{ params }} | jq
 
 # insert a row in the specified table
 [group('api')]
