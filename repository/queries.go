@@ -11,7 +11,10 @@ import (
 // ListRows gets rows from a table with optional filter params
 func (r *Repository) ListRows(tableName string, qf types.QueryFilters) (*sql.Rows, error) {
 	// Build list query with optional conditional filters
-	conditional, values := buildConditionalClause(qf)
+	conditional, values, err := buildConditionalClause(qf)
+	if err != nil {
+		return nil, err
+	}
 	listStmt := "select * from " + tableName + conditional
 
 	// Execute list query
