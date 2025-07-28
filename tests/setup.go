@@ -33,7 +33,7 @@ type ExerciseSet struct {
 	ID          int       `json:"id"`
 	Name        string    `json:"name"`
 	PerformedAt time.Time `json:"performed_at"`
-	Weight      float32   `json:"weight"`
+	Weight      int       `json:"weight"`
 	Unit        string    `json:"unit"`
 	Reps        int       `json:"reps"`
 	SetCount    int       `json:"set_count"`
