@@ -24,9 +24,9 @@ func CheckExpectedErr(expectedErr any, err error) bool {
 		(err != nil && err.Error() != expectedErr)
 }
 
-// ScanExerciseSetRow scans a result row into an ExerciseSet struct
-func ScanExerciseSetRow(toScan *ExerciseSet, rows *sql.Rows) error {
-	err := rows.Scan(
+// ScanExerciseSetRow scans a row into an ExerciseSet struct
+func ScanExerciseSetRow(toScan *ExerciseSet, row *sql.Row) error {
+	return row.Scan(
 		&toScan.ID,
 		&toScan.Name,
 		&toScan.PerformedAt,
@@ -39,7 +39,23 @@ func ScanExerciseSetRow(toScan *ExerciseSet, rows *sql.Rows) error {
 		&toScan.Program,
 		&toScan.Tags,
 	)
-	return err
+}
+
+// ScanNextExerciseSetRow scans the next row into an ExerciseSet struct
+func ScanNextExerciseSetRow(toScan *ExerciseSet, rows *sql.Rows) error {
+	return rows.Scan(
+		&toScan.ID,
+		&toScan.Name,
+		&toScan.PerformedAt,
+		&toScan.Weight,
+		&toScan.Unit,
+		&toScan.Reps,
+		&toScan.SetCount,
+		&toScan.Notes,
+		&toScan.SplitDay,
+		&toScan.Program,
+		&toScan.Tags,
+	)
 }
 
 // FilterSampleRows filters the sample rows by a map of params

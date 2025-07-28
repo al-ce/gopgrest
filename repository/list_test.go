@@ -90,7 +90,7 @@ func TestListRows_NoFilters(t *testing.T) {
 		for rows.Next() {
 
 			// Scan rows into struct
-			err := tests.ScanExerciseSetRow(&scannedRow, rows)
+			err := tests.ScanNextExerciseSetRow(&scannedRow, rows)
 			if err != nil {
 				t.Errorf("Scan err: %v", err)
 			}
@@ -225,7 +225,7 @@ func TestListRows_ValidFilters(t *testing.T) {
 
 			for rows.Next() {
 
-				err := tests.ScanExerciseSetRow(&scannedRow, rows)
+				err := tests.ScanNextExerciseSetRow(&scannedRow, rows)
 				if err != nil {
 					t.Errorf("Scan err: %v", err)
 				}
