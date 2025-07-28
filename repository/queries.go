@@ -34,7 +34,7 @@ func (r *Repository) GetRowByID(tableName string, id int) *sql.Row {
 }
 
 // InsertRow inserts a new row into a specified table
-func (r *Repository) InsertRow(tableName string, newRow *types.RowDataMap) (int64, error) {
+func (r *Repository) InsertRow(tableName string, newRow *types.RowDataMap) (result InsertResult) {
 	// Create cols/values/placeholders slices in consistent order
 	var cols []string
 	var values []any
@@ -52,14 +52,13 @@ func (r *Repository) InsertRow(tableName string, newRow *types.RowDataMap) (int6
 		strings.Join(cols, ", ") +
 		") values (" +
 		strings.Join(placeholders, ",") +
-		")"
+		")" +
+		"RETURNING id"
 
-	// Execute create query
-	result, err := r.db.Exec(createStmnt, values...)
-	if err != nil {
-		return 0, err
-	}
-	return result.RowsAffected()
+	// Execute insert query
+	row := r.db.QueryRow(createStmnt, values...)
+	result.Error = row.Scan(&result.ID)
+	return
 }
 
 // UpdateRowCol updates a field in a table row by id

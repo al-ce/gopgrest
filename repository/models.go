@@ -34,6 +34,12 @@ type Repository struct {
 	tables []Table
 }
 
+// InsertResult contains information from the result of an insert query
+type InsertResult struct {
+	ID           int64
+	Error          error
+}
+
 // NewRepository returns a new Repository
 func NewRepository(db QueryExecutor) Repository {
 	tables, err := getPublicTables(db)

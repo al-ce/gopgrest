@@ -66,12 +66,9 @@ func TestInsertRow(t *testing.T) {
 			tx := tdb.BeginTX(t)
 			repo := repository.NewRepository(tx)
 
-			rowsCreated, err := repo.InsertRow(tests.TABLE1, &tt.newRow)
-			if rowsCreated != tt.expectRows {
-				t.Errorf("Expected rows: %d\nGot: %v", rowsCreated, tt.expectRows)
-			}
-			if tests.CheckExpectedErr(tt.expectErr, err) {
-				t.Errorf("Expected error: %v\nGot %v", tt.expectErr, err)
+			result := repo.InsertRow(tests.TABLE1, &tt.newRow)
+			if tests.CheckExpectedErr(tt.expectErr, result.Error) {
+				t.Errorf("Expected error: %v\nGot %v", tt.expectErr, result.Error)
 			}
 		})
 	}

@@ -1,7 +1,6 @@
 package repository
 
 import (
-	"errors"
 	"fmt"
 
 	"ftrack/types"
@@ -34,9 +33,7 @@ func buildConditionalClause(qf types.QueryFilters) (string, []any, error) {
 	for k, vals := range qf {
 		// Check for empty filter values
 		if len(vals) == 0 {
-			return "", []any{}, errors.New(
-				fmt.Sprintf("attempt to filter on key %s with no values", k),
-			)
+			return "", []any{}, fmt.Errorf("attempt to filter on key %s with no values", k)
 		}
 
 		// Join all values for this key with OR, allow any match

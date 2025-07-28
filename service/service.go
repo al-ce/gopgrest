@@ -26,10 +26,11 @@ func (s *Service) InsertRow(newRow *types.RowDataMap, tableName string) (int64, 
 	// Each column in the insert data must exist in the table
 	cols := slices.Collect(maps.Keys(*newRow))
 	if err := s.verifyColumns(tableName, cols); err != nil {
-		return 0, err
+		return -1, err
 	}
 
-	return s.repo.InsertRow(tableName, newRow)
+	result := s.repo.InsertRow(tableName, newRow)
+	return result.ID, result.Error
 }
 
 // ListRows gets rows from a table with optional filter params

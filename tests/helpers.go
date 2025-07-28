@@ -12,8 +12,8 @@ import (
 // InsertSampleRows inserts sample rows into a repo
 func InsertSampleRows(repo repository.Repository) {
 	for _, sample := range SampleRows {
-		_, err := repo.InsertRow(TABLE1, &sample)
-		if err != nil {
+		result := repo.InsertRow(TABLE1, &sample)
+		if result.Error != nil {
 			panic("Failed to insert row, update insert tests")
 		}
 	}
