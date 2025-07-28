@@ -25,6 +25,14 @@ func (r *Repository) ListRows(tableName string, qf types.QueryFilters) (*sql.Row
 	return rows, nil
 }
 
+// GetRowByID gets a row from a table by id
+func (r *Repository) GetRowByID(tableName string, id int) *sql.Row {
+	return r.db.QueryRow(
+		fmt.Sprintf("SELECT * FROM %s WHERE id=$1", tableName),
+		id,
+	)
+}
+
 // InsertRow inserts a new row into a specified table
 func (r *Repository) InsertRow(tableName string, newRow *types.RowDataMap) (int64, error) {
 	// Create cols/values/placeholders slices in consistent order
