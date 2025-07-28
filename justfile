@@ -164,12 +164,12 @@ tstop:
 # pick gets a row by id
 [group('api')]
 pick table id:
-    curl -X GET -s http://localhost:{{ API_PORT }}/{{ table }}/{{ id }} | jq
+    curl -X GET -s http://localhost:{{ API_PORT }}/{{ table }}/{{ id }} | just jqparse
 
 # list sets filtered by optional query params
 [group('api')]
 list table params='':
-    curl -X GET -s http://localhost:{{ API_PORT }}/{{ table }}?{{ params }} | jq
+    curl -X GET -s http://localhost:{{ API_PORT }}/{{ table }}?{{ params }} | just jqparse
 
 # insert a row in the specified table
 [group('api')]
@@ -189,3 +189,14 @@ update table id data:
     curl -X PUT -s http://localhost:{{ API_PORT }}/{{ table }}/{{ id }} \
     --header 'Content-Type: application/json' \
     --data '{{ data }}'
+
+
+###############################################################################
+## helpers
+###############################################################################
+
+# parse JSON with jq and handle invalid JSON
+[group('helpers')]
+jqparse:
+    jq -R '. as $line | try (fromjson) catch $line'
+
