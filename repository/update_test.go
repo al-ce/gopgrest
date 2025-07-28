@@ -14,7 +14,7 @@ type updateTest struct {
 	testName  string
 	id        string
 	field     string
-	value     string
+	value     any
 	expectErr any
 }
 
@@ -36,10 +36,17 @@ func TestUpdateRowCol(t *testing.T) {
 
 	updateTests := []updateTest{
 		{
-			"update valid field",
+			"update valid string field",
 			fmt.Sprintf("%d", insertResult.ID),
 			"Name",
 			"hack squat",
+			nil,
+		},
+		{
+			"update valid int field",
+			fmt.Sprintf("%d", insertResult.ID),
+			"Weight",
+			299,
 			nil,
 		},
 		{
@@ -77,9 +84,9 @@ func TestUpdateRowCol(t *testing.T) {
 			}
 			// Confirm update
 			rowVal := reflect.ValueOf(updatedRow)
-			gotVal := fmt.Sprintf("%v", rowVal.FieldByName(tt.field))
+			gotVal := rowVal.FieldByName(tt.field).Interface()
 			if tt.value != gotVal {
-				t.Errorf("Expected %s: %s\nGot %s", tt.field, tt.value, gotVal)
+				t.Errorf("Expected %v: %s\nGot %v", tt.field, tt.value, gotVal)
 			}
 		})
 	}
