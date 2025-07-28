@@ -67,7 +67,10 @@ func TestUpdateRowCol(t *testing.T) {
 			updatedRow := tests.ExerciseSet{}
 			err = tests.ScanExerciseSetRow(
 				&updatedRow,
-				repo.GetRowByID(tests.TABLE1, int(insertResult.ID)),
+				repo.GetRowByID(
+					tests.TABLE1,
+					fmt.Sprintf("%d", insertResult.ID),
+				),
 			)
 			if err != nil {
 				t.Errorf("Scan err: %s", err)

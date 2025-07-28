@@ -33,6 +33,13 @@ func (s *Service) InsertRow(newRow *types.RowDataMap, tableName string) (int64, 
 	return result.ID, result.Error
 }
 
+// PickRow gets a row from a table by id
+func (s *Service) PickRow(tableName, id string) (types.RowDataMap, error) {
+	row := s.repo.GetRowByID(tableName, id)
+	rowDataMap, err := s.scanSingleRow(tableName, row)
+	return rowDataMap, err
+}
+
 // ListRows gets rows from a table with optional filter params
 func (s *Service) ListRows(tableName string, qf types.QueryFilters) ([]types.RowDataMap, error) {
 	// Each column in the query params must exist in the table

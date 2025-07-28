@@ -41,10 +41,12 @@ func (h *APIHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case !exists || err != nil:
 		log.Println(r.URL.Path, "not found")
 		NotFoundHandler(w, r)
+	case r.Method == http.MethodGet && ReRequestWithId.MatchString(r.URL.Path):
+		h.Pick(w, r)
 	case r.Method == http.MethodGet && ReListRequest.MatchString(r.URL.Path):
-		h.Read(w, r)
+		h.List(w, r)
 	case r.Method == http.MethodPost:
-		h.Create(w, r)
+		h.Insert(w, r)
 	case r.Method == http.MethodDelete && ReRequestWithId.MatchString(r.URL.Path):
 		h.Delete(w, r)
 	case r.Method == http.MethodPut && ReRequestWithId.MatchString(r.URL.Path):
@@ -121,8 +123,8 @@ func (h *APIHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-// Create adds a row to a table
-func (h *APIHandler) Create(w http.ResponseWriter, r *http.Request) {
+// Insert adds a row to a table
+func (h *APIHandler) Insert(w http.ResponseWriter, r *http.Request) {
 	log.Println(r.Method, r.URL.Path, r.RemoteAddr)
 
 	// Get table from URL path
@@ -153,9 +155,49 @@ func (h *APIHandler) Create(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "row %d created in table %s", newRowId, table)
 }
 
-// Read gets rows from a table in the database, optionally filtering by query
+// Pick gets a single row from a table in the database by id
+func (h *APIHandler) Pick(w http.ResponseWriter, r *http.Request) {
+	log.Println(r.Method, r.URL.Path, r.RemoteAddr)
+
+	// Get table from URL path
+	table, err := h.extractTableName(r)
+	if err != nil {
+		InternalServerErrorHandler(w, r, err.Error())
+	}
+
+
+	matches := ReRequestWithId.FindStringSubmatch(r.URL.Path)
+	if len(matches) < 2 {
+		InternalServerErrorHandler(w, r, "Could not find id match")
+		return
+	}
+	rowID := matches[1]
+
+	// Retrieve pickQueryResult from database
+	pickQueryResult, err := h.service.PickRow(table, rowID)
+	if err != nil {
+		log.Println(err)
+		InternalServerErrorHandler(w, r, fmt.Sprintf("%v", err))
+		return
+	}
+
+	// Encode to JSON
+	jsonData, err := json.Marshal(pickQueryResult)
+	if err != nil {
+		log.Println(err)
+		InternalServerErrorHandler(w, r, fmt.Sprintf("%v", err))
+		return
+	}
+
+	// Write response
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(jsonData)
+}
+
+// List gets rows from a table in the database, optionally filtering by query
 // params
-func (h *APIHandler) Read(w http.ResponseWriter, r *http.Request) {
+func (h *APIHandler) List(w http.ResponseWriter, r *http.Request) {
 	log.Println(r.Method, r.URL.Path, r.RemoteAddr)
 
 	// Get table from URL path

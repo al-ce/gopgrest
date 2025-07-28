@@ -161,6 +161,11 @@ tstop:
 ## api calls
 ###############################################################################
 
+# pick gets a row by id
+[group('api')]
+pick table id:
+    curl -X GET -s http://localhost:{{ API_PORT }}/{{ table }}/{{ id }} | jq
+
 # list sets filtered by optional query params
 [group('api')]
 list table params='':

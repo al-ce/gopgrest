@@ -26,7 +26,7 @@ func (r *Repository) ListRows(tableName string, qf types.QueryFilters) (*sql.Row
 }
 
 // GetRowByID gets a row from a table by id
-func (r *Repository) GetRowByID(tableName string, id int) *sql.Row {
+func (r *Repository) GetRowByID(tableName, id string) *sql.Row {
 	return r.db.QueryRow(
 		fmt.Sprintf("SELECT * FROM %s WHERE id=$1", tableName),
 		id,
