@@ -5,19 +5,15 @@ import (
 	"reflect"
 	"testing"
 
-	"ftrack/repository"
 	"ftrack/tests"
 )
 
 func TestGetRowByID(t *testing.T) {
-	tdb := tests.NewTestDB(t)
-	tx := tdb.BeginTX(t)
-	repo := repository.NewRepository(tx)
-	insertedSampleRows := tests.InsertSampleRows(repo)
+	repo, sampleRows := tests.NewTestRepo(t)
 
 	t.Run("get row with valid id", func(t *testing.T) {
 		scannedRow := tests.ExerciseSet{}
-		for id, sampleRow := range insertedSampleRows {
+		for id, sampleRow := range sampleRows {
 			row := repo.GetRowByID(tests.TABLE1, fmt.Sprintf("%d", id))
 			err := tests.ScanExerciseSetRow(&scannedRow, row)
 			if err != nil {

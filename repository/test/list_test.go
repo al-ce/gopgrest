@@ -8,7 +8,6 @@ import (
 
 	_ "github.com/lib/pq"
 
-	"ftrack/repository"
 	"ftrack/tests"
 	"ftrack/types"
 )
@@ -30,8 +29,6 @@ func makeFilterTest(testName string, qf types.QueryFilters, expectErr any) filte
 }
 
 func TestListRows_InvalidFilters(t *testing.T) {
-	tdb := tests.NewTestDB(t)
-
 	invalidQueryTests := []filterTest{
 		{
 			"empty filter value",
@@ -61,8 +58,7 @@ func TestListRows_InvalidFilters(t *testing.T) {
 
 	for _, tt := range invalidQueryTests {
 		t.Run(tt.testName, func(t *testing.T) {
-			tx := tdb.BeginTX(t)
-			repo := repository.NewRepository(tx)
+			repo, _ := tests.NewTestRepo(t)
 			_, err := repo.ListRows(tests.TABLE1, tt.filters)
 			if tests.CheckExpectedErr(tt.expectErr, err) {
 				t.Errorf("Expected error: %v\nGot %v", tt.expectErr, err)
@@ -73,10 +69,7 @@ func TestListRows_InvalidFilters(t *testing.T) {
 
 func TestListRows_NoFilters(t *testing.T) {
 	t.Run("list all", func(t *testing.T) {
-		tdb := tests.NewTestDB(t)
-		tx := tdb.BeginTX(t)
-		repo := repository.NewRepository(tx)
-		tests.InsertSampleRows(repo)
+		repo, _ := tests.NewTestRepo(t)
 
 		// List all rows in the table
 		rows, err := repo.ListRows(tests.TABLE1, types.QueryFilters{})
@@ -127,12 +120,7 @@ func TestListRows_NoFilters(t *testing.T) {
 }
 
 func TestListRows_ValidFilters(t *testing.T) {
-	tdb := tests.NewTestDB(t)
-
-	tx := tdb.BeginTX(t)
-	repo := repository.NewRepository(tx)
-
-	tests.InsertSampleRows(repo)
+	repo, _ := tests.NewTestRepo(t)
 
 	filterTests := []struct {
 		testName  string

@@ -4,19 +4,15 @@ import (
 	"fmt"
 	"testing"
 
-	"ftrack/repository"
 	"ftrack/tests"
 )
 
 func TestDeleteRow(t *testing.T) {
-	tdb := tests.NewTestDB(t)
-	tx := tdb.BeginTX(t)
-	repo := repository.NewRepository(tx)
-	insertedSampleRows := tests.InsertSampleRows(repo)
+	repo, sampleRows := tests.NewTestRepo(t)
 
 	t.Run("delete row with valid id", func(t *testing.T) {
 		scannedRow := tests.ExerciseSet{}
-		for id := range insertedSampleRows {
+		for id := range sampleRows {
 			err := repo.DeleteRow(tests.TABLE1, fmt.Sprintf("%d", id))
 			if err != nil {
 				t.Errorf("Delete exec err: %v", err)

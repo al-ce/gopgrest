@@ -9,6 +9,7 @@ import (
 
 	_ "github.com/lib/pq"
 
+	"ftrack/repository"
 	"ftrack/types"
 )
 
@@ -110,4 +111,12 @@ func (tdb *TestDB) BeginTX(t *testing.T) *sql.Tx {
 	return tx
 }
 
-//
+// NewTestRepo initializes a new test repository with a transaction and
+// populates it with sample rows
+func NewTestRepo(t *testing.T) (repository.Repository, map[int64]types.RowDataMap) {
+	tdb := NewTestDB(t)
+	tx := tdb.BeginTX(t)
+	repo := repository.NewRepository(tx)
+	sampleRows := InsertSampleRows(repo)
+	return repo, sampleRows
+}

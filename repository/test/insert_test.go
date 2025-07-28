@@ -6,14 +6,11 @@ import (
 
 	_ "github.com/lib/pq"
 
-	"ftrack/repository"
 	"ftrack/tests"
 	"ftrack/types"
 )
 
 func TestInsertRow(t *testing.T) {
-	tdb := tests.NewTestDB(t)
-
 	insertTests := []struct {
 		name       string
 		newRow     types.RowDataMap
@@ -63,8 +60,7 @@ func TestInsertRow(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Need new transaction for each subtest since some will be aborted
 			// when they fail
-			tx := tdb.BeginTX(t)
-			repo := repository.NewRepository(tx)
+			repo, _ := tests.NewTestRepo(t)
 
 			result := repo.InsertRow(tests.TABLE1, &tt.newRow)
 			if tests.CheckExpectedErr(tt.expectErr, result.Error) {

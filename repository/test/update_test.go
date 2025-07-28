@@ -5,7 +5,6 @@ import (
 	"reflect"
 	"testing"
 
-	"ftrack/repository"
 	"ftrack/tests"
 	"ftrack/types"
 )
@@ -19,10 +18,7 @@ type updateTest struct {
 }
 
 func TestUpdateRowCol(t *testing.T) {
-	tdb := tests.NewTestDB(t)
-
-	tx := tdb.BeginTX(t)
-	repo := repository.NewRepository(tx)
+	repo, _ := tests.NewTestRepo(t)
 
 	sampleRow := types.RowDataMap{
 		"Name":   "romanian deadlift",
