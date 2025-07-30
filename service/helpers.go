@@ -11,14 +11,10 @@ import (
 
 // verifyColumns checks that all keys in a slice of cols, representing columns
 // in a database table, actually exist in that table
-func (s *Service) verifyColumns(tableName string, cols []string) error {
-	table, err := s.repo.GetTable(tableName)
-	if err != nil {
-		return err
-	}
+func (s *Service) verifyColumns(t *repository.Table, cols []string) error {
 	for _, col := range cols {
-		if _, ok := table.ColumnMap[col]; !ok {
-			return fmt.Errorf("Column '%s' does not exist in table %s", col, tableName)
+		if _, ok := t.ColumnMap[col]; !ok {
+			return fmt.Errorf("Column '%s' does not exist in table %s", col, t.Name)
 		}
 	}
 	return nil
