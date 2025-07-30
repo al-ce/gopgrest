@@ -10,7 +10,7 @@ import (
 	"ftrack/types"
 )
 
-func TestInsertRow(t *testing.T) {
+func TestRepo_InsertRow(t *testing.T) {
 	insertTests := []struct {
 		name       string
 		newRow     types.RowData
@@ -61,7 +61,6 @@ func TestInsertRow(t *testing.T) {
 			// Need new transaction for each subtest since some will be aborted
 			// when they fail
 			repo, _ := tests.NewTestRepo(t)
-
 			result := repo.InsertRow(tests.TABLE1, &tt.newRow)
 			if tests.CheckExpectedErr(tt.expectErr, result.Error) {
 				t.Errorf("Expected error: %v\nGot %v", tt.expectErr, result.Error)

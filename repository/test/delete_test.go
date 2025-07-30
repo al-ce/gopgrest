@@ -7,7 +7,7 @@ import (
 	"ftrack/tests"
 )
 
-func TestDeleteRow(t *testing.T) {
+func TestRepo_DeleteRow(t *testing.T) {
 	repo, sampleRows := tests.NewTestRepo(t)
 
 	t.Run("delete row with valid id", func(t *testing.T) {
@@ -17,7 +17,6 @@ func TestDeleteRow(t *testing.T) {
 			if err != nil {
 				t.Errorf("Delete exec err: %v", err)
 			}
-
 			// Try to get deleted row by id
 			row := repo.GetRowByID(tests.TABLE1, fmt.Sprintf("%d", id))
 			err = tests.ScanExerciseSetRow(&scannedRow, row)
