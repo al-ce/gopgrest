@@ -39,3 +39,10 @@ type FilterTest struct {
 	PqErr     any
 	CustomErr any
 }
+
+type InsertTest struct {
+	Name       string
+	NewRow     types.RowData
+	ExpectRows int64
+	ExpectErr  any
+}

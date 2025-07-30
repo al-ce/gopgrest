@@ -266,3 +266,45 @@ func GetInvalidQueryTests() []FilterTest {
 		),
 	}
 }
+
+func GetInsertTests() []InsertTest {
+	return []InsertTest{
+		{
+			"ins row with valid col names/values",
+			types.RowData{
+				"name":   "deadlift",
+				"weight": 200,
+				"reps":   10,
+			},
+			1,
+			nil,
+		},
+		{
+			"ins row with missing req cols",
+			types.RowData{
+				"weight": 200,
+				"reps":   10,
+			},
+			0,
+			"pq: null value in column \"name\" of relation \"exercise_sets\" violates not-null constraint",
+		},
+		{
+			"ins row with invalid values",
+			types.RowData{
+				"weight": "not int",
+			},
+			0,
+			"pq: invalid input syntax for type smallint: \"not int\"",
+		},
+		{
+			"ins with invalid col names",
+			types.RowData{
+				"not_a_col": 10,
+			},
+			0,
+			fmt.Sprintf(
+				"pq: column \"not_a_col\" of relation \"%s\" does not exist",
+				TABLE1),
+		},
+	}
+}
