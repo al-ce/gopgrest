@@ -30,4 +30,14 @@ func TestRepo_DeleteRow(t *testing.T) {
 
 		}
 	})
+
+	t.Run("delete row with non-existent id", func(t *testing.T) {
+		err := repo.DeleteRow(tests.TABLE1, fmt.Sprintf("%d", -1))
+		if fmt.Sprintf("%v", err) != fmt.Sprintf(
+			"row %d in table %s does not exist, did not attempt delete",
+			-1, tests.TABLE1,
+		) {
+			t.Errorf("Expected non-existent id, but delete was successful: %v", err)
+		}
+	})
 }
