@@ -32,7 +32,6 @@ DB_USER := "postgres"
 DB_PASS := "ftrack"
 INIT_DB := "database/init_db.sql"
 SCHEMA := "database/schema.sql"
-TEST_SCHEMA := "database/test_schema.sql"
 
 # test db
 
@@ -41,6 +40,7 @@ TEST_DB_PORT := "5433"
 TEST_DB_USER := "ftrack_test"
 TEST_DB_PASS := "ftrack_test"
 TEST_DB_CONTAINER := "ftrack-test-db"
+TEST_SCHEMA := "database/test_schema.sql"
 
 default:
     @just --list
@@ -108,9 +108,6 @@ test path="":
     just tstop
     just tstart && echo "Test db started" || exit 1
     sleep 1;
-    # Create tables
-    PGHOST=localhost PGPORT={{ TEST_DB_PORT }} PGUSER={{ TEST_DB_USER }} PGPASSWORD={{ TEST_DB_PASS }} \
-        psql -f {{ TEST_SCHEMA }}
 
     export HOST={{ HOST }}
     export TEST_DB_PORT={{ TEST_DB_PORT }}
@@ -139,7 +136,11 @@ tstart:
             -e POSTGRES_PASSWORD={{ TEST_DB_PASS }} \
             -p {{ TEST_DB_PORT }}:5432 \
             postgres:15 \
-        && exit 0 \
+        && \
+        sleep 2 && \
+        docker cp {{ TEST_SCHEMA }} {{ TEST_DB_CONTAINER }}:/tmp/test_schema.sql
+        docker exec {{ TEST_DB_CONTAINER }} psql -U {{ TEST_DB_USER }} -d {{ TEST_DB_NAME }} -f /tmp/test_schema.sql && \
+        exit 0 \
         || exit 1
     else
         echo "Test database already running"
