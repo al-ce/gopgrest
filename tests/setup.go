@@ -10,6 +10,7 @@ import (
 
 	"ftrack/repository"
 	"ftrack/service"
+	"ftrack/types"
 )
 
 var (
@@ -63,7 +64,7 @@ func (tdb *TestDB) BeginTX(t *testing.T) *sql.Tx {
 
 // NewTestRepo initializes a new test Repository with a transaction and
 // populates it with sample rows
-func NewTestRepo(t *testing.T) (repository.Repository, SampleRowsIdMap) {
+func NewTestRepo(t *testing.T) (repository.Repository, types.RowDataIdMap) {
 	tdb := NewTestDB(t)
 	tx := tdb.BeginTX(t)
 	repo := repository.NewRepository(tx, tdb.Tables)
@@ -72,7 +73,7 @@ func NewTestRepo(t *testing.T) (repository.Repository, SampleRowsIdMap) {
 }
 
 // NewTestService initializes a new test Service with a test Repository
-func NewTestService(t *testing.T) (service.Service, SampleRowsIdMap) {
+func NewTestService(t *testing.T) (service.Service, types.RowDataIdMap) {
 	repo, sampleRows := NewTestRepo(t)
 	return service.NewService(repo), sampleRows
 }

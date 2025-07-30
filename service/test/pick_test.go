@@ -7,10 +7,8 @@ import (
 	"ftrack/tests"
 )
 
-func Test_PickRow(t *testing.T) {
+func TestService_PickRow(t *testing.T) {
 	serv, sampleRows := tests.NewTestService(t)
-
-	tagMap := tests.GetTagMap(tests.ExerciseSet{})
 
 	t.Run("pick with valid ids", func(t *testing.T) {
 		for id, sample := range sampleRows {
@@ -19,8 +17,7 @@ func Test_PickRow(t *testing.T) {
 				t.Errorf("pick err: %s", err)
 			}
 			for k, v := range sample {
-				colName := tagMap[k]
-				colVal := rowDataMap[colName]
+				colVal := rowDataMap[k]
 				if fmt.Sprintf("%v", v) != fmt.Sprintf("%v", colVal) {
 					t.Errorf("Expected %s: %v %T\nGot: %v %T", k, v, v, colVal, colVal)
 				}

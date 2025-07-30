@@ -11,40 +11,40 @@ import (
 )
 
 // InsertSampleRows inserts sample rows into a repo
-func InsertSampleRows(repo repository.Repository) SampleRowsIdMap {
+func InsertSampleRows(repo repository.Repository) types.RowDataIdMap {
 	// sampleRows are used to populate the test database
 	sampleRows := []types.RowData{
 		{
-			"Name":   "deadlift",
-			"Weight": 300,
+			"name":   "deadlift",
+			"weight": 300,
 		},
 		{
-			"Name":   "deadlift",
-			"Weight": 200,
+			"name":   "deadlift",
+			"weight": 200,
 		},
 		{
-			"Name":   "deadlift",
-			"Weight": 100,
+			"name":   "deadlift",
+			"weight": 100,
 		},
 		{
-			"Name":   "squat",
-			"Weight": 300,
+			"name":   "squat",
+			"weight": 300,
 		},
 		{
-			"Name":   "squat",
-			"Weight": 200,
+			"name":   "squat",
+			"weight": 200,
 		},
 		{
-			"Name":   "squat",
-			"Weight": 100,
+			"name":   "squat",
+			"weight": 100,
 		},
 		// Entries we will NOT filter for
 		{
-			"Name":   "bench press",
-			"Weight": 300,
+			"name":   "bench press",
+			"weight": 300,
 		},
 	}
-	insertedRows := make(SampleRowsIdMap)
+	insertedRows := make(types.RowDataIdMap)
 	for _, sample := range sampleRows {
 		result := repo.InsertRow(TABLE1, &sample)
 		if result.Error != nil {
@@ -95,9 +95,9 @@ func ScanNextExerciseSetRow(toScan *ExerciseSet, rows *sql.Rows) error {
 }
 
 // FilterSampleRows filters the sample rows by a map of params
-func FilterSampleRows(qf types.QueryFilter, sampleRows SampleRowsIdMap) []types.RowData {
-	m := []types.RowData{}
-	for _, row := range sampleRows {
+func FilterSampleRows(qf types.QueryFilter, sampleRows types.RowDataIdMap) types.RowDataIdMap {
+	m := make(types.RowDataIdMap)
+	for id, row := range sampleRows {
 		match := true
 		for k := range row {
 			filterValue, exists := qf[k]
@@ -107,7 +107,7 @@ func FilterSampleRows(qf types.QueryFilter, sampleRows SampleRowsIdMap) []types.
 			}
 		}
 		if match {
-			m = append(m, row)
+			m[id] = row
 		}
 	}
 	return m
@@ -126,4 +126,131 @@ func GetTagMap(s any) TagMap {
 		tagMap[fieldName] = jsonTag
 	}
 	return tagMap
+}
+
+func GetFieldNameByColName(tm TagMap, colName string, s any) string {
+	val := reflect.ValueOf(s)
+	t := val.Type()
+	for i := range val.NumField() {
+		fieldName := t.Field(i).Name
+		if tm[fieldName] == colName {
+			return fieldName
+		}
+	}
+	panic(fmt.Sprintf("col name %s not found in tagmap %v for %v", colName, tm, s))
+}
+
+// MakeFilterTest constructs test params for testing a filtered ListRows call
+func MakeFilterTest(testName string, qf types.QueryFilter, sampleRows types.RowDataIdMap, expectErr any) FilterTest {
+	return FilterTest{
+		TestName:  testName,
+		Filters:   qf,
+		RowCount:  len(FilterSampleRows(qf, sampleRows)),
+		ExpectErr: expectErr,
+	}
+}
+
+func GetValidFilterTests(sampleRows types.RowDataIdMap) []FilterTest {
+	return []FilterTest{
+		MakeFilterTest(
+			"list deadlifts",
+			types.QueryFilter{
+				"name": {"deadlift"},
+			},
+			sampleRows,
+			nil,
+		),
+		MakeFilterTest(
+			"list deadlifts or squats",
+			types.QueryFilter{
+				"name": {"deadlift", "squat"},
+			},
+			sampleRows,
+			nil,
+		),
+		MakeFilterTest(
+			"list weights of 100",
+			types.QueryFilter{
+				"weight": {"100"},
+			},
+			sampleRows,
+			nil,
+		),
+		MakeFilterTest(
+			"list weights of 100 or 200",
+			types.QueryFilter{
+				"weight": {"100", "200"},
+			},
+			sampleRows,
+			nil,
+		),
+		MakeFilterTest(
+			"list squats of weight 200",
+			types.QueryFilter{
+				"name":   {"squat"},
+				"weight": {"200"},
+			},
+			sampleRows,
+			nil,
+		),
+		MakeFilterTest(
+			"list squats of weight 101 or 201",
+			types.QueryFilter{
+				"name":   {"squat"},
+				"weight": {"100", "200"},
+			},
+			sampleRows,
+			nil,
+		),
+
+		// Queries that should return 0 results
+		MakeFilterTest(
+			// non-existent exercise name
+			"list presses",
+			types.QueryFilter{
+				"name": {"press"},
+			},
+			sampleRows,
+			nil,
+		),
+		MakeFilterTest(
+			// valid exercise with no matching weight
+			"list squats of weight 50",
+			types.QueryFilter{
+				"name":   {"squat"},
+				"weight": {"50"},
+			},
+			sampleRows,
+			nil,
+		),
+	}
+}
+
+func GetInvalidQueryTests(sampleRows types.RowDataIdMap) []FilterTest {
+	return []FilterTest{
+		MakeFilterTest(
+			"empty filter value",
+			types.QueryFilter{
+				"name": {},
+			},
+			types.RowDataIdMap{},
+			"attempt to filter on key name with no values",
+		),
+		MakeFilterTest(
+			"invalid column names",
+			types.QueryFilter{
+				"not_a_col": {"value"},
+			},
+			types.RowDataIdMap{},
+			"pq: column \"not_a_col\" does not exist",
+		),
+		MakeFilterTest(
+			"invalid column values",
+			types.QueryFilter{
+				"weight": {"not int"},
+			},
+			types.RowDataIdMap{},
+			"pq: invalid input syntax for type smallint: \"not int\"",
+		),
+	}
 }

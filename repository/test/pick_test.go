@@ -8,11 +8,12 @@ import (
 	"ftrack/tests"
 )
 
-func TestGetRowByID(t *testing.T) {
+func TestRepo_GetRowByID(t *testing.T) {
 	repo, sampleRows := tests.NewTestRepo(t)
 
 	t.Run("get row with valid id", func(t *testing.T) {
 		scannedRow := tests.ExerciseSet{}
+		tagMap := tests.GetTagMap(tests.ExerciseSet{})
 		for id, sampleRow := range sampleRows {
 			row := repo.GetRowByID(tests.TABLE1, fmt.Sprintf("%d", id))
 			err := tests.ScanExerciseSetRow(&scannedRow, row)
@@ -21,11 +22,13 @@ func TestGetRowByID(t *testing.T) {
 			}
 
 			val := reflect.ValueOf(scannedRow)
-			for fieldName, sampleValue := range sampleRow {
+			for colName, sampleValue := range sampleRow {
+				fieldName := tests.GetFieldNameByColName(tagMap, colName, tests.ExerciseSet{})
 				gotVal := val.FieldByName(fieldName).Interface()
+				msg := fmt.Sprintf("\nExpected %s: %v %T\nGot %v %T",
+					colName, sampleValue, sampleValue, gotVal, gotVal)
 				if sampleValue != gotVal {
-					t.Errorf("Expected %s: %v %T\nGot %v %T",
-						fieldName, sampleValue, sampleValue, gotVal, gotVal)
+					t.Error(msg)
 				}
 			}
 

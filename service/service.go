@@ -66,7 +66,7 @@ func (s *Service) ListRows(tableName string, qf types.QueryFilter) (types.RowDat
 	return listQueryResults, nil
 }
 
-// UpdateRow updates any number of valid fields with separate calls to
+// UpdateRow updates any number of valid columns with separate calls to
 // Repository.UpdateRowCol
 func (s *Service) UpdateRow(tableName, id string, updateData types.RowData) error {
 	// Each column in the update data must exist in the table
@@ -75,7 +75,7 @@ func (s *Service) UpdateRow(tableName, id string, updateData types.RowData) erro
 		return err
 	}
 
-	// Decode request body into a dummy row value to validate fields
+	// Decode request body into a dummy row value to validate column names
 	var dummyRow types.RowData
 	b, _ := json.Marshal(updateData)
 	err := json.Unmarshal(b, &dummyRow)
@@ -84,8 +84,8 @@ func (s *Service) UpdateRow(tableName, id string, updateData types.RowData) erro
 	}
 
 	// Update individual columns in the row
-	for field, val := range updateData {
-		if err := s.repo.UpdateRowCol(tableName, id, field, val); err != nil {
+	for col, val := range updateData {
+		if err := s.repo.UpdateRowCol(tableName, id, col, val); err != nil {
 			return err
 		}
 	}

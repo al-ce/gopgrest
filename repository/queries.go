@@ -77,17 +77,17 @@ func (r *Repository) InsertRow(tableName string, newRow *types.RowData) (result 
 	return
 }
 
-// UpdateRowCol updates a field in a table row by id
-func (r *Repository) UpdateRowCol(tableName, id, field string, value any) error {
+// UpdateRowCol updates a column in a table row by id
+func (r *Repository) UpdateRowCol(tableName, id, col string, value any) error {
 	log.Printf(
 		"Exec query\n\tUPDATE %s SET %s = %s WHERE id = %s\n",
-		tableName, field, value, id,
+		tableName, col, value, id,
 	)
 
 	// Build update query
 	updateStmt := fmt.Sprintf(
 		"UPDATE %s SET %s = $1 WHERE id = $2",
-		tableName, field,
+		tableName, col,
 	)
 
 	if _, err := r.db.Exec(updateStmt, value, id); err != nil {

@@ -12,17 +12,17 @@ import (
 type updateTest struct {
 	testName  string
 	id        string
-	field     string
+	col     string
 	value     any
 	expectErr any
 }
 
-func TestUpdateRowCol(t *testing.T) {
+func TestRepo_UpdateRowCol(t *testing.T) {
 	repo, _ := tests.NewTestRepo(t)
 
 	sampleRow := types.RowData{
-		"Name":   "romanian deadlift",
-		"Weight": 309,
+		"name":   "romanian deadlift",
+		"weight": 309,
 	}
 
 	insertResult := repo.InsertRow(tests.TABLE1, &sampleRow)
@@ -32,21 +32,21 @@ func TestUpdateRowCol(t *testing.T) {
 
 	updateTests := []updateTest{
 		{
-			"update valid string field",
+			"update valid string col",
 			fmt.Sprintf("%d", insertResult.ID),
-			"Name",
+			"name",
 			"hack squat",
 			nil,
 		},
 		{
-			"update valid int field",
+			"update valid int col",
 			fmt.Sprintf("%d", insertResult.ID),
-			"Weight",
+			"weight",
 			299,
 			nil,
 		},
 		{
-			"update invalid field",
+			"update invalid col",
 			fmt.Sprintf("%d", insertResult.ID),
 			"not_a_col",
 			"hack squat",
@@ -54,10 +54,12 @@ func TestUpdateRowCol(t *testing.T) {
 		},
 	}
 
+	tagMap := tests.GetTagMap(tests.ExerciseSet{})
+
 	for _, tt := range updateTests {
 		t.Run(tt.testName, func(t *testing.T) {
 			// Exec update query
-			err := repo.UpdateRowCol(tests.TABLE1, tt.id, tt.field, tt.value)
+			err := repo.UpdateRowCol(tests.TABLE1, tt.id, tt.col, tt.value)
 			if tests.CheckExpectedErr(tt.expectErr, err) {
 				t.Errorf("\nExp: %s\nGot: %s", tt.expectErr, err)
 			}
@@ -80,9 +82,10 @@ func TestUpdateRowCol(t *testing.T) {
 			}
 			// Confirm update
 			rowVal := reflect.ValueOf(updatedRow)
-			gotVal := rowVal.FieldByName(tt.field).Interface()
+			fieldName := tests.GetFieldNameByColName(tagMap, tt.col, tests.ExerciseSet{})
+			gotVal := rowVal.FieldByName(fieldName).Interface()
 			if tt.value != gotVal {
-				t.Errorf("Expected %v: %s\nGot %v", tt.field, tt.value, gotVal)
+				t.Errorf("Expected %v: %s\nGot %v", tt.col, tt.value, gotVal)
 			}
 		})
 	}

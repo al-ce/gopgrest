@@ -12,64 +12,24 @@ import (
 	"ftrack/types"
 )
 
-type filterTest struct {
-	testName  string
-	filters   types.QueryFilter
-	rowCount  int
-	expectErr any
-}
-
-func makeFilterTest(testName string, qf types.QueryFilter, sampleRows tests.SampleRowsIdMap, expectErr any) filterTest {
-	return filterTest{
-		testName,
-		qf,
-		len(tests.FilterSampleRows(qf, sampleRows)),
-		expectErr,
-	}
-}
-
-func TestListRows_InvalidFilters(t *testing.T) {
-	invalidQueryTests := []filterTest{
-		{
-			"empty filter value",
-			types.QueryFilter{
-				"name": {},
-			},
-			0,
-			"attempt to filter on key name with no values",
-		},
-		{
-			"invalid column names",
-			types.QueryFilter{
-				"not_a_col": {"value"},
-			},
-			0,
-			"pq: column \"not_a_col\" does not exist",
-		},
-		{
-			"invalid column values",
-			types.QueryFilter{
-				"weight": {"not int"},
-			},
-			0,
-			"pq: invalid input syntax for type smallint: \"not int\"",
-		},
-	}
-
+func TestRepo_ListRows_InvalidFilters(t *testing.T) {
+	invalidQueryTests := tests.GetInvalidQueryTests(types.RowDataIdMap{})
 	for _, tt := range invalidQueryTests {
-		t.Run(tt.testName, func(t *testing.T) {
+		t.Run(tt.TestName, func(t *testing.T) {
 			repo, _ := tests.NewTestRepo(t)
-			_, err := repo.ListRows(tests.TABLE1, tt.filters)
-			if tests.CheckExpectedErr(tt.expectErr, err) {
-				t.Errorf("Expected error: %v\nGot %v", tt.expectErr, err)
+			_, err := repo.ListRows(tests.TABLE1, tt.Filters)
+
+			if tests.CheckExpectedErr(tt.ExpectErr, err) {
+				t.Errorf("Expected error: %v\nGot %v", tt.ExpectErr, err)
 			}
 		})
 	}
 }
 
-func TestListRows_NoFilters(t *testing.T) {
+func TestRepo_ListRows_NoFilters(t *testing.T) {
 	t.Run("list all", func(t *testing.T) {
 		repo, sampleRows := tests.NewTestRepo(t)
+		tagMap := tests.GetTagMap(tests.ExerciseSet{})
 
 		// List all rows in the table
 		rows, err := repo.ListRows(tests.TABLE1, types.QueryFilter{})
@@ -92,7 +52,7 @@ func TestListRows_NoFilters(t *testing.T) {
 			rowVal := reflect.ValueOf(scannedRow)
 			sampleRow := sampleRows[gotCount]
 			for idx := range rowVal.Type().NumField() {
-				fieldName := rowVal.Type().Field(idx).Name
+				fieldName := tagMap[rowVal.Type().Field(idx).Name]
 				expectedVal := fmt.Sprintf("%v", sampleRow[fieldName])
 				gotVal := fmt.Sprintf("%v", rowVal.Field(idx))
 				if expectedVal != "<nil>" && expectedVal != gotVal {
@@ -119,131 +79,55 @@ func TestListRows_NoFilters(t *testing.T) {
 	})
 }
 
-func TestListRows_ValidFilters(t *testing.T) {
+func TestRepo_ListRows_ValidFilters(t *testing.T) {
 	repo, sampleRows := tests.NewTestRepo(t)
-
-	filterTests := []struct {
-		testName  string
-		filters   types.QueryFilter
-		rowCount  int
-		expectErr any
-	}{
-		makeFilterTest(
-			"list deadlifts",
-			types.QueryFilter{
-				"Name": {"deadlift"},
-			},
-			sampleRows,
-			nil,
-		),
-		makeFilterTest(
-			"list deadlifts or squats",
-			types.QueryFilter{
-				"Name": {"deadlift", "squat"},
-			},
-			sampleRows,
-			nil,
-		),
-		makeFilterTest(
-			"list weights of 100",
-			types.QueryFilter{
-				"Weight": {"100"},
-			},
-			sampleRows,
-			nil,
-		),
-		makeFilterTest(
-			"list weights of 100 or 200",
-			types.QueryFilter{
-				"Weight": {"100", "200"},
-			},
-			sampleRows,
-			nil,
-		),
-		makeFilterTest(
-			"list squats of weight 200",
-			types.QueryFilter{
-				"Name":   {"squat"},
-				"Weight": {"200"},
-			},
-			sampleRows,
-			nil,
-		),
-		makeFilterTest(
-			"list squats of weight 101 or 201",
-			types.QueryFilter{
-				"Name":   {"squat"},
-				"Weight": {"100", "200"},
-			},
-			sampleRows,
-			nil,
-		),
-
-		// Queries that should return 0 results
-		makeFilterTest(
-			// non-existent exercise name
-			"list presses",
-			types.QueryFilter{
-				"Name": {"press"},
-			},
-			sampleRows,
-			nil,
-		),
-		makeFilterTest(
-			// valid exercise with no matching weight
-			"list squats of weight 50",
-			types.QueryFilter{
-				"Name":   {"squat"},
-				"Weight": {"50"},
-			},
-			sampleRows,
-			nil,
-		),
-	}
+	tagMap := tests.GetTagMap(tests.ExerciseSet{})
+	filterTests := tests.GetValidFilterTests(sampleRows)
 
 	// doNotFilter contains filters we will never look for, but also values
 	// that we used in our sample rows. This allows us to test that our query
 	// params exclude rows we didn't filter for
 	doNotFilter := types.QueryFilter{
-		"Name":   {"bench press"},
-		"Weight": {"300"},
+		"name":   {"bench press"},
+		"weight": {"300"},
 	}
 
 	for _, tt := range filterTests {
-		t.Run(tt.testName, func(t *testing.T) {
-			rows, err := repo.ListRows(tests.TABLE1, tt.filters)
-			if tests.CheckExpectedErr(tt.expectErr, err) {
-				t.Errorf("Expected error: %v\nGot %v", tt.expectErr, err)
+		t.Run(tt.TestName, func(t *testing.T) {
+			rows, err := repo.ListRows(tests.TABLE1, tt.Filters)
+			if tests.CheckExpectedErr(tt.ExpectErr, err) {
+				t.Errorf("Expected error: %v\nGot %v", tt.ExpectErr, err)
 			}
 
 			scannedRow := tests.ExerciseSet{}
 			allScanned := []tests.ExerciseSet{}
 
 			for rows.Next() {
-
 				err := tests.ScanNextExerciseSetRow(&scannedRow, rows)
 				if err != nil {
 					t.Errorf("Scan err: %v", err)
 				}
 
-				val := reflect.ValueOf(scannedRow)
-				for fieldName, fieldFilters := range tt.filters {
-					gotVal := fmt.Sprintf("%v", val.FieldByName(fieldName))
+				rowVal := reflect.ValueOf(scannedRow)
+				for colName, filterMap := range tt.Filters {
+					fieldName := tests.GetFieldNameByColName(tagMap, colName, tests.ExerciseSet{})
+					gotVal := fmt.Sprintf("%v", rowVal.FieldByName(fieldName))
+
 					// Rows should include values we filtered for we know exist
-					if !slices.Contains(fieldFilters, gotVal) {
-						t.Errorf("Expected %s: %s in %s", fieldName, gotVal, fieldFilters)
+					if !slices.Contains(filterMap, gotVal) {
+						t.Errorf("Expected %s: %s in %s", colName, gotVal, filterMap)
 					}
 					// Rows should exclude values we never look for
-					if slices.Contains(doNotFilter[fieldName], gotVal) {
-						t.Errorf("False positive %s: %s", fieldName, gotVal)
+					if slices.Contains(doNotFilter[colName], gotVal) {
+						t.Errorf("False positive %s: %s", colName, gotVal)
 					}
 				}
 
 				allScanned = append(allScanned, scannedRow)
 			}
 
-			if tt.rowCount != len(allScanned) {
-				t.Errorf("Expected %d rows\nGot %d\n%v", tt.rowCount, len(allScanned), allScanned)
+			if tt.RowCount != len(allScanned) {
+				t.Errorf("Expected %d rows\nGot %d\n%v", tt.RowCount, len(allScanned), allScanned)
 			}
 		})
 	}

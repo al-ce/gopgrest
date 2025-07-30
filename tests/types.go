@@ -32,4 +32,9 @@ type ExerciseSet struct {
 
 type TagMap map[string]string
 
-type SampleRowsIdMap map[int64]types.RowData
+type FilterTest struct {
+	TestName  string
+	Filters   types.QueryFilter
+	RowCount  int
+	ExpectErr any
+}
