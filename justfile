@@ -13,7 +13,7 @@
 # Set this here:
 
 test_parser := ```
-    which gotestsum || which tparse || which gotestfmt || which cat
+    which gotestfmt || which tparse || which gotestsum || which cat
 ```
 
 set quiet := true
