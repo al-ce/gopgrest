@@ -125,6 +125,7 @@ func (h *APIHandler) Delete(w http.ResponseWriter, r *http.Request) {
 
 	// Set response
 	w.WriteHeader(http.StatusOK)
+	fmt.Fprintf(w, "row %s deleted from table %s\n", id, table)
 }
 
 // Insert adds a row to a table
