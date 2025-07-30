@@ -12,13 +12,16 @@ type TableColumn struct {
 	Datatype sql.ColumnType
 }
 
+// ColumnMap is a map of column names in a row and their type
+type ColumnMap map[string]sql.ColumnType
+
 // Table represents a table in the database
 // The Columns slice preserves the column order.
 // The ColumnMap is used for fast lookup to check if a column exists
 type Table struct {
 	Name      string
 	Columns   []TableColumn
-	ColumnMap map[string]struct{}
+	ColumnMap ColumnMap
 }
 
 // QueryExecutor is an interface that can be satisfied by both *sql.DB and *sql.Tx
@@ -60,7 +63,7 @@ func NewTable(db QueryExecutor, tableName string) (*Table, error) {
 	defer rows.Close()
 
 	var tableColumns []TableColumn
-	columnMap := make(map[string]struct{})
+	columnMap := ColumnMap{}
 
 	// Get column names
 	colnames, err := rows.Columns()
@@ -83,7 +86,7 @@ func NewTable(db QueryExecutor, tableName string) (*Table, error) {
 				*coltypes[i],
 			},
 		)
-		columnMap[name] = struct{}{}
+		columnMap[name] = *coltypes[i]
 	}
 
 	return &Table{
