@@ -111,8 +111,15 @@ func (r *Repository) DeleteRow(tableName, id string) error {
 	if err != nil {
 		return err
 	}
-	if _, err = result.RowsAffected(); err != nil {
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
 		return err
+	}
+	if rowsAffected == 0 {
+		return fmt.Errorf(
+			"row %s in table %s does not exist, did not attempt delete",
+			id, tableName,
+		)
 	}
 
 	return nil
