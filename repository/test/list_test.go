@@ -14,12 +14,12 @@ import (
 
 type filterTest struct {
 	testName  string
-	filters   types.QueryFilters
+	filters   types.QueryFilter
 	rowCount  int
 	expectErr any
 }
 
-func makeFilterTest(testName string, qf types.QueryFilters, expectErr any) filterTest {
+func makeFilterTest(testName string, qf types.QueryFilter, expectErr any) filterTest {
 	return filterTest{
 		testName,
 		qf,
@@ -32,7 +32,7 @@ func TestListRows_InvalidFilters(t *testing.T) {
 	invalidQueryTests := []filterTest{
 		{
 			"empty filter value",
-			types.QueryFilters{
+			types.QueryFilter{
 				"name": {},
 			},
 			0,
@@ -40,7 +40,7 @@ func TestListRows_InvalidFilters(t *testing.T) {
 		},
 		{
 			"invalid column names",
-			types.QueryFilters{
+			types.QueryFilter{
 				"not_a_col": {"value"},
 			},
 			0,
@@ -48,7 +48,7 @@ func TestListRows_InvalidFilters(t *testing.T) {
 		},
 		{
 			"invalid column values",
-			types.QueryFilters{
+			types.QueryFilter{
 				"weight": {"not int"},
 			},
 			0,
@@ -72,7 +72,7 @@ func TestListRows_NoFilters(t *testing.T) {
 		repo, _ := tests.NewTestRepo(t)
 
 		// List all rows in the table
-		rows, err := repo.ListRows(tests.TABLE1, types.QueryFilters{})
+		rows, err := repo.ListRows(tests.TABLE1, types.QueryFilter{})
 		if tests.CheckExpectedErr(nil, err) {
 			t.Errorf("Expected error: %v\nGot %v", nil, err)
 		}
@@ -124,41 +124,41 @@ func TestListRows_ValidFilters(t *testing.T) {
 
 	filterTests := []struct {
 		testName  string
-		filters   types.QueryFilters
+		filters   types.QueryFilter
 		rowCount  int
 		expectErr any
 	}{
 		makeFilterTest(
 			"list deadlifts",
-			types.QueryFilters{
+			types.QueryFilter{
 				"Name": {"deadlift"},
 			},
 			nil,
 		),
 		makeFilterTest(
 			"list deadlifts or squats",
-			types.QueryFilters{
+			types.QueryFilter{
 				"Name": {"deadlift", "squat"},
 			},
 			nil,
 		),
 		makeFilterTest(
 			"list weights of 100",
-			types.QueryFilters{
+			types.QueryFilter{
 				"Weight": {"100"},
 			},
 			nil,
 		),
 		makeFilterTest(
 			"list weights of 100 or 200",
-			types.QueryFilters{
+			types.QueryFilter{
 				"Weight": {"100", "200"},
 			},
 			nil,
 		),
 		makeFilterTest(
 			"list squats of weight 200",
-			types.QueryFilters{
+			types.QueryFilter{
 				"Name":   {"squat"},
 				"Weight": {"200"},
 			},
@@ -166,7 +166,7 @@ func TestListRows_ValidFilters(t *testing.T) {
 		),
 		makeFilterTest(
 			"list squats of weight 101 or 201",
-			types.QueryFilters{
+			types.QueryFilter{
 				"Name":   {"squat"},
 				"Weight": {"100", "200"},
 			},
@@ -177,7 +177,7 @@ func TestListRows_ValidFilters(t *testing.T) {
 		makeFilterTest(
 			// non-existent exercise name
 			"list presses",
-			types.QueryFilters{
+			types.QueryFilter{
 				"Name": {"press"},
 			},
 			nil,
@@ -185,7 +185,7 @@ func TestListRows_ValidFilters(t *testing.T) {
 		makeFilterTest(
 			// valid exercise with no matching weight
 			"list squats of weight 50",
-			types.QueryFilters{
+			types.QueryFilter{
 				"Name":   {"squat"},
 				"Weight": {"50"},
 			},
@@ -196,7 +196,7 @@ func TestListRows_ValidFilters(t *testing.T) {
 	// doNotFilter contains filters we will never look for, but also values
 	// that we used in our sample rows. This allows us to test that our query
 	// params exclude rows we didn't filter for
-	doNotFilter := types.QueryFilters{
+	doNotFilter := types.QueryFilter{
 		"Name":   {"bench press"},
 		"Weight": {"300"},
 	}

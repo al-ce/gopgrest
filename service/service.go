@@ -41,7 +41,7 @@ func (s *Service) PickRow(tableName, id string) (types.RowDataMap, error) {
 }
 
 // ListRows gets rows from a table with optional filter params
-func (s *Service) ListRows(tableName string, qf types.QueryFilters) ([]types.RowDataMap, error) {
+func (s *Service) ListRows(tableName string, qf types.QueryFilter) ([]types.RowDataMap, error) {
 	// Each column in the query params must exist in the table
 	cols := slices.Collect(maps.Keys(qf))
 	if err := s.verifyColumns(tableName, cols); err != nil {

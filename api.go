@@ -210,7 +210,7 @@ func (h *APIHandler) List(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Retrieve listQueryResults from database
-	listQueryResults, err := h.service.ListRows(table, types.QueryFilters(r.URL.Query()))
+	listQueryResults, err := h.service.ListRows(table, types.QueryFilter(r.URL.Query()))
 	if err != nil {
 		log.Println(err)
 		InternalServerErrorHandler(w, r, fmt.Sprintf("%v", err))

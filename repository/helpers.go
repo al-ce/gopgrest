@@ -19,7 +19,7 @@ func (r *Repository) GetTable(tableName string) (*Table, error) {
 // buildConditionalClause builds a SQL WHERE clause to select a row. Ex: when
 // params == `[name:[bob alice] age:[45]]`, the name in the row must be either
 // bob or alice and the age must be 45.
-func buildConditionalClause(qf types.QueryFilters) (string, []any, error) {
+func buildConditionalClause(qf types.QueryFilter) (string, []any, error) {
 	// If no params were passed, there should not be a WHERE clause
 	if len(qf) == 0 {
 		return "", []any{}, nil

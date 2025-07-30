@@ -63,7 +63,7 @@ func ScanNextExerciseSetRow(toScan *ExerciseSet, rows *sql.Rows) error {
 }
 
 // FilterSampleRows filters the sample rows by a map of params
-func FilterSampleRows(qf types.QueryFilters) []types.RowDataMap {
+func FilterSampleRows(qf types.QueryFilter) []types.RowDataMap {
 	m := []types.RowDataMap{}
 	for _, row := range SampleRows {
 		match := true

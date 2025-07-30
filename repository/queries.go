@@ -9,7 +9,7 @@ import (
 )
 
 // ListRows gets rows from a table with optional filter params
-func (r *Repository) ListRows(tableName string, qf types.QueryFilters) (*sql.Rows, error) {
+func (r *Repository) ListRows(tableName string, qf types.QueryFilter) (*sql.Rows, error) {
 	// Build list query with optional conditional filters
 	conditional, values, err := buildConditionalClause(qf)
 	if err != nil {
