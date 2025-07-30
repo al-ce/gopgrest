@@ -101,7 +101,7 @@ func NewTable(db QueryExecutor, tableName string) (*Table, error) {
 func GetPublicTables(db QueryExecutor) ([]Table, error) {
 	// Get table names with query
 	rows, err := db.Query(
-		`select tablename from pg_catalog.pg_tables where schemaname='public'`,
+		`SELECT tablename FROM Pg_catalog.pg_tables WHERE schemaname='public'`,
 	)
 	if err != nil {
 		return []Table{}, err
