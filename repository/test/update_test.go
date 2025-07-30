@@ -12,7 +12,7 @@ import (
 type updateTest struct {
 	testName  string
 	id        string
-	col     string
+	col       string
 	value     any
 	expectErr any
 }

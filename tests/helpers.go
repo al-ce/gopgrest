@@ -146,7 +146,7 @@ func MakeFilterTest(testName string, qf types.QueryFilter, sampleRows types.RowD
 		TestName:  testName,
 		Filters:   qf,
 		RowCount:  len(FilterSampleRows(qf, sampleRows)),
-		PqErr: pqErr,
+		PqErr:     pqErr,
 		CustomErr: customErr,
 	}
 }
