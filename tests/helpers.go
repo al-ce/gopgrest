@@ -11,8 +11,8 @@ import (
 )
 
 // InsertSampleRows inserts sample rows into a repo
-func InsertSampleRows(repo repository.Repository) map[int64]types.RowDataMap {
-	insertedRows := make(map[int64]types.RowDataMap)
+func InsertSampleRows(repo repository.Repository) SampleRowsMap {
+	insertedRows := make(SampleRowsMap)
 	for _, sample := range SampleRows {
 		result := repo.InsertRow(TABLE1, &sample)
 		if result.Error != nil {
@@ -82,9 +82,9 @@ func FilterSampleRows(qf types.QueryFilters) []types.RowDataMap {
 }
 
 // GetTagMap returns a map of json tags from a struct, assuming it has any
-func GetTagMap(s any) map[string]string {
+func GetTagMap(s any) TagMap {
 	val := reflect.ValueOf(s)
-	tagMap := make(map[string]string)
+	tagMap := make(TagMap)
 	t := val.Type()
 
 	for i := range val.NumField() {

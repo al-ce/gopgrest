@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"testing"
-	"time"
 
 	_ "github.com/lib/pq"
 
@@ -23,28 +22,6 @@ var (
 )
 
 const TABLE1 = "exercise_sets"
-
-type TestDB struct {
-	DB *sql.DB
-	TX *sql.Tx
-	Tables []repository.Table
-}
-
-// ExerciseSet matches the exercise_set table in the test database so that rows
-// can be scanned into fields of appropriate size
-type ExerciseSet struct {
-	ID          int       `json:"id"`
-	Name        string    `json:"name"`
-	PerformedAt time.Time `json:"performed_at"`
-	Weight      int       `json:"weight"`
-	Unit        string    `json:"unit"`
-	Reps        int       `json:"reps"`
-	SetCount    int       `json:"set_count"`
-	Notes       string    `json:"notes"`
-	SplitDay    string    `json:"split_day"`
-	Program     string    `json:"program"`
-	Tags        string    `json:"tags"`
-}
 
 // SampleRows are used to populate the test database
 var SampleRows = []types.RowDataMap{
@@ -120,7 +97,7 @@ func (tdb *TestDB) BeginTX(t *testing.T) *sql.Tx {
 
 // NewTestRepo initializes a new test Repository with a transaction and
 // populates it with sample rows
-func NewTestRepo(t *testing.T) (repository.Repository, map[int64]types.RowDataMap) {
+func NewTestRepo(t *testing.T) (repository.Repository, SampleRowsMap) {
 	tdb := NewTestDB(t)
 	tx := tdb.BeginTX(t)
 	repo := repository.NewRepository(tx, tdb.Tables)
@@ -129,7 +106,7 @@ func NewTestRepo(t *testing.T) (repository.Repository, map[int64]types.RowDataMa
 }
 
 // NewTestService initializes a new test Service with a test Repository
-func NewTestService(t *testing.T) (service.Service, map[int64]types.RowDataMap) {
+func NewTestService(t *testing.T) (service.Service, SampleRowsMap) {
 	repo, sampleRows := NewTestRepo(t)
 	return service.NewService(repo), sampleRows
 }
