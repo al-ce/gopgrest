@@ -24,7 +24,8 @@ func TestGetRowByID(t *testing.T) {
 			for fieldName, sampleValue := range sampleRow {
 				gotVal := val.FieldByName(fieldName).Interface()
 				if sampleValue != gotVal {
-					t.Errorf("Expected %s: %v\nGot %v", fieldName, sampleValue, gotVal)
+					t.Errorf("Expected %s: %v %T\nGot %v %T",
+						fieldName, sampleValue, sampleValue, gotVal, gotVal)
 				}
 			}
 
