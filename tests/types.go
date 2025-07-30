@@ -32,4 +32,4 @@ type ExerciseSet struct {
 
 type TagMap map[string]string
 
-type SampleRowsMap map[int64]types.RowDataMap
+type SampleRowsIdMap map[int64]types.RowDataMap

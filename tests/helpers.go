@@ -11,9 +11,41 @@ import (
 )
 
 // InsertSampleRows inserts sample rows into a repo
-func InsertSampleRows(repo repository.Repository) SampleRowsMap {
-	insertedRows := make(SampleRowsMap)
-	for _, sample := range SampleRows {
+func InsertSampleRows(repo repository.Repository) SampleRowsIdMap {
+	// sampleRows are used to populate the test database
+	sampleRows := []types.RowDataMap{
+		{
+			"Name":   "deadlift",
+			"Weight": 300,
+		},
+		{
+			"Name":   "deadlift",
+			"Weight": 200,
+		},
+		{
+			"Name":   "deadlift",
+			"Weight": 100,
+		},
+		{
+			"Name":   "squat",
+			"Weight": 300,
+		},
+		{
+			"Name":   "squat",
+			"Weight": 200,
+		},
+		{
+			"Name":   "squat",
+			"Weight": 100,
+		},
+		// Entries we will NOT filter for
+		{
+			"Name":   "bench press",
+			"Weight": 300,
+		},
+	}
+	insertedRows := make(SampleRowsIdMap)
+	for _, sample := range sampleRows {
 		result := repo.InsertRow(TABLE1, &sample)
 		if result.Error != nil {
 			panic("Failed to insert row, update insert tests")
@@ -63,9 +95,9 @@ func ScanNextExerciseSetRow(toScan *ExerciseSet, rows *sql.Rows) error {
 }
 
 // FilterSampleRows filters the sample rows by a map of params
-func FilterSampleRows(qf types.QueryFilter) []types.RowDataMap {
+func FilterSampleRows(qf types.QueryFilter, sampleRows SampleRowsIdMap) []types.RowDataMap {
 	m := []types.RowDataMap{}
-	for _, row := range SampleRows {
+	for _, row := range sampleRows {
 		match := true
 		for k := range row {
 			filterValue, exists := qf[k]

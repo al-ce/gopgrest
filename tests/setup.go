@@ -10,7 +10,6 @@ import (
 
 	"ftrack/repository"
 	"ftrack/service"
-	"ftrack/types"
 )
 
 var (
@@ -22,39 +21,6 @@ var (
 )
 
 const TABLE1 = "exercise_sets"
-
-// SampleRows are used to populate the test database
-var SampleRows = []types.RowDataMap{
-	{
-		"Name":   "deadlift",
-		"Weight": 300,
-	},
-	{
-		"Name":   "deadlift",
-		"Weight": 200,
-	},
-	{
-		"Name":   "deadlift",
-		"Weight": 100,
-	},
-	{
-		"Name":   "squat",
-		"Weight": 300,
-	},
-	{
-		"Name":   "squat",
-		"Weight": 200,
-	},
-	{
-		"Name":   "squat",
-		"Weight": 100,
-	},
-	// Entries we will NOT filter for
-	{
-		"Name":   "bench press",
-		"Weight": 300,
-	},
-}
 
 // NewTestDB returns a test database
 func NewTestDB(t *testing.T) *TestDB {
@@ -97,7 +63,7 @@ func (tdb *TestDB) BeginTX(t *testing.T) *sql.Tx {
 
 // NewTestRepo initializes a new test Repository with a transaction and
 // populates it with sample rows
-func NewTestRepo(t *testing.T) (repository.Repository, SampleRowsMap) {
+func NewTestRepo(t *testing.T) (repository.Repository, SampleRowsIdMap) {
 	tdb := NewTestDB(t)
 	tx := tdb.BeginTX(t)
 	repo := repository.NewRepository(tx, tdb.Tables)
@@ -106,7 +72,7 @@ func NewTestRepo(t *testing.T) (repository.Repository, SampleRowsMap) {
 }
 
 // NewTestService initializes a new test Service with a test Repository
-func NewTestService(t *testing.T) (service.Service, SampleRowsMap) {
+func NewTestService(t *testing.T) (service.Service, SampleRowsIdMap) {
 	repo, sampleRows := NewTestRepo(t)
 	return service.NewService(repo), sampleRows
 }

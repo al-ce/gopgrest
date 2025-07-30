@@ -19,11 +19,11 @@ type filterTest struct {
 	expectErr any
 }
 
-func makeFilterTest(testName string, qf types.QueryFilter, expectErr any) filterTest {
+func makeFilterTest(testName string, qf types.QueryFilter, sampleRows tests.SampleRowsIdMap, expectErr any) filterTest {
 	return filterTest{
 		testName,
 		qf,
-		len(tests.FilterSampleRows(qf)),
+		len(tests.FilterSampleRows(qf, sampleRows)),
 		expectErr,
 	}
 }
@@ -69,7 +69,7 @@ func TestListRows_InvalidFilters(t *testing.T) {
 
 func TestListRows_NoFilters(t *testing.T) {
 	t.Run("list all", func(t *testing.T) {
-		repo, _ := tests.NewTestRepo(t)
+		repo, sampleRows := tests.NewTestRepo(t)
 
 		// List all rows in the table
 		rows, err := repo.ListRows(tests.TABLE1, types.QueryFilter{})
@@ -78,7 +78,7 @@ func TestListRows_NoFilters(t *testing.T) {
 		}
 
 		// Track how many rows we got
-		gotCount := 0
+		var gotCount int64 = 0
 		scannedRow := tests.ExerciseSet{}
 		for rows.Next() {
 
@@ -90,7 +90,7 @@ func TestListRows_NoFilters(t *testing.T) {
 
 			// Confirm each column in the row matches the sample we inserted
 			rowVal := reflect.ValueOf(scannedRow)
-			sampleRow := tests.SampleRows[gotCount]
+			sampleRow := sampleRows[gotCount]
 			for idx := range rowVal.Type().NumField() {
 				fieldName := rowVal.Type().Field(idx).Name
 				expectedVal := fmt.Sprintf("%v", sampleRow[fieldName])
@@ -108,11 +108,11 @@ func TestListRows_NoFilters(t *testing.T) {
 		}
 
 		// Confirm we got the same amount of rows we inserted
-		expectedCount := len(tests.SampleRows)
+		expectedCount := int64(len(sampleRows))
 		if expectedCount != gotCount {
 			t.Errorf(
 				"Expected %d rows\nGot %d\n",
-				len(tests.SampleRows),
+				len(sampleRows),
 				gotCount,
 			)
 		}
@@ -120,7 +120,7 @@ func TestListRows_NoFilters(t *testing.T) {
 }
 
 func TestListRows_ValidFilters(t *testing.T) {
-	repo, _ := tests.NewTestRepo(t)
+	repo, sampleRows := tests.NewTestRepo(t)
 
 	filterTests := []struct {
 		testName  string
@@ -133,6 +133,7 @@ func TestListRows_ValidFilters(t *testing.T) {
 			types.QueryFilter{
 				"Name": {"deadlift"},
 			},
+			sampleRows,
 			nil,
 		),
 		makeFilterTest(
@@ -140,6 +141,7 @@ func TestListRows_ValidFilters(t *testing.T) {
 			types.QueryFilter{
 				"Name": {"deadlift", "squat"},
 			},
+			sampleRows,
 			nil,
 		),
 		makeFilterTest(
@@ -147,6 +149,7 @@ func TestListRows_ValidFilters(t *testing.T) {
 			types.QueryFilter{
 				"Weight": {"100"},
 			},
+			sampleRows,
 			nil,
 		),
 		makeFilterTest(
@@ -154,6 +157,7 @@ func TestListRows_ValidFilters(t *testing.T) {
 			types.QueryFilter{
 				"Weight": {"100", "200"},
 			},
+			sampleRows,
 			nil,
 		),
 		makeFilterTest(
@@ -162,6 +166,7 @@ func TestListRows_ValidFilters(t *testing.T) {
 				"Name":   {"squat"},
 				"Weight": {"200"},
 			},
+			sampleRows,
 			nil,
 		),
 		makeFilterTest(
@@ -170,6 +175,7 @@ func TestListRows_ValidFilters(t *testing.T) {
 				"Name":   {"squat"},
 				"Weight": {"100", "200"},
 			},
+			sampleRows,
 			nil,
 		),
 
@@ -180,6 +186,7 @@ func TestListRows_ValidFilters(t *testing.T) {
 			types.QueryFilter{
 				"Name": {"press"},
 			},
+			sampleRows,
 			nil,
 		),
 		makeFilterTest(
@@ -189,6 +196,7 @@ func TestListRows_ValidFilters(t *testing.T) {
 				"Name":   {"squat"},
 				"Weight": {"50"},
 			},
+			sampleRows,
 			nil,
 		),
 	}
