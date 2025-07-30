@@ -3,6 +3,7 @@ package tests
 import (
 	"database/sql"
 	"fmt"
+	"reflect"
 	"slices"
 
 	"ftrack/repository"
@@ -78,4 +79,19 @@ func FilterSampleRows(qf types.QueryFilters) []types.RowDataMap {
 		}
 	}
 	return m
+}
+
+// GetTagMap returns a map of json tags from a struct, assuming it has any
+func GetTagMap(s any) map[string]string {
+	val := reflect.ValueOf(s)
+	tagMap := make(map[string]string)
+	t := val.Type()
+
+	for i := range val.NumField() {
+		field := t.Field(i)
+		jsonTag := field.Tag.Get("json")
+		fieldName := t.Field(i).Name
+		tagMap[fieldName] = jsonTag
+	}
+	return tagMap
 }
