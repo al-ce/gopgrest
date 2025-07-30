@@ -19,8 +19,8 @@ func TestRepo_ListRows_InvalidFilters(t *testing.T) {
 			repo, _ := tests.NewTestRepo(t)
 			_, err := repo.ListRows(tests.TABLE1, tt.Filters)
 
-			if tests.CheckExpectedErr(tt.ExpectErr, err) {
-				t.Errorf("Expected error: %v\nGot %v", tt.ExpectErr, err)
+			if tests.CheckExpectedErr(tt.PqErr, err) {
+				t.Errorf("Expected error: %v\nGot %v", tt.PqErr, err)
 			}
 		})
 	}
@@ -95,8 +95,8 @@ func TestRepo_ListRows_ValidFilters(t *testing.T) {
 	for _, tt := range filterTests {
 		t.Run(tt.TestName, func(t *testing.T) {
 			rows, err := repo.ListRows(tests.TABLE1, tt.Filters)
-			if tests.CheckExpectedErr(tt.ExpectErr, err) {
-				t.Errorf("Expected error: %v\nGot %v", tt.ExpectErr, err)
+			if tests.CheckExpectedErr(tt.PqErr, err) {
+				t.Errorf("Expected error: %v\nGot %v", tt.PqErr, err)
 			}
 
 			scannedRow := tests.ExerciseSet{}

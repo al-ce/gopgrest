@@ -141,12 +141,13 @@ func GetFieldNameByColName(tm TagMap, colName string, s any) string {
 }
 
 // MakeFilterTest constructs test params for testing a filtered ListRows call
-func MakeFilterTest(testName string, qf types.QueryFilter, sampleRows types.RowDataIdMap, expectErr any) FilterTest {
+func MakeFilterTest(testName string, qf types.QueryFilter, sampleRows types.RowDataIdMap, pqErr, customErr any) FilterTest {
 	return FilterTest{
 		TestName:  testName,
 		Filters:   qf,
 		RowCount:  len(FilterSampleRows(qf, sampleRows)),
-		ExpectErr: expectErr,
+		PqErr: pqErr,
+		CustomErr: customErr,
 	}
 }
 
@@ -159,6 +160,7 @@ func GetValidFilterTests(sampleRows types.RowDataIdMap) []FilterTest {
 			},
 			sampleRows,
 			nil,
+			nil,
 		),
 		MakeFilterTest(
 			"list deadlifts or squats",
@@ -166,6 +168,7 @@ func GetValidFilterTests(sampleRows types.RowDataIdMap) []FilterTest {
 				"name": {"deadlift", "squat"},
 			},
 			sampleRows,
+			nil,
 			nil,
 		),
 		MakeFilterTest(
@@ -175,6 +178,7 @@ func GetValidFilterTests(sampleRows types.RowDataIdMap) []FilterTest {
 			},
 			sampleRows,
 			nil,
+			nil,
 		),
 		MakeFilterTest(
 			"list weights of 100 or 200",
@@ -182,6 +186,7 @@ func GetValidFilterTests(sampleRows types.RowDataIdMap) []FilterTest {
 				"weight": {"100", "200"},
 			},
 			sampleRows,
+			nil,
 			nil,
 		),
 		MakeFilterTest(
@@ -192,6 +197,7 @@ func GetValidFilterTests(sampleRows types.RowDataIdMap) []FilterTest {
 			},
 			sampleRows,
 			nil,
+			nil,
 		),
 		MakeFilterTest(
 			"list squats of weight 101 or 201",
@@ -200,6 +206,7 @@ func GetValidFilterTests(sampleRows types.RowDataIdMap) []FilterTest {
 				"weight": {"100", "200"},
 			},
 			sampleRows,
+			nil,
 			nil,
 		),
 
@@ -212,6 +219,7 @@ func GetValidFilterTests(sampleRows types.RowDataIdMap) []FilterTest {
 			},
 			sampleRows,
 			nil,
+			nil,
 		),
 		MakeFilterTest(
 			// valid exercise with no matching weight
@@ -221,6 +229,7 @@ func GetValidFilterTests(sampleRows types.RowDataIdMap) []FilterTest {
 				"weight": {"50"},
 			},
 			sampleRows,
+			nil,
 			nil,
 		),
 	}
@@ -235,6 +244,7 @@ func GetInvalidQueryTests() []FilterTest {
 			},
 			types.RowDataIdMap{},
 			"attempt to filter on key name with no values",
+			"attempt to filter on key name with no values",
 		),
 		MakeFilterTest(
 			"invalid column names",
@@ -243,6 +253,7 @@ func GetInvalidQueryTests() []FilterTest {
 			},
 			types.RowDataIdMap{},
 			"pq: column \"not_a_col\" does not exist",
+			"Column 'not_a_col' does not exist in table exercise_sets",
 		),
 		MakeFilterTest(
 			"invalid column values",
@@ -250,6 +261,7 @@ func GetInvalidQueryTests() []FilterTest {
 				"weight": {"not int"},
 			},
 			types.RowDataIdMap{},
+			"pq: invalid input syntax for type smallint: \"not int\"",
 			"pq: invalid input syntax for type smallint: \"not int\"",
 		),
 	}

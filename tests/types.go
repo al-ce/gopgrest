@@ -36,5 +36,6 @@ type FilterTest struct {
 	TestName  string
 	Filters   types.QueryFilter
 	RowCount  int
-	ExpectErr any
+	PqErr any
+	CustomErr any
 }
