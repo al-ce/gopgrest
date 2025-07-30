@@ -50,42 +50,42 @@ func (s *Service) PickRow(tableName, id string) (types.RowData, error) {
 }
 
 // ListRows gets rows from a table with optional filter params
-func (s *Service) ListRows(tableName string, qf types.QueryFilter) (types.RowDataIdMap, error) {
+func (s *Service) ListRows(tableName string, qf types.QueryFilter) (*types.RowDataIdMap, error) {
 	// Get table info for verification
 	table, err := s.repo.GetTable(tableName)
 	if err != nil {
-		return types.RowDataIdMap{}, err
+		return nil, err
 	}
 
 	// Each column in the query params must exist in the table
 	cols := slices.Collect(maps.Keys(qf))
 	if err := s.verifyColumns(table, cols); err != nil {
-		return types.RowDataIdMap{}, err
+		return nil, err
 	}
 
 	rows, err := s.repo.ListRows(tableName, qf)
 	if err != nil {
-		return types.RowDataIdMap{}, err
+		return nil, err
 	}
 	defer rows.Close()
 
 	// Scan rows into struct slice
 	listQueryResults, err := s.scanRows(tableName, rows)
 	if err != nil {
-		return types.RowDataIdMap{}, err
+		return nil, err
 	}
 	return listQueryResults, nil
 }
 
 // UpdateRow updates any number of valid columns with separate calls to
 // Repository.UpdateRowCol
-func (s *Service) UpdateRow(tableName, id string, updateData types.RowData) error {
+func (s *Service) UpdateRow(tableName, id string, updateData *types.RowData) error {
 	table, err := s.repo.GetTable(tableName)
 	if err != nil {
 		return err
 	}
 	// Each column in the update data must exist in the table
-	cols := slices.Collect(maps.Keys(updateData))
+	cols := slices.Collect(maps.Keys(*updateData))
 	if err := s.verifyColumns(table, cols); err != nil {
 		return err
 	}
@@ -99,7 +99,7 @@ func (s *Service) UpdateRow(tableName, id string, updateData types.RowData) erro
 	}
 
 	// Update individual columns in the row
-	for col, val := range updateData {
+	for col, val := range *updateData {
 		if err := s.repo.UpdateRowCol(tableName, id, col, val); err != nil {
 			return err
 		}

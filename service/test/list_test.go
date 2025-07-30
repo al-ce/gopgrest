@@ -30,7 +30,7 @@ func TestService_ListRows_ValidFilters(t *testing.T) {
 				t.Errorf("ListRows err: %v\n", err)
 			}
 			filteredSampleRows := tests.FilterSampleRows(tt.Filters, sampleRows)
-			for idx, rdm := range rowDataMap {
+			for idx, rdm := range *rowDataMap {
 				sample := filteredSampleRows[idx]
 				for k, v := range sample {
 					colVal := rdm[k]

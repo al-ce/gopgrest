@@ -21,11 +21,11 @@ func (s *Service) verifyColumns(t *repository.Table, cols []string) error {
 }
 
 // scanRows scans rows from a query into a map
-func (s *Service) scanRows(tableName string, rows *sql.Rows) (types.RowDataIdMap, error) {
+func (s *Service) scanRows(tableName string, rows *sql.Rows) (*types.RowDataIdMap, error) {
 	// Get Table from Repository
 	table, err := s.repo.GetTable(tableName)
 	if err != nil {
-		return types.RowDataIdMap{}, err
+		return nil, err
 	}
 
 	// Make a slice of zero values for this table and a slice of pointers to
@@ -37,17 +37,17 @@ func (s *Service) scanRows(tableName string, rows *sql.Rows) (types.RowDataIdMap
 		// Scan column values into pointer slice
 		err := rows.Scan(rowPtrs...)
 		if err != nil {
-			return types.RowDataIdMap{}, err
+			return nil, err
 		}
 		// Create row data map of column names and column values
 		id, scannedRow, err := makeScannedRowMap(table, rowValues)
 		if err != nil {
-			return types.RowDataIdMap{}, nil
+			return nil, nil
 		}
 		scannedRowIdMap[id] = scannedRow
 	}
 
-	return scannedRowIdMap, nil
+	return &scannedRowIdMap, nil
 }
 
 // scanSingleRow scans a single row from a query into a map
