@@ -41,11 +41,7 @@ type InsertResult struct {
 }
 
 // NewRepository returns a new Repository
-func NewRepository(db QueryExecutor) Repository {
-	tables, err := getPublicTables(db)
-	if err != nil {
-		panic(err)
-	}
+func NewRepository(db QueryExecutor, tables []Table) Repository {
 	return Repository{
 		db:     db,
 		tables: tables,
@@ -97,9 +93,9 @@ func NewTable(db QueryExecutor, tableName string) (*Table, error) {
 	}, nil
 }
 
-// getPublicTables gets the public tables in the database and builds a slice of
+// GetPublicTables gets the public tables in the database and builds a slice of
 // Table structs to assign to the table field of the Repository
-func getPublicTables(db QueryExecutor) ([]Table, error) {
+func GetPublicTables(db QueryExecutor) ([]Table, error) {
 	// Get table names with query
 	rows, err := db.Query(
 		`select tablename from pg_catalog.pg_tables where schemaname='public'`,

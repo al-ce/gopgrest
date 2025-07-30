@@ -27,6 +27,7 @@ const TABLE1 = "exercise_sets"
 type TestDB struct {
 	DB *sql.DB
 	TX *sql.Tx
+	Tables []repository.Table
 }
 
 // ExerciseSet matches the exercise_set table in the test database so that rows
@@ -89,6 +90,10 @@ func NewTestDB(t *testing.T) *TestDB {
 		t.Fatalf("could not connect to db: %v", err)
 	}
 
+	// Get tables from database here rather than from a Tx later, which won't
+	// return the column names
+	tables, err := repository.GetPublicTables(db)
+
 	t.Cleanup(func() {
 		db.Close()
 	})
@@ -96,6 +101,7 @@ func NewTestDB(t *testing.T) *TestDB {
 	return &TestDB{
 		db,
 		nil,
+		tables,
 	}
 }
 
@@ -117,7 +123,7 @@ func (tdb *TestDB) BeginTX(t *testing.T) *sql.Tx {
 func NewTestRepo(t *testing.T) (repository.Repository, map[int64]types.RowDataMap) {
 	tdb := NewTestDB(t)
 	tx := tdb.BeginTX(t)
-	repo := repository.NewRepository(tx)
+	repo := repository.NewRepository(tx, tdb.Tables)
 	sampleRows := InsertSampleRows(repo)
 	return repo, sampleRows
 }

@@ -25,7 +25,11 @@ var (
 )
 
 func NewAPIHandler(db *sql.DB) APIHandler {
-	repo := repository.NewRepository(db)
+	tables, err := repository.GetPublicTables(db)
+	if err != nil {
+		panic(err)
+	}
+	repo := repository.NewRepository(db, tables)
 	service := service.NewService(repo)
 	return APIHandler{
 		service: service,
@@ -164,7 +168,6 @@ func (h *APIHandler) Pick(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		InternalServerErrorHandler(w, r, err.Error())
 	}
-
 
 	matches := ReRequestWithId.FindStringSubmatch(r.URL.Path)
 	if len(matches) < 2 {
