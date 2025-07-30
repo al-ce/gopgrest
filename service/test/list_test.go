@@ -7,7 +7,19 @@ import (
 	"ftrack/tests"
 )
 
-func Test_Service_ListRows(t *testing.T) {
+func TestService_ListRows_InvalidFilters(t *testing.T) {
+	for _, tt := range tests.GetInvalidQueryTests() {
+		t.Run(tt.TestName, func(t *testing.T) {
+			serv, _ := tests.NewTestService(t)
+			_, err := serv.ListRows(tests.TABLE1, tt.Filters)
+			if tests.CheckExpectedErr(tt.CustomErr, err) {
+				t.Errorf("\nExp: %v\nGot: %v", tt.CustomErr, err)
+			}
+		})
+	}
+}
+
+func TestService_ListRows_ValidFilters(t *testing.T) {
 	serv, sampleRows := tests.NewTestService(t)
 	filterTests := tests.GetValidFilterTests(sampleRows)
 
@@ -23,7 +35,7 @@ func Test_Service_ListRows(t *testing.T) {
 				for k, v := range sample {
 					colVal := rdm[k]
 					if fmt.Sprintf("%v", v) != fmt.Sprintf("%v", colVal) {
-						t.Errorf("Expected %s: %v %T\nGot: %v %T", k, v, v, colVal, colVal)
+						t.Errorf("\nExp %s: %v %T\nGot: %v %T", k, v, v, colVal, colVal)
 					}
 				}
 			}
