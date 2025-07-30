@@ -2,6 +2,7 @@ package service
 
 import (
 	"encoding/json"
+	"fmt"
 	"maps"
 	"slices"
 
@@ -36,28 +37,31 @@ func (s *Service) InsertRow(newRow *types.RowData, tableName string) (int64, err
 // PickRow gets a row from a table by id
 func (s *Service) PickRow(tableName, id string) (types.RowData, error) {
 	row := s.repo.GetRowByID(tableName, id)
-	rowDataMap, err := s.scanSingleRow(tableName, row)
-	return rowDataMap, err
+	gotId, rowData, err := s.scanSingleRow(tableName, row)
+	if fmt.Sprintf("%v", gotId) != id {
+		return types.RowData{}, fmt.Errorf("PickRow got id %v, requested %s", gotId, id)
+	}
+	return rowData, err
 }
 
 // ListRows gets rows from a table with optional filter params
-func (s *Service) ListRows(tableName string, qf types.QueryFilter) ([]types.RowData, error) {
+func (s *Service) ListRows(tableName string, qf types.QueryFilter) (types.RowDataIdMap, error) {
 	// Each column in the query params must exist in the table
 	cols := slices.Collect(maps.Keys(qf))
 	if err := s.verifyColumns(tableName, cols); err != nil {
-		return []types.RowData{}, err
+		return types.RowDataIdMap{}, err
 	}
 
 	rows, err := s.repo.ListRows(tableName, qf)
 	if err != nil {
-		return []types.RowData{}, err
+		return types.RowDataIdMap{}, err
 	}
 	defer rows.Close()
 
 	// Scan rows into struct slice
 	listQueryResults, err := s.scanRows(tableName, rows)
 	if err != nil {
-		return []types.RowData{}, err
+		return types.RowDataIdMap{}, err
 	}
 	return listQueryResults, nil
 }

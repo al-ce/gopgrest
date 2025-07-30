@@ -25,38 +25,45 @@ func (s *Service) verifyColumns(tableName string, cols []string) error {
 }
 
 // scanRows scans rows from a query into a map
-func (s *Service) scanRows(tableName string, rows *sql.Rows) ([]types.RowData, error) {
+func (s *Service) scanRows(tableName string, rows *sql.Rows) (types.RowDataIdMap, error) {
 	// Get Table from Repository
 	table, err := s.repo.GetTable(tableName)
 	if err != nil {
-		return []types.RowData{}, err
+		return types.RowDataIdMap{}, err
 	}
 
 	// Make a slice of zero values for this table and a slice of pointers to
 	// those zero values
 	rowValues, rowPtrs := makeScanDestination(table)
 
-	scannedRowMapSlice := []types.RowData{}
+	scannedRowIdMap := make(types.RowDataIdMap)
 	for rows.Next() {
 		// Scan column values into pointer slice
 		err := rows.Scan(rowPtrs...)
 		if err != nil {
-			return []types.RowData{}, err
+			return types.RowDataIdMap{}, err
 		}
 		// Create row data map of column names and column values
-		scannedRowMap := makeScannedRowMap(table, rowValues)
-		scannedRowMapSlice = append(scannedRowMapSlice, scannedRowMap)
+		id, scannedRow, err := makeScannedRowMap(table, rowValues)
+		if err != nil {
+			return types.RowDataIdMap{}, nil
+		}
+		scannedRowIdMap[id] = scannedRow
 	}
 
-	return scannedRowMapSlice, nil
+	return scannedRowIdMap, nil
 }
 
 // scanSingleRow scans a single row from a query into a map
-func (s *Service) scanSingleRow(tableName string, row *sql.Row) (types.RowData, error) {
+func (s *Service) scanSingleRow(tableName string, row *sql.Row) (
+	int64,
+	types.RowData,
+	error,
+) {
 	// Get Table from Repository
 	table, err := s.repo.GetTable(tableName)
 	if err != nil {
-		return types.RowData{}, err
+		return -1, types.RowData{}, err
 	}
 
 	// Make a slice of zero values for this table and a slice of pointers to
@@ -66,11 +73,14 @@ func (s *Service) scanSingleRow(tableName string, row *sql.Row) (types.RowData, 
 	// Scan column values into pointer slice
 	err = row.Scan(rowPtrs...)
 	if err != nil {
-		return types.RowData{}, err
+		return -1, types.RowData{}, err
 	}
 	// Create row data map of column names and column values
-	scannedRowMap := makeScannedRowMap(table, rowValues)
-	return scannedRowMap, nil
+	id, scannedRowMap, err := makeScannedRowMap(table, rowValues)
+	if err != nil {
+		return -1, types.RowData{}, err
+	}
+	return id, scannedRowMap, nil
 }
 
 // makeScanDestination create slices to hold zero values for a given table and
@@ -86,12 +96,26 @@ func makeScanDestination(table *repository.Table) ([]any, []any) {
 }
 
 // makeScannedRowMap fills a RowDataMap with values from a scanned row
-func makeScannedRowMap(table *repository.Table, rowValues []any) types.RowData {
-	scannedRowMap := types.RowData{}
+func makeScannedRowMap(table *repository.Table, rowValues []any) (
+	int64,
+	types.RowData,
+	error,
+) {
+	var id int64
+	scannedRow := make(types.RowData)
 	for i := range len(table.Columns) {
 		col := table.Columns[i].Name
-		scannedRowMap[col] = rowValues[i]
+		val := rowValues[i]
+		if col == "id" && reflect.TypeOf(val) == reflect.TypeOf(int64(0)) {
+			idCast, isInt64 := val.(int64)
+			if !isInt64 {
+				return -1, types.RowData{}, fmt.Errorf("makeScannedRowMap could not convert ")
+			} else {
+				id = idCast
+			}
+		}
+		scannedRow[col] = val
 
 	}
-	return scannedRowMap
+	return id, scannedRow, nil
 }
