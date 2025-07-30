@@ -33,8 +33,8 @@ type QueryExecutor interface {
 
 // Repository handles database transactions
 type Repository struct {
-	db     QueryExecutor
-	tables []Table
+	DB     QueryExecutor
+	Tables []Table
 }
 
 // InsertResult contains information from the result of an insert query
@@ -46,8 +46,8 @@ type InsertResult struct {
 // NewRepository returns a new Repository
 func NewRepository(db QueryExecutor, tables []Table) Repository {
 	return Repository{
-		db:     db,
-		tables: tables,
+		DB:     db,
+		Tables: tables,
 	}
 }
 

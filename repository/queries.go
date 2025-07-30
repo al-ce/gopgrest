@@ -22,7 +22,7 @@ func (r *Repository) ListRows(tableName string, qf types.QueryFilter) (*sql.Rows
 	listStmt := "SELECT * FROM " + tableName + conditional
 
 	// Execute list query
-	rows, err := r.db.Query(listStmt, values...)
+	rows, err := r.DB.Query(listStmt, values...)
 	if err != nil {
 		return nil, err
 	}
@@ -36,7 +36,7 @@ func (r *Repository) GetRowByID(tableName, id string) *sql.Row {
 		tableName, id,
 	)
 
-	return r.db.QueryRow(
+	return r.DB.QueryRow(
 		fmt.Sprintf("SELECT * FROM %s WHERE id=$1", tableName),
 		id,
 	)
@@ -72,7 +72,7 @@ func (r *Repository) InsertRow(tableName string, newRow *types.RowData) (result 
 		"RETURNING id"
 
 	// Execute insert query
-	row := r.db.QueryRow(createStmnt, values...)
+	row := r.DB.QueryRow(createStmnt, values...)
 	result.Error = row.Scan(&result.ID)
 	return
 }
@@ -90,7 +90,7 @@ func (r *Repository) UpdateRowCol(tableName, id, col string, value any) error {
 		tableName, col,
 	)
 
-	if _, err := r.db.Exec(updateStmt, value, id); err != nil {
+	if _, err := r.DB.Exec(updateStmt, value, id); err != nil {
 		return err
 	}
 
@@ -107,7 +107,7 @@ func (r *Repository) DeleteRow(tableName, id string) error {
 	)
 
 	// Execute delete query
-	result, err := r.db.Exec(deleteStmt, id)
+	result, err := r.DB.Exec(deleteStmt, id)
 	if err != nil {
 		return err
 	}

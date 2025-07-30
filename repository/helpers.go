@@ -8,7 +8,7 @@ import (
 
 // GetTable gets a table from the tables slice by name
 func (r *Repository) GetTable(tableName string) (*Table, error) {
-	for _, t := range r.tables {
+	for _, t := range r.Tables {
 		if t.Name == tableName {
 			return &t, nil
 		}
