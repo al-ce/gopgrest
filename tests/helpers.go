@@ -13,7 +13,7 @@ import (
 // InsertSampleRows inserts sample rows into a repo
 func InsertSampleRows(repo repository.Repository) SampleRowsIdMap {
 	// sampleRows are used to populate the test database
-	sampleRows := []types.RowDataMap{
+	sampleRows := []types.RowData{
 		{
 			"Name":   "deadlift",
 			"Weight": 300,
@@ -95,8 +95,8 @@ func ScanNextExerciseSetRow(toScan *ExerciseSet, rows *sql.Rows) error {
 }
 
 // FilterSampleRows filters the sample rows by a map of params
-func FilterSampleRows(qf types.QueryFilter, sampleRows SampleRowsIdMap) []types.RowDataMap {
-	m := []types.RowDataMap{}
+func FilterSampleRows(qf types.QueryFilter, sampleRows SampleRowsIdMap) []types.RowData {
+	m := []types.RowData{}
 	for _, row := range sampleRows {
 		match := true
 		for k := range row {

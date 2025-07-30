@@ -5,6 +5,6 @@ package types
 // filter must match the corresponding column value of the row.
 type QueryFilter map[string][]string
 
-// RowDataMap is a map used to store data that was retrieved from the database
+// RowData is a map used to store data that was retrieved from the database
 // or that is to be written to the database
-type RowDataMap map[string]any
+type RowData map[string]any

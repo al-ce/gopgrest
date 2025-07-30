@@ -20,7 +20,7 @@ type updateTest struct {
 func TestUpdateRowCol(t *testing.T) {
 	repo, _ := tests.NewTestRepo(t)
 
-	sampleRow := types.RowDataMap{
+	sampleRow := types.RowData{
 		"Name":   "romanian deadlift",
 		"Weight": 309,
 	}

@@ -13,13 +13,13 @@ import (
 func TestInsertRow(t *testing.T) {
 	insertTests := []struct {
 		name       string
-		newRow     types.RowDataMap
+		newRow     types.RowData
 		expectRows int64
 		expectErr  any
 	}{
 		{
 			"ins row with valid col names/values",
-			types.RowDataMap{
+			types.RowData{
 				"name":   "deadlift",
 				"weight": 200,
 				"reps":   10,
@@ -29,7 +29,7 @@ func TestInsertRow(t *testing.T) {
 		},
 		{
 			"ins row with missing req cols",
-			types.RowDataMap{
+			types.RowData{
 				"weight": 200,
 				"reps":   10,
 			},
@@ -38,7 +38,7 @@ func TestInsertRow(t *testing.T) {
 		},
 		{
 			"ins row with invalid values",
-			types.RowDataMap{
+			types.RowData{
 				"weight": "not int",
 			},
 			0,
@@ -46,7 +46,7 @@ func TestInsertRow(t *testing.T) {
 		},
 		{
 			"ins with invalid col names",
-			types.RowDataMap{
+			types.RowData{
 				"not_a_col": 10,
 			},
 			0,

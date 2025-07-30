@@ -34,7 +34,7 @@ func (r *Repository) GetRowByID(tableName, id string) *sql.Row {
 }
 
 // InsertRow inserts a new row into a specified table
-func (r *Repository) InsertRow(tableName string, newRow *types.RowDataMap) (result InsertResult) {
+func (r *Repository) InsertRow(tableName string, newRow *types.RowData) (result InsertResult) {
 	// Create cols/values/placeholders slices in consistent order
 	var cols []string
 	var values []any

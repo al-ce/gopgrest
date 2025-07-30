@@ -79,7 +79,7 @@ func (h *APIHandler) Update(w http.ResponseWriter, r *http.Request) {
 	id := matches[1]
 
 	// Decode request body into map to dynamically update row
-	var updateData types.RowDataMap
+	var updateData types.RowData
 	err = json.NewDecoder(r.Body).Decode(&updateData)
 	if err != nil {
 		log.Println(err)
@@ -138,7 +138,7 @@ func (h *APIHandler) Insert(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Decode request
-	var data *types.RowDataMap
+	var data *types.RowData
 	err = json.NewDecoder(r.Body).Decode(&data)
 	if err != nil {
 		log.Println(err)
