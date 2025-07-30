@@ -13,7 +13,7 @@ import (
 )
 
 func TestRepo_ListRows_InvalidFilters(t *testing.T) {
-	invalidQueryTests := tests.GetInvalidQueryTests(types.RowDataIdMap{})
+	invalidQueryTests := tests.GetInvalidQueryTests()
 	for _, tt := range invalidQueryTests {
 		t.Run(tt.TestName, func(t *testing.T) {
 			repo, _ := tests.NewTestRepo(t)

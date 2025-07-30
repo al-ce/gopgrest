@@ -226,7 +226,7 @@ func GetValidFilterTests(sampleRows types.RowDataIdMap) []FilterTest {
 	}
 }
 
-func GetInvalidQueryTests(sampleRows types.RowDataIdMap) []FilterTest {
+func GetInvalidQueryTests() []FilterTest {
 	return []FilterTest{
 		MakeFilterTest(
 			"empty filter value",
