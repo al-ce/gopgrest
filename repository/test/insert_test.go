@@ -15,8 +15,8 @@ func TestRepo_InsertRow(t *testing.T) {
 			// when they fail
 			repo, _ := tests.NewTestRepo(t)
 			result := repo.InsertRow(tests.TABLE1, &tt.NewRow)
-			if tests.CheckExpectedErr(tt.ExpectErr, result.Error) {
-				t.Errorf("Expected error: %v\nGot %v", tt.ExpectErr, result.Error)
+			if tests.CheckExpectedErr(tt.PqErr, result.Error) {
+				t.Errorf("Expected error: %v\nGot %v", tt.PqErr, result.Error)
 			}
 		})
 	}

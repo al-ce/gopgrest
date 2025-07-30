@@ -50,7 +50,7 @@ func TestRepo_UpdateRowCol(t *testing.T) {
 			fmt.Sprintf("%d", insertResult.ID),
 			"not_a_col",
 			"hack squat",
-			"pq: column \"not_a_col\" of relation \"exercise_sets\" does not exist",
+			fmt.Sprintf("pq: column \"not_a_col\" of relation %s does not exist", tests.TABLE1),
 		},
 	}
 

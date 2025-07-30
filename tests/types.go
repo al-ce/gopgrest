@@ -44,5 +44,6 @@ type InsertTest struct {
 	Name       string
 	NewRow     types.RowData
 	ExpectRows int64
-	ExpectErr  any
+	PqErr  any
+	CustomErr  any
 }

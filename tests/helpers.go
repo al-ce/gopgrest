@@ -7,6 +7,7 @@ import (
 	"slices"
 
 	"ftrack/repository"
+	"ftrack/tests"
 	"ftrack/types"
 )
 
@@ -252,8 +253,8 @@ func GetInvalidQueryTests() []FilterTest {
 				"not_a_col": {"value"},
 			},
 			types.RowDataIdMap{},
-			"pq: column \"not_a_col\" does not exist",
-			"Column 'not_a_col' does not exist in table exercise_sets",
+			fmt.Sprintf("pq: column %s does not exist", tests.TABLE1),
+			fmt.Sprintf("Column 'not_a_col' does not exist in table %s", tests.TABLE1),
 		),
 		MakeFilterTest(
 			"invalid column values",
@@ -278,6 +279,7 @@ func GetInsertTests() []InsertTest {
 			},
 			1,
 			nil,
+			nil,
 		},
 		{
 			"ins row with missing req cols",
@@ -286,7 +288,14 @@ func GetInsertTests() []InsertTest {
 				"reps":   10,
 			},
 			0,
-			"pq: null value in column \"name\" of relation \"exercise_sets\" violates not-null constraint",
+			fmt.Sprintf(
+				"pq: null value in column \"name\" of relation %s violates not-null constraint",
+				tests.TTABLE1,
+			),
+			fmt.Sprintf(
+				"pq: null value in column \"name\" of relation %s violates not-null constraint",
+				tests.TTABLE1,
+			),
 		},
 		{
 			"ins row with invalid values",
@@ -295,6 +304,7 @@ func GetInsertTests() []InsertTest {
 			},
 			0,
 			"pq: invalid input syntax for type smallint: \"not int\"",
+			"pq: invalid input syntax for type smallint: \"not int\"",
 		},
 		{
 			"ins with invalid col names",
@@ -302,9 +312,8 @@ func GetInsertTests() []InsertTest {
 				"not_a_col": 10,
 			},
 			0,
-			fmt.Sprintf(
-				"pq: column \"not_a_col\" of relation \"%s\" does not exist",
-				TABLE1),
+			fmt.Sprintf("pq: column \"not_a_col\" of relation \"%s\" does not exist", TABLE1),
+			fmt.Sprintf("Column 'not_a_col' does not exist in table %s", tests.TABLE1),
 		},
 	}
 }
