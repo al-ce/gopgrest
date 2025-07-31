@@ -1,7 +1,6 @@
 package api
 
 import (
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -14,8 +13,8 @@ import (
 )
 
 type APIHandler struct {
-	service service.Service
-	repo    repository.Repository
+	Service service.Service
+	Repo    repository.Repository
 }
 
 var (
@@ -24,7 +23,7 @@ var (
 	ReTable         = regexp.MustCompile(`^/(\w+).*$`)
 )
 
-func NewAPIHandler(db *sql.DB) APIHandler {
+func NewAPIHandler(db repository.QueryExecutor) APIHandler {
 	tables, err := repository.GetPublicTables(db)
 	if err != nil {
 		panic(err)
@@ -32,8 +31,8 @@ func NewAPIHandler(db *sql.DB) APIHandler {
 	repo := repository.NewRepository(db, tables)
 	service := service.NewService(repo)
 	return APIHandler{
-		service: service,
-		repo:    repo,
+		Service: service,
+		Repo:    repo,
 	}
 }
 
@@ -88,7 +87,7 @@ func (h *APIHandler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Update row with request data
-	if err := h.service.UpdateRow(table, id, updateData); err != nil {
+	if err := h.Service.UpdateRow(table, id, updateData); err != nil {
 		log.Println(err)
 		InternalServerErrorHandler(w, r, fmt.Sprintf("%v", err))
 		return
@@ -117,7 +116,7 @@ func (h *APIHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	id := matches[1]
 
 	// Delete row by id
-	if err := h.service.DeleteRow(table, id); err != nil {
+	if err := h.Service.DeleteRow(table, id); err != nil {
 		log.Println(err)
 		InternalServerErrorHandler(w, r, fmt.Sprintf("%v", err))
 		return
@@ -148,7 +147,7 @@ func (h *APIHandler) Insert(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Insert new set into the database
-	newRowId, err := h.service.InsertRow(data, table)
+	newRowId, err := h.Service.InsertRow(data, table)
 	if err != nil {
 		log.Println(err)
 		InternalServerErrorHandler(w, r, fmt.Sprintf("%v", err))
@@ -178,7 +177,7 @@ func (h *APIHandler) Pick(w http.ResponseWriter, r *http.Request) {
 	rowID := matches[1]
 
 	// Retrieve pickQueryResult from database
-	pickQueryResult, err := h.service.PickRow(table, rowID)
+	pickQueryResult, err := h.Service.PickRow(table, rowID)
 	if err != nil {
 		log.Println(err)
 		InternalServerErrorHandler(w, r, fmt.Sprintf("%v", err))
@@ -211,7 +210,7 @@ func (h *APIHandler) List(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Retrieve listQueryResults from database
-	listQueryResults, err := h.service.ListRows(table, types.QueryFilter(r.URL.Query()))
+	listQueryResults, err := h.Service.ListRows(table, types.QueryFilter(r.URL.Query()))
 	if err != nil {
 		log.Println(err)
 		InternalServerErrorHandler(w, r, fmt.Sprintf("%v", err))
@@ -239,7 +238,7 @@ func (h *APIHandler) tableExists(r *http.Request) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	table, err := h.repo.GetTable(tableName)
+	table, err := h.Repo.GetTable(tableName)
 	return table != nil, err
 }
 
@@ -251,7 +250,6 @@ func (h *APIHandler) extractTableName(r *http.Request) (string, error) {
 	}
 	return matches[1], nil
 }
-
 
 // InternalServerErrorHandler responds with a 500 status and an error message
 func InternalServerErrorHandler(w http.ResponseWriter, r *http.Request, message string) {
