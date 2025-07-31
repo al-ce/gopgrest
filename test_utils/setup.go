@@ -8,6 +8,7 @@ import (
 
 	_ "github.com/lib/pq"
 
+	"ftrack/api"
 	"ftrack/repository"
 	"ftrack/service"
 	"ftrack/types"
@@ -76,4 +77,12 @@ func NewTestRepo(t *testing.T) (repository.Repository, types.RowDataIdMap) {
 func NewTestService(t *testing.T) (service.Service, types.RowDataIdMap) {
 	repo, sampleRows := NewTestRepo(t)
 	return service.NewService(repo), sampleRows
+}
+
+func NewTestAPIHandler(t *testing.T) (api.APIHandler, types.RowDataIdMap) {
+	tdb := NewTestDB(t)
+	tx := tdb.BeginTX(t)
+	apih := api.NewAPIHandler(tx)
+	sampleRows := InsertSampleRows(apih.Repo)
+	return apih, sampleRows
 }
