@@ -1,11 +1,16 @@
 package test_utils
 
 import (
+	"bytes"
 	"database/sql"
+	"encoding/json"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"reflect"
 	"slices"
 
+	"ftrack/api"
 	"ftrack/repository"
 	"ftrack/types"
 )
@@ -344,4 +349,22 @@ func GetUpdateTests(insertResult repository.InsertResult) []UpdateTest {
 			fmt.Sprintf("Column 'not_a_col' does not exist in table %s", TABLE1),
 		},
 	}
+}
+
+func MakeRequest(ah api.APIHandler, reqData any, path string) (*httptest.ResponseRecorder, error) {
+	jsonData, err := json.Marshal(reqData)
+	if err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequest(
+		http.MethodPost,
+		path,
+		bytes.NewBuffer(jsonData),
+	)
+	if err != nil {
+		return nil, err
+	}
+	rr := httptest.NewRecorder()
+	ah.ServeHTTP(rr, req)
+	return rr, nil
 }
