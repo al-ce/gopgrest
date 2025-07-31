@@ -12,19 +12,19 @@ import (
 
 // Service handles business logic with retrieved repository data
 type Service struct {
-	repo repository.Repository
+	Repo repository.Repository
 }
 
 // NewService returns a new Service struct
 func NewService(r repository.Repository) Service {
 	return Service{
-		repo: r,
+		Repo: r,
 	}
 }
 
 // InsertRow inserts a new row in a specified table
 func (s *Service) InsertRow(newRow *types.RowData, tableName string) (int64, error) {
-	table, err := s.repo.GetTable(tableName)
+	table, err := s.Repo.GetTable(tableName)
 	if err != nil {
 		return -1, err
 	}
@@ -35,13 +35,13 @@ func (s *Service) InsertRow(newRow *types.RowData, tableName string) (int64, err
 		return -1, err
 	}
 
-	result := s.repo.InsertRow(tableName, newRow)
+	result := s.Repo.InsertRow(tableName, newRow)
 	return result.ID, result.Error
 }
 
 // PickRow gets a row from a table by id
 func (s *Service) PickRow(tableName, id string) (types.RowData, error) {
-	row := s.repo.GetRowByID(tableName, id)
+	row := s.Repo.GetRowByID(tableName, id)
 	gotId, rowData, err := s.scanSingleRow(tableName, row)
 	if fmt.Sprintf("%v", gotId) != id {
 		return types.RowData{}, fmt.Errorf("PickRow got id %v, requested %s", gotId, id)
@@ -52,7 +52,7 @@ func (s *Service) PickRow(tableName, id string) (types.RowData, error) {
 // ListRows gets rows from a table with optional filter params
 func (s *Service) ListRows(tableName string, qf types.QueryFilter) (*types.RowDataIdMap, error) {
 	// Get table info for verification
-	table, err := s.repo.GetTable(tableName)
+	table, err := s.Repo.GetTable(tableName)
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +63,7 @@ func (s *Service) ListRows(tableName string, qf types.QueryFilter) (*types.RowDa
 		return nil, err
 	}
 
-	rows, err := s.repo.ListRows(tableName, qf)
+	rows, err := s.Repo.ListRows(tableName, qf)
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +80,7 @@ func (s *Service) ListRows(tableName string, qf types.QueryFilter) (*types.RowDa
 // UpdateRow updates any number of valid columns with separate calls to
 // Repository.UpdateRowCol
 func (s *Service) UpdateRow(tableName, id string, updateData *types.RowData) error {
-	table, err := s.repo.GetTable(tableName)
+	table, err := s.Repo.GetTable(tableName)
 	if err != nil {
 		return err
 	}
@@ -100,7 +100,7 @@ func (s *Service) UpdateRow(tableName, id string, updateData *types.RowData) err
 
 	// Update individual columns in the row
 	for col, val := range *updateData {
-		if err := s.repo.UpdateRowCol(tableName, id, col, val); err != nil {
+		if err := s.Repo.UpdateRowCol(tableName, id, col, val); err != nil {
 			return err
 		}
 	}
@@ -109,5 +109,5 @@ func (s *Service) UpdateRow(tableName, id string, updateData *types.RowData) err
 
 // DeleteRow removes a row from the table by id
 func (s *Service) DeleteRow(tableName, id string) error {
-	return s.repo.DeleteRow(tableName, id)
+	return s.Repo.DeleteRow(tableName, id)
 }

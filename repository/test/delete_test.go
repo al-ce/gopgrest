@@ -27,7 +27,6 @@ func TestRepo_DeleteRow(t *testing.T) {
 					scannedRow,
 				)
 			}
-
 		}
 	})
 

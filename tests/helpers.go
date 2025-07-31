@@ -7,7 +7,6 @@ import (
 	"slices"
 
 	"ftrack/repository"
-	"ftrack/tests"
 	"ftrack/types"
 )
 
@@ -253,8 +252,8 @@ func GetInvalidQueryTests() []FilterTest {
 				"not_a_col": {"value"},
 			},
 			types.RowDataIdMap{},
-			fmt.Sprintf("pq: column %s does not exist", tests.TABLE1),
-			fmt.Sprintf("Column 'not_a_col' does not exist in table %s", tests.TABLE1),
+			fmt.Sprintf("pq: column %s does not exist", TABLE1),
+			fmt.Sprintf("Column 'not_a_col' does not exist in table %s", TABLE1),
 		),
 		MakeFilterTest(
 			"invalid column values",
@@ -290,11 +289,11 @@ func GetInsertTests() []InsertTest {
 			0,
 			fmt.Sprintf(
 				"pq: null value in column \"name\" of relation %s violates not-null constraint",
-				tests.TTABLE1,
+				TABLE1,
 			),
 			fmt.Sprintf(
 				"pq: null value in column \"name\" of relation %s violates not-null constraint",
-				tests.TTABLE1,
+				TABLE1,
 			),
 		},
 		{
@@ -313,7 +312,7 @@ func GetInsertTests() []InsertTest {
 			},
 			0,
 			fmt.Sprintf("pq: column \"not_a_col\" of relation \"%s\" does not exist", TABLE1),
-			fmt.Sprintf("Column 'not_a_col' does not exist in table %s", tests.TABLE1),
+			fmt.Sprintf("Column 'not_a_col' does not exist in table %s", TABLE1),
 		},
 	}
 }

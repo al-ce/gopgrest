@@ -23,7 +23,7 @@ func (s *Service) verifyColumns(t *repository.Table, cols []string) error {
 // scanRows scans rows from a query into a map
 func (s *Service) scanRows(tableName string, rows *sql.Rows) (*types.RowDataIdMap, error) {
 	// Get Table from Repository
-	table, err := s.repo.GetTable(tableName)
+	table, err := s.Repo.GetTable(tableName)
 	if err != nil {
 		return nil, err
 	}
@@ -57,7 +57,7 @@ func (s *Service) scanSingleRow(tableName string, row *sql.Row) (
 	error,
 ) {
 	// Get Table from Repository
-	table, err := s.repo.GetTable(tableName)
+	table, err := s.Repo.GetTable(tableName)
 	if err != nil {
 		return -1, types.RowData{}, err
 	}
