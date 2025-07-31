@@ -351,13 +351,13 @@ func GetUpdateTests(insertResult repository.InsertResult) []UpdateTest {
 	}
 }
 
-func MakeRequest(ah api.APIHandler, reqData any, path string) (*httptest.ResponseRecorder, error) {
+func MakeRequest(ah api.APIHandler, reqData any, method, path string ) (*httptest.ResponseRecorder, error) {
 	jsonData, err := json.Marshal(reqData)
 	if err != nil {
 		return nil, err
 	}
 	req, err := http.NewRequest(
-		http.MethodPost,
+		method,
 		path,
 		bytes.NewBuffer(jsonData),
 	)
