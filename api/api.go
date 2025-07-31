@@ -23,11 +23,7 @@ var (
 	ReTable         = regexp.MustCompile(`^/(\w+).*$`)
 )
 
-func NewAPIHandler(db repository.QueryExecutor) APIHandler {
-	tables, err := repository.GetPublicTables(db)
-	if err != nil {
-		panic(err)
-	}
+func NewAPIHandler(db repository.QueryExecutor, tables []repository.Table) APIHandler {
 	repo := repository.NewRepository(db, tables)
 	service := service.NewService(repo)
 	return APIHandler{

@@ -82,7 +82,7 @@ func NewTestService(t *testing.T) (service.Service, types.RowDataIdMap) {
 func NewTestAPIHandler(t *testing.T) (api.APIHandler, types.RowDataIdMap) {
 	tdb := NewTestDB(t)
 	tx := tdb.BeginTX(t)
-	apih := api.NewAPIHandler(tx)
+	apih := api.NewAPIHandler(tx, tdb.Tables)
 	sampleRows := InsertSampleRows(apih.Repo)
 	return apih, sampleRows
 }

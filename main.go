@@ -10,6 +10,7 @@ import (
 	_ "github.com/lib/pq"
 
 	"ftrack/api"
+	"ftrack/repository"
 )
 
 const (
@@ -41,7 +42,11 @@ func run() error {
 		log.Println(err)
 	}
 
-	APIHandler := api.NewAPIHandler(db)
+	tables, err := repository.GetPublicTables(db)
+	if err != nil {
+		panic("Could not get public tables")
+	}
+	APIHandler := api.NewAPIHandler(db, tables)
 
 	// Create server and routes
 	mux := http.NewServeMux()
