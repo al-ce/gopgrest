@@ -5,34 +5,34 @@ import (
 	"reflect"
 	"testing"
 
-	"ftrack/tests"
+	"ftrack/test_utils"
 	"ftrack/types"
 )
 
 func TestService_Update(t *testing.T) {
-	serv, _ := tests.NewTestService(t)
+	serv, _ := test_utils.NewTestService(t)
 
 	sampleRow := types.RowData{
 		"name":   "romanian deadlift",
 		"weight": 309,
 	}
 
-	insertResult := serv.Repo.InsertRow(tests.TABLE1, &sampleRow)
+	insertResult := serv.Repo.InsertRow(test_utils.TABLE1, &sampleRow)
 	if insertResult.Error != nil {
 		t.Errorf("Insert err %s", insertResult.Error)
 	}
 
-	tagMap := tests.GetTagMap(tests.ExerciseSet{})
+	tagMap := test_utils.GetTagMap(test_utils.ExerciseSet{})
 
-	updateTests := tests.GetUpdateTests(insertResult)
+	updateTests := test_utils.GetUpdateTests(insertResult)
 
 	for _, tt := range updateTests {
 		t.Run(tt.TestName, func(t *testing.T) {
 			updateData := types.RowData{tt.Col: tt.Value}
 
 			// Exec update query
-			err := serv.UpdateRow(tests.TABLE1, tt.ID, &updateData)
-			if tests.CheckExpectedErr(tt.CustomErr, err) {
+			err := serv.UpdateRow(test_utils.TABLE1, tt.ID, &updateData)
+			if test_utils.CheckExpectedErr(tt.CustomErr, err) {
 				t.Errorf("\nExp: %s\nGot: %s", tt.CustomErr, err)
 			}
 			// Go to next test if this is an invalid update query
@@ -41,11 +41,11 @@ func TestService_Update(t *testing.T) {
 			}
 
 			// Get updated row
-			updatedRow := tests.ExerciseSet{}
-			err = tests.ScanExerciseSetRow(
+			updatedRow := test_utils.ExerciseSet{}
+			err = test_utils.ScanExerciseSetRow(
 				&updatedRow,
 				serv.Repo.GetRowByID(
-					tests.TABLE1,
+					test_utils.TABLE1,
 					fmt.Sprintf("%d", insertResult.ID),
 				),
 			)
@@ -54,7 +54,7 @@ func TestService_Update(t *testing.T) {
 			}
 			// Confirm update
 			rowVal := reflect.ValueOf(updatedRow)
-			fieldName := tests.GetFieldNameByColName(tagMap, tt.Col, tests.ExerciseSet{})
+			fieldName := test_utils.GetFieldNameByColName(tagMap, tt.Col, test_utils.ExerciseSet{})
 			gotVal := rowVal.FieldByName(fieldName).Interface()
 			if tt.Value != gotVal {
 				t.Errorf("Expected %v: %s\nGot %v", tt.Col, tt.Value, gotVal)

@@ -4,15 +4,15 @@ import (
 	"fmt"
 	"testing"
 
-	"ftrack/tests"
+	"ftrack/test_utils"
 )
 
 func TestService_PickRow(t *testing.T) {
-	serv, sampleRows := tests.NewTestService(t)
+	serv, sampleRows := test_utils.NewTestService(t)
 
 	t.Run("pick with valid ids", func(t *testing.T) {
 		for id, sample := range sampleRows {
-			rowDataMap, err := serv.PickRow(tests.TABLE1, fmt.Sprintf("%d", id))
+			rowDataMap, err := serv.PickRow(test_utils.TABLE1, fmt.Sprintf("%d", id))
 			if err != nil {
 				t.Errorf("pick err: %s", err)
 			}
