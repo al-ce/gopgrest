@@ -8,6 +8,8 @@ import (
 	"os"
 
 	_ "github.com/lib/pq"
+
+	"ftrack/api"
 )
 
 const (
@@ -39,7 +41,7 @@ func run() error {
 		log.Println(err)
 	}
 
-	APIHandler := NewAPIHandler(db)
+	APIHandler := api.NewAPIHandler(db)
 
 	// Create server and routes
 	mux := http.NewServeMux()

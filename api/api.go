@@ -1,4 +1,4 @@
-package main
+package api
 
 import (
 	"database/sql"
@@ -250,4 +250,17 @@ func (h *APIHandler) extractTableName(r *http.Request) (string, error) {
 		return "", fmt.Errorf("could not extract table name from %s", r.URL.Path)
 	}
 	return matches[1], nil
+}
+
+
+// InternalServerErrorHandler responds with a 500 status and an error message
+func InternalServerErrorHandler(w http.ResponseWriter, r *http.Request, message string) {
+	w.WriteHeader(http.StatusInternalServerError)
+	w.Write([]byte(message))
+}
+
+// NotFoundHandler responds with a 404 status and an error message
+func NotFoundHandler(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotFound)
+	w.Write([]byte("404 Not Found"))
 }
