@@ -252,7 +252,7 @@ func GetInvalidQueryTests() []FilterTest {
 				"not_a_col": {"value"},
 			},
 			types.RowDataIdMap{},
-			fmt.Sprintf("pq: column %s does not exist", TABLE1),
+			"pq: column \"not_a_col\" does not exist",
 			fmt.Sprintf("Column 'not_a_col' does not exist in table %s", TABLE1),
 		),
 		MakeFilterTest(
@@ -288,11 +288,11 @@ func GetInsertTests() []InsertTest {
 			},
 			0,
 			fmt.Sprintf(
-				"pq: null value in column \"name\" of relation %s violates not-null constraint",
+				"pq: null value in column \"name\" of relation \"%s\" violates not-null constraint",
 				TABLE1,
 			),
 			fmt.Sprintf(
-				"pq: null value in column \"name\" of relation %s violates not-null constraint",
+				"pq: null value in column \"name\" of relation \"%s\" violates not-null constraint",
 				TABLE1,
 			),
 		},

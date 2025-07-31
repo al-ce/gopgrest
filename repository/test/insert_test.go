@@ -1,6 +1,7 @@
 package repository_test
 
 import (
+	"fmt"
 	"testing"
 
 	_ "github.com/lib/pq"
@@ -15,8 +16,8 @@ func TestRepo_InsertRow(t *testing.T) {
 			// when they fail
 			repo, _ := tests.NewTestRepo(t)
 			result := repo.InsertRow(tests.TABLE1, &tt.NewRow)
-			if tests.CheckExpectedErr(tt.PqErr, result.Error) {
-				t.Errorf("Expected error: %v\nGot %v", tt.PqErr, result.Error)
+			if fmt.Sprintf("%s", tt.PqErr) != fmt.Sprintf("%s", result.Error) {
+				t.Errorf("\nExp: %s\nGot %s", tt.PqErr, result.Error)
 			}
 		})
 	}
