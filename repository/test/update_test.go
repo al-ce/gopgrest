@@ -9,14 +9,6 @@ import (
 	"ftrack/types"
 )
 
-type updateTest struct {
-	testName  string
-	id        string
-	col       string
-	value     any
-	expectErr any
-}
-
 func TestRepo_UpdateRowCol(t *testing.T) {
 	repo, _ := tests.NewTestRepo(t)
 
@@ -30,38 +22,16 @@ func TestRepo_UpdateRowCol(t *testing.T) {
 		t.Errorf("Insert err %s", insertResult.Error)
 	}
 
-	updateTests := []updateTest{
-		{
-			"update valid string col",
-			fmt.Sprintf("%d", insertResult.ID),
-			"name",
-			"hack squat",
-			nil,
-		},
-		{
-			"update valid int col",
-			fmt.Sprintf("%d", insertResult.ID),
-			"weight",
-			299,
-			nil,
-		},
-		{
-			"update invalid col",
-			fmt.Sprintf("%d", insertResult.ID),
-			"not_a_col",
-			"hack squat",
-			fmt.Sprintf("pq: column \"not_a_col\" of relation \"%s\" does not exist", tests.TABLE1),
-		},
-	}
-
 	tagMap := tests.GetTagMap(tests.ExerciseSet{})
 
+	updateTests := tests.GetUpdateTests(insertResult)
+
 	for _, tt := range updateTests {
-		t.Run(tt.testName, func(t *testing.T) {
+		t.Run(tt.TestName, func(t *testing.T) {
 			// Exec update query
-			err := repo.UpdateRowCol(tests.TABLE1, tt.id, tt.col, tt.value)
-			if tests.CheckExpectedErr(tt.expectErr, err) {
-				t.Errorf("\nExp: %s\nGot: %s", tt.expectErr, err)
+			err := repo.UpdateRowCol(tests.TABLE1, tt.ID, tt.Col, tt.Value)
+			if tests.CheckExpectedErr(tt.PqErr, err) {
+				t.Errorf("\nExp: %s\nGot: %s", tt.PqErr, err)
 			}
 			// Go to next test if this is an invalid update query
 			if err != nil {
@@ -82,10 +52,10 @@ func TestRepo_UpdateRowCol(t *testing.T) {
 			}
 			// Confirm update
 			rowVal := reflect.ValueOf(updatedRow)
-			fieldName := tests.GetFieldNameByColName(tagMap, tt.col, tests.ExerciseSet{})
+			fieldName := tests.GetFieldNameByColName(tagMap, tt.Col, tests.ExerciseSet{})
 			gotVal := rowVal.FieldByName(fieldName).Interface()
-			if tt.value != gotVal {
-				t.Errorf("Expected %v: %s\nGot %v", tt.col, tt.value, gotVal)
+			if tt.Value != gotVal {
+				t.Errorf("Expected %v: %s\nGot %v", tt.Col, tt.Value, gotVal)
 			}
 		})
 	}

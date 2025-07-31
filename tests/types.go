@@ -47,3 +47,12 @@ type InsertTest struct {
 	PqErr  any
 	CustomErr  any
 }
+
+type UpdateTest struct {
+	TestName  string
+	ID        string
+	Col       string
+	Value     any
+	PqErr any
+	CustomErr any
+}

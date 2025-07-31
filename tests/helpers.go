@@ -316,3 +316,32 @@ func GetInsertTests() []InsertTest {
 		},
 	}
 }
+
+func GetUpdateTests(insertResult repository.InsertResult) []UpdateTest {
+	return []UpdateTest{
+		{
+			"update valid string col",
+			fmt.Sprintf("%d", insertResult.ID),
+			"name",
+			"hack squat",
+			nil,
+			nil,
+		},
+		{
+			"update valid int col",
+			fmt.Sprintf("%d", insertResult.ID),
+			"weight",
+			299,
+			nil,
+			nil,
+		},
+		{
+			"update invalid col",
+			fmt.Sprintf("%d", insertResult.ID),
+			"not_a_col",
+			"hack squat",
+			fmt.Sprintf("pq: column \"not_a_col\" of relation \"%s\" does not exist", TABLE1),
+			fmt.Sprintf("Column 'not_a_col' does not exist in table %s", TABLE1),
+		},
+	}
+}
