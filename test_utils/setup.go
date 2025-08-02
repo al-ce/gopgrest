@@ -73,12 +73,15 @@ func NewTestRepo(t *testing.T) (repository.Repository, types.RowDataIdMap) {
 	return repo, sampleRows
 }
 
-// NewTestService initializes a new test Service with a test Repository
+// NewTestService initializes a new test Service with a test Repository, using
+// a transaction and returning the service plus some inserted sample rows
 func NewTestService(t *testing.T) (service.Service, types.RowDataIdMap) {
 	repo, sampleRows := NewTestRepo(t)
 	return service.NewService(repo), sampleRows
 }
 
+// NewTestAPIHandler initializes an api handler with a transaction and return
+// the handler plus some inserted sample rows
 func NewTestAPIHandler(t *testing.T) (api.APIHandler, types.RowDataIdMap) {
 	tdb := NewTestDB(t)
 	tx := tdb.BeginTX(t)
