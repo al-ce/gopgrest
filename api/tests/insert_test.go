@@ -27,7 +27,7 @@ func TestAPI_Insert_ValidReq(t *testing.T) {
 
 	// Check response body for id
 	respBody := rr.Body.String()
-	ReInsertedId := regexp.MustCompile(`^row\s([0-9])+.*$`)
+	ReInsertedId := regexp.MustCompile(`^row\s([0-9]+).*$`)
 	match := ReInsertedId.FindStringSubmatch(respBody)
 	if len(match) != 2 {
 		t.Errorf("Expected respBody match on pattern: %v\nGot: %v", ReInsertedId, match)
