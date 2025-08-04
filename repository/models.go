@@ -125,6 +125,11 @@ func GetPublicTables(db QueryExecutor) ([]Table, error) {
 		tables = append(tables, *newTable)
 	}
 
+	if err = rows.Err(); err != nil {
+		log.Printf("Error after iterating rows for db tables: %v", err)
+		return nil, err
+	}
+
 	// Log the tables
 	log.Println("Found tables in database:")
 	for _, table := range tables {

@@ -3,6 +3,7 @@ package service
 import (
 	"database/sql"
 	"fmt"
+	"log"
 	"reflect"
 
 	"ftrack/repository"
@@ -45,6 +46,11 @@ func (s *Service) scanRows(tableName string, rows *sql.Rows) (*types.RowDataIdMa
 			return nil, nil
 		}
 		scannedRowIdMap[id] = scannedRow
+	}
+
+	if err = rows.Err(); err != nil {
+		log.Printf("Error after iterating rows in table %s: %v", tableName, err)
+		return nil, err
 	}
 
 	return &scannedRowIdMap, nil

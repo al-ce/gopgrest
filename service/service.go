@@ -3,6 +3,7 @@ package service
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"maps"
 	"slices"
 
@@ -67,7 +68,11 @@ func (s *Service) ListRows(tableName string, qf types.QueryFilter) (*types.RowDa
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() {
+		if err := rows.Close(); err != nil {
+			log.Printf("Error closing rows: %s\n", err)
+		}
+	}()
 
 	// Scan rows into struct slice
 	listQueryResults, err := s.scanRows(tableName, rows)
