@@ -84,7 +84,7 @@ init:
     sudo -u postgres psql -f {{ INIT_DB }}
     sudo -u postgres psql -d {{ DB_NAME }} -f {{ SCHEMA }}
 
-# Drop `sets` table from database
+# Drop db
 [group('db')]
 drop:
     #!/usr/bin/env sh
