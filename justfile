@@ -45,6 +45,14 @@ TEST_SCHEMA := "database/test_schema.sql"
 default:
     @just --list
 
+run:
+    #!/usr/bin/env sh
+    export API_PORT={{ API_PORT }}
+    export DB_NAME={{ DB_NAME }}
+    export DB_PASS={{ DB_PASS }}
+    export HOST={{ HOST }}
+    ./{{ PROJECT_NAME }}
+
 ###############################################################################
 ## dev
 ###############################################################################
