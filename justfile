@@ -152,7 +152,7 @@ init:
 # Remove the database container
 [group('db')]
 remove:
-    docker rm {{ PROJECT_NAME }}
+    docker rm {{ DB_CONTAINER }}
 
 # Execute a psql command in the database
 [group('db')]
