@@ -83,12 +83,11 @@ rain:
         --password="{{ DB_PASS }}"
 
 ###############################################################################
-## db
+## app
 ###############################################################################
 
-# Run the database container
-[group('db')]
-[no-quiet]
+# Run the app
+[group('app')]
 run:
     #!/usr/bin/env sh
     # Init container if not created
@@ -111,8 +110,8 @@ run:
     ./{{ PROJECT_NAME }} || \
     just stop # stop container when the program exits
 
-# Stop the database container
-[group('db')]
+# Stop the app
+[group('app')]
 stop:
     #!/usr/bin/env sh
     if docker ps --format json | jq -r .Names | grep -q "^{{ DB_CONTAINER }}$"; then
@@ -122,6 +121,11 @@ stop:
     else
         echo "{{ PROJECT_NAME }} database not running"
     fi
+
+
+###############################################################################
+## db
+###############################################################################
 
 # Initialize database with schema
 [group('db')]
