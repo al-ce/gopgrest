@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"testing"
 
-	"ftrack/test_utils"
-	"ftrack/types"
+	"gopgrest/test_utils"
+	"gopgrest/types"
 )
 
 func TestService_Update(t *testing.T) {

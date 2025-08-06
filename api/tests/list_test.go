@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"testing"
 
-	"ftrack/test_utils"
-	"ftrack/types"
+	"gopgrest/test_utils"
+	"gopgrest/types"
 )
 
 func TestAPI_List_AllRows(t *testing.T) {

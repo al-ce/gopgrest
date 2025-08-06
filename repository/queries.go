@@ -6,7 +6,7 @@ import (
 	"log"
 	"strings"
 
-	"ftrack/types"
+	"gopgrest/types"
 )
 
 // ListRows gets rows from a table with optional filter params

@@ -9,28 +9,25 @@ import (
 
 	_ "github.com/lib/pq"
 
-	"ftrack/api"
-	"ftrack/repository"
-)
-
-const (
-	host = "localhost"
-	port = 5432
-	user = "postgres"
+	"gopgrest/api"
+	"gopgrest/repository"
 )
 
 func run() error {
 	// Define connection params
+	host := lookupEnv("HOST")
+	dbuser := lookupEnv("DB_USER")
 	dbname := lookupEnv("DB_NAME")
 	dbpass := lookupEnv("DB_PASS")
-	apiPort := lookupEnv("API_PORT")
-	dbParams := fmt.Sprintf(
-		"host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
-		host, port, user, dbpass, dbname,
+	apiport := lookupEnv("API_PORT")
+	dbport := lookupEnv("DB_PORT")
+	dbparams := fmt.Sprintf(
+		"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+		host, dbport, dbuser, dbpass, dbname,
 	)
 
 	// Open db connection
-	db, err := sql.Open("postgres", dbParams)
+	db, err := sql.Open("postgres", dbparams)
 	if err != nil {
 		panic(err)
 	}
@@ -53,8 +50,8 @@ func run() error {
 	mux.Handle("/", &APIHandler)
 
 	// Run server
-	log.Printf("Listening on port %s...\n", apiPort)
-	err = http.ListenAndServe(":"+apiPort, mux)
+	log.Printf("Listening on port %s...\n", apiport)
+	err = http.ListenAndServe(":"+apiport, mux)
 	log.Fatal(err)
 
 	return nil

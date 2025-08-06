@@ -4,8 +4,8 @@ import (
 	"reflect"
 	"testing"
 
-	"ftrack/test_utils"
-	"ftrack/types"
+	"gopgrest/test_utils"
+	"gopgrest/types"
 )
 
 func TestRepo_UpdateRowCol(t *testing.T) {

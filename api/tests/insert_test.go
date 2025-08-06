@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"testing"
 
-	"ftrack/test_utils"
+	"gopgrest/test_utils"
 )
 
 func TestAPI_Insert_ValidReq(t *testing.T) {

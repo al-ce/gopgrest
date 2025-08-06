@@ -8,8 +8,8 @@ import (
 
 	_ "github.com/lib/pq"
 
-	"ftrack/test_utils"
-	"ftrack/types"
+	"gopgrest/test_utils"
+	"gopgrest/types"
 )
 
 func TestRepo_ListRows_InvalidFilters(t *testing.T) {

@@ -6,7 +6,7 @@ import (
 
 	_ "github.com/lib/pq"
 
-	"ftrack/test_utils"
+	"gopgrest/test_utils"
 )
 
 func TestRepo_InsertRow(t *testing.T) {

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"ftrack/test_utils"
+	"gopgrest/test_utils"
 )
 
 func TestService_PickRow(t *testing.T) {

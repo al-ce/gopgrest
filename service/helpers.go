@@ -6,8 +6,8 @@ import (
 	"log"
 	"reflect"
 
-	"ftrack/repository"
-	"ftrack/types"
+	"gopgrest/repository"
+	"gopgrest/types"
 )
 
 // verifyColumns checks that all keys in a slice of cols, representing columns

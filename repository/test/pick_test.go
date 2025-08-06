@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"testing"
 
-	"ftrack/test_utils"
+	"gopgrest/test_utils"
 )
 
 func TestRepo_GetRowByID(t *testing.T) {

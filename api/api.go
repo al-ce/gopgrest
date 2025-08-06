@@ -7,9 +7,9 @@ import (
 	"net/http"
 	"regexp"
 
-	"ftrack/repository"
-	"ftrack/service"
-	"ftrack/types"
+	"gopgrest/repository"
+	"gopgrest/service"
+	"gopgrest/types"
 )
 
 type APIHandler struct {

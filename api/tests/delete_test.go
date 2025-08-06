@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"testing"
 
-	"ftrack/test_utils"
+	"gopgrest/test_utils"
 )
 
 func TestAPI_Delete_ValidID(t *testing.T) {

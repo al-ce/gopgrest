@@ -3,7 +3,7 @@ package repository
 import (
 	"fmt"
 
-	"ftrack/types"
+	"gopgrest/types"
 )
 
 // GetTable gets a table from the tables slice by name

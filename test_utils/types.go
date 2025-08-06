@@ -4,8 +4,8 @@ import (
 	"database/sql"
 	"time"
 
-	"ftrack/repository"
-	"ftrack/types"
+	"gopgrest/repository"
+	"gopgrest/types"
 )
 
 type TestDB struct {

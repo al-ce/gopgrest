@@ -1,4 +1,4 @@
-module ftrack
+module gopgrest
 
 go 1.24.5
 

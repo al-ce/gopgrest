@@ -8,8 +8,8 @@ import (
 	"slices"
 	"strconv"
 
-	"ftrack/repository"
-	"ftrack/types"
+	"gopgrest/repository"
+	"gopgrest/types"
 )
 
 // Service handles business logic with retrieved repository data

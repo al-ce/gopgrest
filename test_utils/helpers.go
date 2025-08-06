@@ -10,9 +10,9 @@ import (
 	"reflect"
 	"slices"
 
-	"ftrack/api"
-	"ftrack/repository"
-	"ftrack/types"
+	"gopgrest/api"
+	"gopgrest/repository"
+	"gopgrest/types"
 )
 
 // InsertSampleRows inserts sample rows into a repo

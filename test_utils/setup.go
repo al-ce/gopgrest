@@ -8,10 +8,10 @@ import (
 
 	_ "github.com/lib/pq"
 
-	"ftrack/api"
-	"ftrack/repository"
-	"ftrack/service"
-	"ftrack/types"
+	"gopgrest/api"
+	"gopgrest/repository"
+	"gopgrest/service"
+	"gopgrest/types"
 )
 
 var (

@@ -20,38 +20,31 @@ set quiet := true
 
 # service
 
-PROJECT_NAME := "ftrack"
+PROJECT_NAME := "gopgrest"
 API_PORT := "8090"
 HOST := "localhost"
 
 # db
 
-DB_NAME := "ftrack"
-DB_PORT := "5432"
+DB_CONTAINER := "gopgrest-db"
+DB_NAME := "gopgrest"
+DB_PORT := "5434"
 DB_USER := "postgres"
-DB_PASS := "ftrack"
+DB_PASS := "gopgrest"
 INIT_DB := "database/init_db.sql"
 SCHEMA := "database/schema.sql"
 
 # test db
 
-TEST_DB_NAME := "ftrack_test"
+TEST_DB_CONTAINER := "gopgrest-test-db"
+TEST_DB_NAME := "gopgrest_test"
 TEST_DB_PORT := "5433"
-TEST_DB_USER := "ftrack_test"
-TEST_DB_PASS := "ftrack_test"
-TEST_DB_CONTAINER := "ftrack-test-db"
+TEST_DB_USER := "gopgrest_test"
+TEST_DB_PASS := "gopgrest_test"
 TEST_SCHEMA := "database/test_schema.sql"
 
 default:
     @just --list
-
-run:
-    #!/usr/bin/env sh
-    export API_PORT={{ API_PORT }}
-    export DB_NAME={{ DB_NAME }}
-    export DB_PASS={{ DB_PASS }}
-    export HOST={{ HOST }}
-    ./{{ PROJECT_NAME }}
 
 ###############################################################################
 ## dev
@@ -62,7 +55,9 @@ run:
 watch:
     #!/usr/bin/env sh
     export API_PORT={{ API_PORT }}
+    export DB_PORT={{ DB_PORT }}
     export DB_NAME={{ DB_NAME }}
+    export DB_USER={{ DB_USER }}
     export DB_PASS={{ DB_PASS }}
     export HOST={{ HOST }}
     CompileDaemon \
@@ -85,18 +80,69 @@ rain:
 ## db
 ###############################################################################
 
+# Run the database container
+[group('db')]
+[no-quiet]
+run:
+    #!/usr/bin/env sh
+    # Init container if not created
+    just init
+    # Start container if not running
+    if ! docker ps --format json | jq -r .Names | grep -q "^{{ DB_CONTAINER }}$"; then
+        echo "Starting {{ PROJECT_NAME }} database..."
+        docker start {{ DB_CONTAINER }}
+        sleep 1
+    else
+        echo "{{ PROJECT_NAME }} database already running"
+    fi
+
+    export API_PORT={{ API_PORT }}
+    export DB_PORT={{ DB_PORT }}
+    export DB_NAME={{ DB_NAME }}
+    export DB_USER={{ DB_USER }}
+    export DB_PASS={{ DB_PASS }}
+    export HOST={{ HOST }}
+    ./{{ PROJECT_NAME }} || \
+    just stop # stop container when the program exits
+
+# Stop the database container
+[group('db')]
+stop:
+    #!/usr/bin/env sh
+    if docker ps --format json | jq -r .Names | grep -q "^{{ DB_CONTAINER }}$"; then
+        echo "Stopping {{ PROJECT_NAME }} database..."
+        docker stop {{ DB_CONTAINER }}
+        echo "{{ PROJECT_NAME }} database stopped"
+    else
+        echo "{{ PROJECT_NAME }} database not running"
+    fi
+
 # Initialize database with schema
 [group('db')]
 init:
     #!/usr/bin/env sh
-    sudo -u postgres psql -f {{ INIT_DB }}
-    sudo -u postgres psql -d {{ DB_NAME }} -f {{ SCHEMA }}
+    # Init container if not created
+    if docker ps --all --format json | jq -r .Names | grep -q "^{{ DB_CONTAINER }}$"; then
+        echo "{{ PROJECT_NAME }} database already created"
+        exit 0
+    fi
+    echo "Initializing {{ PROJECT_NAME }} database..."
+    docker run -d --name {{ DB_CONTAINER }} \
+        -e POSTGRES_DB={{ DB_NAME }} \
+        -e POSTGRES_USER={{ DB_USER }} \
+        -e POSTGRES_PASSWORD={{ DB_PASS }} \
+        -p {{ DB_PORT }}:5432 \
+        postgres:15 \
+    && \
+    sleep 2 && \
+    docker cp {{ SCHEMA }} {{ DB_CONTAINER }}:/tmp/schema.sql
+    docker exec {{ DB_CONTAINER }} psql -U {{ DB_USER }} -d {{ DB_NAME }} -f /tmp/schema.sql && \
+    docker stop {{ DB_CONTAINER }}
 
-# Drop db
+# Remove the database container
 [group('db')]
-drop:
-    #!/usr/bin/env sh
-    sudo -u postgres psql -c "DROP DATABASE IF EXISTS {{ DB_NAME }};"
+remove:
+    docker rm {{ PROJECT_NAME }}
 
 # Execute a psql command in the database
 [group('db')]
@@ -137,7 +183,7 @@ test path="":
 tstart:
     #!/usr/bin/env sh
     if ! docker ps --format json | jq -r .Names | grep -q "^{{ TEST_DB_CONTAINER }}$"; then
-        echo "Starting test database..."
+        echo "Starting {{ PROJECT_NAME }} test database..."
         docker run --rm -d --name {{ TEST_DB_CONTAINER }} \
             -e POSTGRES_DB={{ TEST_DB_NAME }} \
             -e POSTGRES_USER={{ TEST_DB_USER }} \
@@ -151,7 +197,7 @@ tstart:
         exit 0 \
         || exit 1
     else
-        echo "Test database already running"
+        echo "{{ PROJECT_NAME }} test database already running"
     fi
 
 # Stop test database container
@@ -159,11 +205,11 @@ tstart:
 tstop:
     #!/usr/bin/env sh
     if docker ps --format json | jq -r .Names | grep -q "^{{ TEST_DB_CONTAINER }}$"; then
-        echo "Stopping test database..."
+        echo "Stopping {{ PROJECT_NAME }} test database..."
         docker stop {{ TEST_DB_CONTAINER }}
-        echo "Test database stopped"
+        echo "{{ PROJECT_NAME }} test database stopped"
     else
-        echo "Test database not running"
+        echo "{{ PROJECT_NAME }} test database not running"
     fi
 
 ###############################################################################
