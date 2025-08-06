@@ -2,7 +2,6 @@ package main
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -16,7 +15,7 @@ import (
 	"gopgrest/repository"
 )
 
-func run() error {
+func startServer() {
 	// Define connection params
 	host := lookupEnv("HOST")
 	dbuser := lookupEnv("DB_USER")
@@ -34,17 +33,16 @@ func run() error {
 	if err != nil {
 		panic(err)
 	}
-	defer db.Close()
 
 	// Establish connection
 	err = db.Ping()
 	if err != nil {
-		return err
+		panic(err)
 	}
 
 	tables, err := repository.GetPublicTables(db)
 	if err != nil {
-		return errors.New("Could not get public tables")
+		panic(err)
 	}
 	APIHandler := api.NewAPIHandler(db, tables)
 
@@ -54,15 +52,11 @@ func run() error {
 
 	// Run server
 	log.Printf("Listening on port %s...\n", apiport)
-	go http.ListenAndServe(":"+apiport, mux)
-
-	return nil
+	http.ListenAndServe(":"+apiport, mux)
 }
 
 func main() {
-	if err := run(); err != nil {
-		log.Fatal(err)
-	}
+	go startServer()
 
 	// Block until quit signal
 	quit := makeQuitListener()
