@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"reflect"
 	"regexp"
+	"strconv"
 	"testing"
 
 	"ftrack/test_utils"
@@ -33,10 +34,11 @@ func TestAPI_Insert_ValidReq(t *testing.T) {
 		t.Errorf("Expected respBody match on pattern: %v\nGot: %v", ReInsertedId, match)
 	}
 	id := match[1]
+	idInt, err := strconv.ParseInt(id, 10, 64)
 
 	// Check db for inserted row by id
 	scannedRow := test_utils.ExerciseSet{}
-	row := ah.Repo.GetRowByID(test_utils.TABLE1, fmt.Sprintf("%s", id))
+	row := ah.Repo.GetRowByID(test_utils.TABLE1, idInt)
 	err = test_utils.ScanExerciseSetRow(&scannedRow, row)
 	if err != nil {
 		t.Errorf("Scan err: %s", err)

@@ -37,8 +37,8 @@ type Repository struct {
 	Tables []Table
 }
 
-// InsertResult contains information from the result of an insert query
-type InsertResult struct {
+// ExecResult contains information from the result of an insert query
+type ExecResult struct {
 	ID    int64
 	Error error
 }

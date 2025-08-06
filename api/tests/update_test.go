@@ -54,7 +54,7 @@ func TestAPI_Update(t *testing.T) {
 				&updatedRow,
 				ah.Repo.GetRowByID(
 					test_utils.TABLE1,
-					fmt.Sprintf("%d", insertResult.ID),
+					insertResult.ID,
 				),
 			)
 			if err != nil {

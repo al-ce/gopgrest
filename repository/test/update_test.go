@@ -1,7 +1,6 @@
 package repository_test
 
 import (
-	"fmt"
 	"reflect"
 	"testing"
 
@@ -29,7 +28,8 @@ func TestRepo_UpdateRowCol(t *testing.T) {
 	for _, tt := range updateTests {
 		t.Run(tt.TestName, func(t *testing.T) {
 			// Exec update query
-			err := repo.UpdateRowCol(test_utils.TABLE1, tt.ID, tt.Col, tt.Value)
+			updateData := types.RowData{tt.Col: tt.Value}
+			err := repo.UpdateRowCol(test_utils.TABLE1, tt.ID, &updateData)
 			if test_utils.CheckExpectedErr(tt.PqErr, err) {
 				t.Errorf("\nExp: %s\nGot: %s", tt.PqErr, err)
 			}
@@ -44,7 +44,7 @@ func TestRepo_UpdateRowCol(t *testing.T) {
 				&updatedRow,
 				repo.GetRowByID(
 					test_utils.TABLE1,
-					fmt.Sprintf("%d", insertResult.ID),
+					insertResult.ID,
 				),
 			)
 			if err != nil {

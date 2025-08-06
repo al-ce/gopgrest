@@ -6,6 +6,7 @@ import (
 	"log"
 	"maps"
 	"slices"
+	"strconv"
 
 	"ftrack/repository"
 	"ftrack/types"
@@ -42,7 +43,8 @@ func (s *Service) InsertRow(newRow *types.RowData, tableName string) (int64, err
 
 // PickRow gets a row from a table by id
 func (s *Service) PickRow(tableName, id string) (types.RowData, error) {
-	row := s.Repo.GetRowByID(tableName, id)
+	idInt, err := strconv.ParseInt(id, 10, 64)
+	row := s.Repo.GetRowByID(tableName, idInt)
 	gotId, rowData, err := s.scanSingleRow(tableName, row)
 	if fmt.Sprintf("%v", gotId) != id {
 		return types.RowData{}, fmt.Errorf("PickRow got id %v, requested %s", gotId, id)
@@ -84,15 +86,24 @@ func (s *Service) ListRows(tableName string, qf types.QueryFilter) (*types.RowDa
 
 // UpdateRow updates any number of valid columns with separate calls to
 // Repository.UpdateRowCol
-func (s *Service) UpdateRow(tableName, id string, updateData *types.RowData) error {
+func (s *Service) UpdateRow(tableName, id string, updateData *types.RowData) (types.RowData, error) {
 	table, err := s.Repo.GetTable(tableName)
 	if err != nil {
-		return err
+		return types.RowData{}, err
 	}
+
+	// Convert id to int
+	idInt, err := strconv.ParseInt(id, 10, 64)
+	if err != nil {
+		return types.RowData{}, err
+	}
+
+	// 
+
 	// Each column in the update data must exist in the table
 	cols := slices.Collect(maps.Keys(*updateData))
 	if err := s.verifyColumns(table, cols); err != nil {
-		return err
+		return types.RowData{}, err
 	}
 
 	// Decode request body into a dummy row value to validate column names
@@ -100,19 +111,24 @@ func (s *Service) UpdateRow(tableName, id string, updateData *types.RowData) err
 	b, _ := json.Marshal(updateData)
 	err = json.Unmarshal(b, &dummyRow)
 	if err != nil {
-		return err
+		return types.RowData{}, err
 	}
 
-	// Update individual columns in the row
-	for col, val := range *updateData {
-		if err := s.Repo.UpdateRowCol(tableName, id, col, val); err != nil {
-			return err
-		}
+	// Update row
+	err = s.Repo.UpdateRowCol(tableName, idInt, updateData)
+	if err!= nil {
+		return types.RowData{}, err
 	}
-	return nil
+	return s.PickRow(tableName, id)
 }
 
 // DeleteRow removes a row from the table by id
 func (s *Service) DeleteRow(tableName, id string) error {
-	return s.Repo.DeleteRow(tableName, id)
+	// Convert id to int
+	idInt, err := strconv.ParseInt(id, 10, 64)
+	if err != nil {
+		return err
+	}
+
+	return s.Repo.DeleteRow(tableName, idInt)
 }

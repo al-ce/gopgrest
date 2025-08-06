@@ -25,7 +25,7 @@ func TestAPI_Delete_ValidID(t *testing.T) {
 		}
 
 		// Try to get deleted row by id
-		row := ah.Repo.GetRowByID(test_utils.TABLE1, fmt.Sprintf("%d", id))
+		row := ah.Repo.GetRowByID(test_utils.TABLE1, id)
 		err = test_utils.ScanExerciseSetRow(&scannedRow, row)
 		if err.Error() != "sql: no rows in result set" {
 			t.Errorf(

@@ -15,7 +15,7 @@ func TestRepo_GetRowByID(t *testing.T) {
 		scannedRow := test_utils.ExerciseSet{}
 		tagMap := test_utils.GetTagMap(test_utils.ExerciseSet{})
 		for id, sampleRow := range sampleRows {
-			row := repo.GetRowByID(test_utils.TABLE1, fmt.Sprintf("%d", id))
+			row := repo.GetRowByID(test_utils.TABLE1, id)
 			err := test_utils.ScanExerciseSetRow(&scannedRow, row)
 			if err != nil {
 				t.Errorf("Scan err: %v", err)

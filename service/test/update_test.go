@@ -2,7 +2,6 @@ package service_test
 
 import (
 	"fmt"
-	"reflect"
 	"testing"
 
 	"ftrack/test_utils"
@@ -22,8 +21,6 @@ func TestService_Update(t *testing.T) {
 		t.Errorf("Insert err %s", insertResult.Error)
 	}
 
-	tagMap := test_utils.GetTagMap(test_utils.ExerciseSet{})
-
 	updateTests := test_utils.GetUpdateTests(insertResult)
 
 	for _, tt := range updateTests {
@@ -31,7 +28,11 @@ func TestService_Update(t *testing.T) {
 			updateData := types.RowData{tt.Col: tt.Value}
 
 			// Exec update query
-			err := serv.UpdateRow(test_utils.TABLE1, tt.ID, &updateData)
+			updateResult, err := serv.UpdateRow(
+				test_utils.TABLE1,
+				fmt.Sprintf("%d", tt.ID),
+				&updateData,
+			)
 			if test_utils.CheckExpectedErr(tt.CustomErr, err) {
 				t.Errorf("\nExp: %s\nGot: %s", tt.CustomErr, err)
 			}
@@ -40,24 +41,14 @@ func TestService_Update(t *testing.T) {
 				return
 			}
 
-			// Get updated row
-			updatedRow := test_utils.ExerciseSet{}
-			err = test_utils.ScanExerciseSetRow(
-				&updatedRow,
-				serv.Repo.GetRowByID(
-					test_utils.TABLE1,
-					fmt.Sprintf("%d", insertResult.ID),
-				),
-			)
-			if err != nil {
-				t.Errorf("Scan err: %s", err)
-			}
-			// Confirm update
-			rowVal := reflect.ValueOf(updatedRow)
-			fieldName := test_utils.GetFieldNameByColName(tagMap, tt.Col, test_utils.ExerciseSet{})
-			gotVal := rowVal.FieldByName(fieldName).Interface()
-			if tt.Value != gotVal {
-				t.Errorf("Expected %v: %s\nGot %v", tt.Col, tt.Value, gotVal)
+			// Confirm updated field
+			if updateResult[tt.Col] != tt.Value {
+				t.Errorf(
+					"\nExp %s: %s\nGot: %s",
+					tt.Col,
+					tt.Value,
+					updateResult[tt.Col],
+				)
 			}
 		})
 	}

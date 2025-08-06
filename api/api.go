@@ -83,14 +83,25 @@ func (h *APIHandler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Update row with request data
-	if err := h.Service.UpdateRow(table, id, updateData); err != nil {
+	updateQueryResult, err := h.Service.UpdateRow(table, id, updateData)
+	if err != nil {
 		log.Println(err)
 		InternalServerErrorHandler(w, r, fmt.Sprintf("%v", err))
 		return
 	}
 
-	// Set response
+	// Encode to JSON
+	jsonData, err := json.Marshal(updateQueryResult)
+	if err != nil {
+		log.Println(err)
+		InternalServerErrorHandler(w, r, fmt.Sprintf("%v", err))
+		return
+	}
+
+	// Write response
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
+	w.Write(jsonData)
 }
 
 // Delete adds removes a row from a table by id

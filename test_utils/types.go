@@ -50,7 +50,7 @@ type InsertTest struct {
 
 type UpdateTest struct {
 	TestName  string
-	ID        string
+	ID        int64
 	Col       string
 	Value     any
 	PqErr any

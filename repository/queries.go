@@ -30,9 +30,9 @@ func (r *Repository) ListRows(tableName string, qf types.QueryFilter) (*sql.Rows
 }
 
 // GetRowByID gets a row from a table by id
-func (r *Repository) GetRowByID(tableName, id string) *sql.Row {
+func (r *Repository) GetRowByID(tableName string, id int64) *sql.Row {
 	log.Printf(
-		"Exec query\n\tSELECT * FROM %s WHERE id = %s",
+		"Exec query\n\tSELECT * FROM %s WHERE id = %d",
 		tableName, id,
 	)
 
@@ -43,7 +43,7 @@ func (r *Repository) GetRowByID(tableName, id string) *sql.Row {
 }
 
 // InsertRow inserts a new row into a specified table
-func (r *Repository) InsertRow(tableName string, newRow *types.RowData) (result InsertResult) {
+func (r *Repository) InsertRow(tableName string, newRow *types.RowData) (result ExecResult) {
 	// Create cols/values/placeholders slices in consistent order
 	var cols []string
 	var values []any
@@ -58,11 +58,6 @@ func (r *Repository) InsertRow(tableName string, newRow *types.RowData) (result 
 		i++
 	}
 
-	log.Printf(
-		"Exec query\n\tINSERT INTO %s (%s) values (%s) RETURNING id",
-		tableName, strings.Join(cols, ", "), strings.Join(valuesLog, ", "),
-	)
-
 	// Build create query
 	createStmnt := fmt.Sprintf("INSERT INTO %s (", tableName) +
 		strings.Join(cols, ", ") +
@@ -71,6 +66,8 @@ func (r *Repository) InsertRow(tableName string, newRow *types.RowData) (result 
 		")" +
 		"RETURNING id"
 
+	log.Printf("Exec query\n\t%s\nValues: %v\n", createStmnt, values)
+
 	// Execute insert query
 	row := r.DB.QueryRow(createStmnt, values...)
 	result.Error = row.Scan(&result.ID)
@@ -78,31 +75,49 @@ func (r *Repository) InsertRow(tableName string, newRow *types.RowData) (result 
 }
 
 // UpdateRowCol updates a column in a table row by id
-func (r *Repository) UpdateRowCol(tableName, id, col string, value any) error {
-	log.Printf(
-		"Exec query\n\tUPDATE %s SET %s = %s WHERE id = %s\n",
-		tableName, col, value, id,
-	)
-
+func (r *Repository) UpdateRowCol(tableName string, id int64, updatedRow *types.RowData) error {
 	// Build update query
-	updateStmt := fmt.Sprintf(
-		"UPDATE %s SET %s = $1 WHERE id = $2",
-		tableName, col,
-	)
+	updateStmnt := fmt.Sprintf("UPDATE %s SET ", tableName)
 
-	if _, err := r.DB.Exec(updateStmt, value, id); err != nil {
+	// Create cols/values/placeholders slices in consistent order
+	var values []any
+	var i int
+	for k, v := range *updatedRow {
+		updateStmnt += fmt.Sprintf("%s = $%d, ", k, i+1)
+		values = append(values, v)
+		i++
+	}
+	// Strip final comma separator
+	updateStmnt = updateStmnt[:len(updateStmnt)-2]
+	updateStmnt += fmt.Sprintf(" WHERE id = %d", id)
+
+	log.Printf("Exec query\n\t%s\nValues: %v", updateStmnt, values)
+
+	// Execute update query
+	result, err := r.DB.Exec(updateStmnt, values...)
+	if err != nil {
 		return err
+	}
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffected == 0 {
+		return fmt.Errorf(
+			"cannot update row %d in table %s, does not exist",
+			id, tableName,
+		)
 	}
 
 	return nil
 }
 
 // DeleteRow removes a row from a table by id
-func (r *Repository) DeleteRow(tableName, id string) error {
+func (r *Repository) DeleteRow(tableName string, id int64) error {
 	deleteStmt := fmt.Sprintf("DELETE FROM %s WHERE id = $1", tableName)
 
 	log.Printf(
-		"Exec query \n\tDELETE FROM %s WHERE id = %s\n",
+		"Exec query \n\tDELETE FROM %s WHERE id = %d\n",
 		tableName, id,
 	)
 
@@ -117,7 +132,7 @@ func (r *Repository) DeleteRow(tableName, id string) error {
 	}
 	if rowsAffected == 0 {
 		return fmt.Errorf(
-			"row %s in table %s does not exist, did not attempt delete",
+			"cannot delete row %d in table %s, does not exist",
 			id, tableName,
 		)
 	}
