@@ -2,6 +2,7 @@ package api_test
 
 import (
 	"fmt"
+	"math"
 	"net/http"
 	"testing"
 
@@ -34,5 +35,25 @@ func TestAPI_Delete_ValidID(t *testing.T) {
 			)
 		}
 
+	}
+}
+
+func TestAPI_Delete_NonexistentID(t *testing.T) {
+	ah, _ := test_utils.NewTestAPIHandler(t)
+	id := math.MaxInt32 // psql integer value is 4 bytes signed, assuming that type for id
+	path := fmt.Sprintf("/%s/%d", test_utils.TABLE1, id)
+	rr, err := test_utils.MakeHttpRequest(ah, http.MethodDelete, path, struct{}{})
+	if err != nil {
+		t.Error(err.Error())
+	}
+	if http.StatusInternalServerError != rr.Code {
+		t.Errorf("\nExp StatusCode: %d\nGot: %d", http.StatusOK, rr.Code)
+	}
+
+	expErr := fmt.Sprintf(
+		"row %d in table exercise_sets does not exist, did not attempt delete", id,
+	)
+	if rr.Body.String() != expErr {
+		t.Errorf("\nExp: %s\nGot: %s", expErr, rr.Body)
 	}
 }
