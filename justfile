@@ -165,18 +165,19 @@ tstop:
 # pick gets a row by id
 [group('api')]
 pick table id:
-    curl -X GET -s http://localhost:{{ API_PORT }}/{{ table }}/{{ id }} | just jqparse
+    curl -X GET -s http://localhost:{{ API_PORT }}/{{ table }}/{{ id }} \
+    | just jqparse
 
 # list sets filtered by optional query params
 [group('api')]
 list table params='':
-    curl -X GET -s http://localhost:{{ API_PORT }}/{{ table }}?{{ params }} | just jqparse
+    curl -X GET -s http://localhost:{{ API_PORT }}/{{ table }}?{{ params }} \
+    | just jqparse
 
 # insert a row in the specified table
 [group('api')]
 insert table data:
     curl -X POST -s http://localhost:{{ API_PORT }}/{{ table }} \
-    --header 'Content-Type: application/json' \
     --data '{{ data }}'
 
 # delete a set in the database by id
@@ -188,8 +189,8 @@ delete table id:
 [group('api')]
 update table id data:
     curl -X PUT -s http://localhost:{{ API_PORT }}/{{ table }}/{{ id }} \
-    --header 'Content-Type: application/json' \
-    --data '{{ data }}'
+    --data '{{ data }}' | \
+    just jqparse
 
 
 ###############################################################################
