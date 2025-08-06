@@ -50,6 +50,11 @@ default:
 ## dev
 ###############################################################################
 
+# Build the program
+[group('dev')]
+build:
+    go build -o ./{{ PROJECT_NAME }}
+
 # Run the application and watch for changes, recompile/restart on changes
 [group('dev')]
 watch:
