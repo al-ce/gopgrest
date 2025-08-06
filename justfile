@@ -107,7 +107,7 @@ run:
     export DB_USER={{ DB_USER }}
     export DB_PASS={{ DB_PASS }}
     export HOST={{ HOST }}
-    ./{{ PROJECT_NAME }} || \
+    ./{{ PROJECT_NAME }}
     just stop # stop container when the program exits
 
 # Stop the app
