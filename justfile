@@ -154,11 +154,13 @@ init:
 remove:
     docker rm {{ DB_CONTAINER }}
 
-# Execute a psql command in the database
+# Execute a psql command in the container database
 [group('db')]
 exec command flags="":
-    sudo -u postgres psql -U {{ DB_USER }} -d {{ DB_NAME }} \
-        {{ flags }} --command "{{ command }}"
+    docker exec -it {{ DB_CONTAINER }} psql \
+        -U {{ DB_USER }} -d {{ DB_NAME }} \
+        {{ flags }} \
+        --command "{{ command }}"
 
 ###############################################################################
 ## test
@@ -226,30 +228,30 @@ tstop:
 ## api calls
 ###############################################################################
 
-# pick gets a row by id
+# pick a single row by id
 [group('api')]
 pick table id:
     curl -X GET -s http://localhost:{{ API_PORT }}/{{ table }}/{{ id }} \
     | just jqparse
 
-# list sets filtered by optional query params
+# list sets with optional query params e.g. `insert authors 'surname=Plato'`
 [group('api')]
 list table params='':
     curl -X GET -s http://localhost:{{ API_PORT }}/{{ table }}?{{ params }} \
     | just jqparse
 
-# insert a row in the specified table
+# Insert a row in a table e.g. `list authors '{"surname": "Plato"}'`
 [group('api')]
 insert table data:
     curl -X POST -s http://localhost:{{ API_PORT }}/{{ table }} \
     --data '{{ data }}'
 
-# delete a set in the database by id
+# Delete a row in the database by id
 [group('api')]
 delete table id:
     curl -X DELETE -s http://localhost:{{ API_PORT }}/{{ table }}/{{ id }}
 
-# delete a set in the database by id
+# Update a a row in by id e.g. `update authors 1 '{"surname": "Carson"}'`
 [group('api')]
 update table id data:
     curl -X PUT -s http://localhost:{{ API_PORT }}/{{ table }}/{{ id }} \
