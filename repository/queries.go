@@ -6,6 +6,7 @@ import (
 	"log"
 	"strings"
 
+	"gopgrest/apperrors"
 	"gopgrest/types"
 )
 
@@ -103,10 +104,7 @@ func (r *Repository) UpdateRowCol(tableName string, id int64, updatedRow *types.
 		return err
 	}
 	if rowsAffected == 0 {
-		return fmt.Errorf(
-			"cannot update row %d in table %s, does not exist",
-			id, tableName,
-		)
+		return apperrors.NewUpdateInvalidIDErr(tableName, id)
 	}
 
 	return nil
@@ -131,10 +129,7 @@ func (r *Repository) DeleteRow(tableName string, id int64) error {
 		return err
 	}
 	if rowsAffected == 0 {
-		return fmt.Errorf(
-			"cannot delete row %d in table %s, does not exist",
-			id, tableName,
-		)
+		return apperrors.NewDeleteInvalidIDErr(tableName, id)
 	}
 
 	return nil

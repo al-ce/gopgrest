@@ -336,7 +336,7 @@ func GetUpdateTests(insertResult repository.ExecResult) []UpdateTest {
 			"update valid int col",
 			insertResult.ID,
 			"weight",
-			299,
+			int64(299),
 			nil,
 			nil,
 		},

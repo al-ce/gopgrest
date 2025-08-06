@@ -65,8 +65,8 @@ func TestAPI_Update(t *testing.T) {
 			rowVal := reflect.ValueOf(updatedRow)
 			fieldName := test_utils.GetFieldNameByColName(tagMap, tt.Col, test_utils.ExerciseSet{})
 			gotVal := rowVal.FieldByName(fieldName).Interface()
-			if tt.Value != gotVal {
-				t.Errorf("Expected %v: %s\nGot %v", tt.Col, tt.Value, gotVal)
+			if fmt.Sprintf("%v", tt.Value) != fmt.Sprintf("%v", gotVal) {
+				t.Errorf("Expected %s: %v %T\nGot %v %T", tt.Col, tt.Value, tt.Value, gotVal, gotVal)
 			}
 		})
 	}

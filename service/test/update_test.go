@@ -44,8 +44,10 @@ func TestService_Update(t *testing.T) {
 			// Confirm updated field
 			if updateResult[tt.Col] != tt.Value {
 				t.Errorf(
-					"\nExp %s: %s\nGot: %s",
+					"\nExp %s: %T %s\nGot: %s %T",
 					tt.Col,
+					tt.Col,
+					tt.Value,
 					tt.Value,
 					updateResult[tt.Col],
 				)
