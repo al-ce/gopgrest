@@ -43,6 +43,7 @@ TEST_DB_USER := "gopgrest_test"
 TEST_DB_PASS := "gopgrest_test"
 TEST_SCHEMA := "database/test_schema.sql"
 
+# list recipes
 default:
     @just --list
 
