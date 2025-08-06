@@ -2,10 +2,13 @@ package main
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 
 	_ "github.com/lib/pq"
 
@@ -36,12 +39,12 @@ func run() error {
 	// Establish connection
 	err = db.Ping()
 	if err != nil {
-		log.Println(err)
+		return err
 	}
 
 	tables, err := repository.GetPublicTables(db)
 	if err != nil {
-		panic("Could not get public tables")
+		return errors.New("Could not get public tables")
 	}
 	APIHandler := api.NewAPIHandler(db, tables)
 
@@ -51,8 +54,7 @@ func run() error {
 
 	// Run server
 	log.Printf("Listening on port %s...\n", apiport)
-	err = http.ListenAndServe(":"+apiport, mux)
-	log.Fatal(err)
+	go http.ListenAndServe(":"+apiport, mux)
 
 	return nil
 }
@@ -61,6 +63,18 @@ func main() {
 	if err := run(); err != nil {
 		log.Fatal(err)
 	}
+
+	// Block until quit signal
+	quit := makeQuitListener()
+	<-quit
+	log.Println("Server is shutting down...")
+}
+
+// Make a channel to listen for a quit signal
+func makeQuitListener() chan os.Signal {
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	return quit
 }
 
 func lookupEnv(varName string) string {
