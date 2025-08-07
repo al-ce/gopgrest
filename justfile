@@ -12,9 +12,9 @@
 # - gotestfmt https://github.com/GoTestTools/gotestfmt
 # Set this here:
 
-test_parser := ```
-    which gotestfmt || which tparse || which gotestsum || which cat
-```
+test_parser := "tparse"
+# test_parser := "gotestfmt"
+# test_parser := "gotestsum"
 
 set quiet := true
 
@@ -31,7 +31,6 @@ DB_NAME := "gopgrest"
 DB_PORT := "5434"
 DB_USER := "postgres"
 DB_PASS := "gopgrest"
-INIT_DB := "database/init_db.sql"
 SCHEMA := "database/schema.sql"
 
 # test db
@@ -116,7 +115,6 @@ start:
         echo "{{ PROJECT_NAME }} database already running"
     fi
 
-
 # Stop the container
 [group('app')]
 stop:
@@ -128,7 +126,6 @@ stop:
     else
         echo "{{ PROJECT_NAME }} database not running"
     fi
-
 
 ###############################################################################
 ## db
@@ -175,8 +172,13 @@ exec command flags="":
 
 # Run tests
 [group('test')]
-test path="":
+test path="" parser="":
     #!/usr/bin/env sh
+    parser="{{ parser }}"
+    if [ -z "{{ parser }}"]; then
+        parser="{{ test_parser }}"
+    fi
+    echo "Test parser: $parser"
     # Clean start for test db
     just tstop
     just tstart && echo "Test db started" || exit 1
@@ -189,9 +191,9 @@ test path="":
     export TEST_DB_NAME={{ TEST_DB_NAME }}
     go clean -testcache | exit 1
     if [ -z "{{ path }}" ]; then
-        go test -p 1 -v -cover -json ./... | {{ test_parser }}
+        go test -p 1 -v -cover -json ./... | $(which $parser)
     else
-        go test -v -cover -json ./{{ path }} | {{ test_parser }}
+        go test -v -cover -json ./{{ path }} | $(which $parser)
     fi
     TEST_RESULT=$?
     just tstop
@@ -265,7 +267,6 @@ update table id data:
     --data '{{ data }}' | \
     just jqparse
 
-
 ###############################################################################
 ## helpers
 ###############################################################################
@@ -274,4 +275,3 @@ update table id data:
 [group('helpers')]
 jqparse:
     jq -R '. as $line | try (fromjson) catch $line'
-
