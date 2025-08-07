@@ -13,14 +13,14 @@ import (
 // ListRows gets rows from a table with optional filter params
 func (r *Repository) ListRows(tableName string, qf types.QueryFilter) (*sql.Rows, error) {
 	// Build list query with optional conditional filters
-	conditional, conditionalLog, values, err := buildConditionalClause(qf)
+	conditional, values, err := buildConditionalClause(qf)
 	if err != nil {
 		return nil, err
 	}
 
-	log.Printf("SELECT * FROM %s%s", tableName, conditionalLog)
 
 	listStmt := "SELECT * FROM " + tableName + conditional
+	log.Printf("Exec query\n\t%s\nValues: %v\n", listStmt, values)
 
 	// Execute list query
 	rows, err := r.DB.Query(listStmt, values...)
