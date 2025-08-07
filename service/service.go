@@ -43,6 +43,12 @@ func (s *Service) InsertRow(newRow *types.RowData, tableName string) (int64, err
 
 // PickRow gets a row from a table by id
 func (s *Service) PickRow(tableName, id string) (types.RowData, error) {
+	// Get table info for verification
+	_, err := s.Repo.GetTable(tableName)
+	if err != nil {
+		return nil, err
+	}
+
 	idInt, err := strconv.ParseInt(id, 10, 64)
 	row := s.Repo.GetRowByID(tableName, idInt)
 	gotId, rowData, err := s.scanSingleRow(tableName, row)
@@ -98,7 +104,7 @@ func (s *Service) UpdateRow(tableName, id string, updateData *types.RowData) (ty
 		return types.RowData{}, err
 	}
 
-	// 
+	//
 
 	// Each column in the update data must exist in the table
 	cols := slices.Collect(maps.Keys(*updateData))
@@ -116,7 +122,7 @@ func (s *Service) UpdateRow(tableName, id string, updateData *types.RowData) (ty
 
 	// Update row
 	err = s.Repo.UpdateRowCol(tableName, idInt, updateData)
-	if err!= nil {
+	if err != nil {
 		return types.RowData{}, err
 	}
 	return s.PickRow(tableName, id)
@@ -124,6 +130,12 @@ func (s *Service) UpdateRow(tableName, id string, updateData *types.RowData) (ty
 
 // DeleteRow removes a row from the table by id
 func (s *Service) DeleteRow(tableName, id string) error {
+	// Get table info for verification
+	_, err := s.Repo.GetTable(tableName)
+	if err != nil {
+		return err
+	}
+
 	// Convert id to int
 	idInt, err := strconv.ParseInt(id, 10, 64)
 	if err != nil {
