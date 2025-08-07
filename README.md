@@ -194,7 +194,8 @@ Available recipes:
 
     [app]
     run                   # Run the app
-    stop                  # Stop the app
+    start                 # Start the container
+    stop                  # Stop the container
 
     [db]
     exec command flags="" # Execute a psql command in the container database

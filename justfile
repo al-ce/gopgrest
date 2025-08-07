@@ -60,6 +60,7 @@ build:
 [group('dev')]
 watch:
     #!/usr/bin/env sh
+    just start
     export API_PORT={{ API_PORT }}
     export DB_PORT={{ DB_PORT }}
     export DB_NAME={{ DB_NAME }}
@@ -90,16 +91,8 @@ rain:
 [group('app')]
 run:
     #!/usr/bin/env sh
-    # Init container if not created
     just init
-    # Start container if not running
-    if ! docker ps --format json | jq -r .Names | grep -q "^{{ DB_CONTAINER }}$"; then
-        echo "Starting {{ PROJECT_NAME }} database..."
-        docker start {{ DB_CONTAINER }}
-        sleep 1
-    else
-        echo "{{ PROJECT_NAME }} database already running"
-    fi
+    just start
 
     export API_PORT={{ API_PORT }}
     export DB_PORT={{ DB_PORT }}
@@ -110,7 +103,21 @@ run:
     ./{{ PROJECT_NAME }}
     just stop # stop container when the program exits
 
-# Stop the app
+# Start the container
+[group('app')]
+start:
+    #!/usr/bin/env sh
+    # Start container if not running
+    if ! docker ps --format json | jq -r .Names | grep -q "^{{ DB_CONTAINER }}$"; then
+        echo "Starting {{ PROJECT_NAME }} database..."
+        docker start {{ DB_CONTAINER }}
+        sleep 1
+    else
+        echo "{{ PROJECT_NAME }} database already running"
+    fi
+
+
+# Stop the container
 [group('app')]
 stop:
     #!/usr/bin/env sh
@@ -234,13 +241,13 @@ pick table id:
     curl -X GET -s http://localhost:{{ API_PORT }}/{{ table }}/{{ id }} \
     | just jqparse
 
-# list sets with optional query params e.g. `insert authors 'surname=Plato'`
+# list sets with optional query params e.g. `list authors 'surname=Plato'`
 [group('api')]
 list table params='':
     curl -X GET -s http://localhost:{{ API_PORT }}/{{ table }}?{{ params }} \
     | just jqparse
 
-# Insert a row in a table e.g. `list authors '{"surname": "Plato"}'`
+# Insert a row in a table e.g. `insert authors '{"surname": "Plato"}'`
 [group('api')]
 insert table data:
     curl -X POST -s http://localhost:{{ API_PORT }}/{{ table }} \
