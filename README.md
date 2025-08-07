@@ -31,27 +31,37 @@ SELECT tablename FROM Pg_catalog.pg_tables WHERE schemaname='public'"
 
 The following endpoints are valid for each table in the database with an `id`:
 
-| Endpoint                     | Method | Description              | Request            | Response                                  |
-| ---------------------------- | ------ | ------------------------ | ------------------ | ----------------------------------------- |
-| `/{tablename}`               | POST   | Insert a new row         | `application/json` | `row {id} created in table {tablename}`   |
-| `/{tablename}/{id}`          | GET    | Get a row by ID          | ---                | `application/json` (found row)            |
-| `/{tablename}?{querystring}` | GET    | List rows matching query | ---                | `application/json` (matching rows)        |
-| `/{tablename}/{id}`          | PUT    | Update a row by ID       | `application/json` | `application/json` (updated row)          |
-| `/{tablename}/{id}`          | DELETE | Delete a row by ID       | ---                | `row {id} deleted from table {tablename}` |
+| Endpoint                     | Method | Description              | Request            | Response                                   |
+| ---------------------------- | ------ | ------------------------ | ------------------ | ------------------------------------------ |
+| `/{tablename}`               | POST   | Insert a new row         | `application/json` | `rows created in table {tablename}: [ids]` |
+| `/{tablename}/{id}`          | GET    | Get a row by ID          | ---                | `application/json` (found row)             |
+| `/{tablename}?{querystring}` | GET    | List rows matching query | ---                | `application/json` (matching rows)         |
+| `/{tablename}/{id}`          | PUT    | Update a row by ID       | `application/json` | `application/json` (updated row)           |
+| `/{tablename}/{id}`          | DELETE | Delete a row by ID       | ---                | `row {id} deleted from table {tablename}`  |
 
 ### Insert
 
-Insert a new row into an existing table.
+Insert a new row or rows into an existing table.
 
 ```http
 POST http://{HOST}:{PORT}/{tablename}
 Accept: application/json
 ```
 
+Example (single JSON object):
+
 ```bash
 curl -X POST -s http://localhost:8090/authors \
-      --data '{ "surname": "Plato" }'
-# example stdout: row 1 created in table authors
+      --data '{ "surname": "Woolf", "forename": "Virginia" }'
+# rows created in table authors: [1]⏎
+```
+
+Example (multiple rows from array of JSON objects):
+
+```bash
+curl -X POST http://localhost:8090/authors \
+      --data '[{ "surname": "Groton", "forename": "Anne" }, { "surname": "Plato" }]'
+# rows created in table authors: [2 3]⏎
 ```
 
 ### Pick

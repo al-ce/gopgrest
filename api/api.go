@@ -1,8 +1,10 @@
 package api
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"regexp"
@@ -144,26 +146,53 @@ func (h *APIHandler) Insert(w http.ResponseWriter, r *http.Request) {
 		InternalServerErrorHandler(w, r, err.Error())
 	}
 
-	// Decode request
-	var data *types.RowData
-	err = json.NewDecoder(r.Body).Decode(&data)
-	if err != nil {
-		log.Println(err)
-		InternalServerErrorHandler(w, r, fmt.Sprintf("%v", err))
-		return
+	// Store body for potential multiple reads
+	bodyBytes, _ := io.ReadAll(r.Body)
+	// Set a fresh ReadCloser with the body bytes
+	r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
+	r.Body.Close()
+
+	var data *[]types.RowData
+	// Try decoding an array of JSON objects
+	if err = json.NewDecoder(r.Body).Decode(&data); err != nil {
+
+		// The request may not have been an array of JSON objects
+		// Try decoding a single JSON object
+
+		// Set a fresh ReadCloser with the body bytes
+		r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
+		r.Body.Close()
+		var singleRow *types.RowData
+
+		if err = json.NewDecoder(r.Body).Decode(&singleRow); err != nil {
+
+			// If we fail again, give up
+			log.Println("Decode second attempt err", err)
+			InternalServerErrorHandler(w, r, fmt.Sprintf("%v", err))
+			return
+
+		} else {
+			// If it was a single object, assign it as the only item in the
+			// data array
+			data = &[]types.RowData{*singleRow}
+		}
 	}
 
-	// Insert new set into the database
-	newRowId, err := h.Service.InsertRow(data, table)
-	if err != nil {
-		log.Println(err)
-		InternalServerErrorHandler(w, r, fmt.Sprintf("%v", err))
-		return
+	// Insert new rows into the database one at a time so we can validate data
+	newIds := []int64{}
+	for _, row := range *data {
+		newRowId, err := h.Service.InsertRow(&row, table)
+		newIds = append(newIds, newRowId)
+		if err != nil {
+			log.Println(err)
+			InternalServerErrorHandler(w, r, fmt.Sprintf("%v", err))
+			return
+		}
 	}
 
 	// Set response
 	w.WriteHeader(http.StatusOK)
-	fmt.Fprintf(w, "row %d created in table %s", newRowId, table)
+	fmt.Fprintf(w, "rows created in table %s: %v", table, newIds)
 }
 
 // Pick gets a single row from a table in the database by id
