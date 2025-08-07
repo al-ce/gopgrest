@@ -3,6 +3,34 @@
 A dynamic RESTful HTTP server for a Postgres database. The app will adapt its
 URL routing and SQL queries to the provided table schemas.
 
+## API
+
+The following endpoints are valid for each table in the database with an `id`:
+
+| Endpoint                     | Method | Description              | Request            | Response                                   |
+| ---------------------------- | ------ | ------------------------ | ------------------ | ------------------------------------------ |
+| `/{tablename}`               | POST   | Insert a new row         | `application/json` | `rows created in table {tablename}: [ids]` |
+| `/{tablename}/{id}`          | GET    | Get a row by ID          | ---                | `application/json` (found row)             |
+| `/{tablename}?{querystring}` | GET    | List rows matching query | ---                | `application/json` (matching rows)         |
+| `/{tablename}/{id}`          | PUT    | Update a row by ID       | `application/json` | `application/json` (updated row)           |
+| `/{tablename}/{id}`          | DELETE | Delete a row by ID       | ---                | `row {id} deleted from table {tablename}`  |
+
+
+## Why this project?
+
+This project allows me to get a backend server going as soon as I have my
+tables defined for a database. If I decide I need to make changes to the table
+structures, then I don't need to make any changes to the backend. This allows
+me to perform simple CRUD operations right away and put off writing a more
+robust backend until I know exactly what I need.
+
+This makes `gopgrest` good for simple data retrieval on a home server, like
+tracking exercise data, managing a personal library, language learning, etc.;
+or as a placeholder backend for local development on a frontend application.
+
+I would not use this for a project that publicly exposes sensitive personal
+data.
+
 ## Limitations:
 
 - Insert, update, or delete requests _cannot_ be made on tables without an `id`
@@ -27,17 +55,17 @@ SELECT tablename FROM Pg_catalog.pg_tables WHERE schemaname='public'"
 - Requests with JSON content (insert/update) or query params (list) must use
   valid column names and corresponding column types
 
-## API
+## Security measures
 
-The following endpoints are valid for each table in the database with an `id`:
+These are the steps I took to be mindful of SQL injection in the service layer:
 
-| Endpoint                     | Method | Description              | Request            | Response                                   |
-| ---------------------------- | ------ | ------------------------ | ------------------ | ------------------------------------------ |
-| `/{tablename}`               | POST   | Insert a new row         | `application/json` | `rows created in table {tablename}: [ids]` |
-| `/{tablename}/{id}`          | GET    | Get a row by ID          | ---                | `application/json` (found row)             |
-| `/{tablename}?{querystring}` | GET    | List rows matching query | ---                | `application/json` (matching rows)         |
-| `/{tablename}/{id}`          | PUT    | Update a row by ID       | `application/json` | `application/json` (updated row)           |
-| `/{tablename}/{id}`          | DELETE | Delete a row by ID       | ---                | `row {id} deleted from table {tablename}`  |
+1. Statements use parameter placeholders for all value
+2. Queries can only be made to tables from a whitelist, i.e.
+   `Pg_catalog.pg_tables`
+3. Columns in JSON requests are checked against the associated table. Any
+   invalid column name will throw an error before the query is executed
+
+## Example usage
 
 ### Insert
 
@@ -180,9 +208,9 @@ export DB_PASS={{ DB_PASS }}    # The password to your Postgres database
 ./gopgrest                      # Run the build output
 ```
 
-### Quick setup/usage
+## Quick setup/usage
 
-With [casey/just](https://github.com/casey/just) as a task runner:
+Use recipes in the `justfile` with [casey/just](https://github.com/casey/just) as a task runner.
 
 - Define a schema (e.g. as above) in `./database/schema.sql`
 - `just run` (initialize a docker container database and run the program)
