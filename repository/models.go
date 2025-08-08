@@ -4,16 +4,17 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"reflect"
 )
 
 // TableColumn represents a column in a table
 type TableColumn struct {
-	Name     string
-	Datatype sql.ColumnType
+	Name string
+	Type reflect.Type
 }
 
 // ColumnMap is a map of column names in a row and their type
-type ColumnMap map[string]sql.ColumnType
+type ColumnMap map[string]reflect.Type
 
 // Table represents a table in the database
 // The Columns slice preserves the column order.
@@ -83,10 +84,10 @@ func NewTable(db QueryExecutor, tableName string) (*Table, error) {
 			tableColumns,
 			TableColumn{
 				name,
-				*coltypes[i],
+				coltypes[i].ScanType(),
 			},
 		)
-		columnMap[name] = *coltypes[i]
+		columnMap[name] = coltypes[i].ScanType()
 	}
 
 	return &Table{
@@ -135,7 +136,7 @@ func GetPublicTables(db QueryExecutor) ([]Table, error) {
 	for _, table := range tables {
 		log.Printf("\t%s : %d cols", table.Name, len(table.Columns))
 		for _, col := range table.Columns {
-			log.Printf("\t\t%-15s\t%s", col.Name, col.Datatype.ScanType())
+			log.Printf("\t\t%-15s\t%s", col.Name, col.Type)
 		}
 	}
 	log.Println()

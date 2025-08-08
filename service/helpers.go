@@ -91,7 +91,7 @@ func makeScanDestination(table *repository.Table) ([]any, []any) {
 	rowValues := make([]any, len(table.Columns))
 	rowPtrs := make([]any, len(table.Columns))
 	for i := range rowValues {
-		rowValues[i] = reflect.Zero(table.Columns[i].Datatype.ScanType())
+		rowValues[i] = reflect.Zero(table.Columns[i].Type)
 		rowPtrs[i] = &rowValues[i]
 	}
 	return rowValues, rowPtrs
