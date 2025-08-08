@@ -37,6 +37,8 @@ func NewAPIHandler(db repository.QueryExecutor, tables []repository.Table) APIHa
 // ServeHTTP routes the request by method and path, where the path begins with
 // an existing table name
 func (h *APIHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	log.Println(r.Method, r.URL.String(), r.RemoteAddr)
+
 	exists, err := h.tableExists(r)
 	switch {
 	case !exists || err != nil:
@@ -59,8 +61,6 @@ func (h *APIHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 // Update updates a row in the table by id
 func (h *APIHandler) Update(w http.ResponseWriter, r *http.Request) {
-	log.Println(r.Method, r.URL.String(), r.RemoteAddr)
-
 	// Get table from URL path
 	table, err := h.extractTableName(r)
 	if err != nil {
@@ -108,8 +108,6 @@ func (h *APIHandler) Update(w http.ResponseWriter, r *http.Request) {
 
 // Delete adds removes a row from a table by id
 func (h *APIHandler) Delete(w http.ResponseWriter, r *http.Request) {
-	log.Println(r.Method, r.URL.String(), r.RemoteAddr)
-
 	// Get table from URL path
 	table, err := h.extractTableName(r)
 	if err != nil {
@@ -138,8 +136,6 @@ func (h *APIHandler) Delete(w http.ResponseWriter, r *http.Request) {
 
 // Insert adds a row to a table
 func (h *APIHandler) Insert(w http.ResponseWriter, r *http.Request) {
-	log.Println(r.Method, r.URL.String(), r.RemoteAddr)
-
 	// Get table from URL path
 	table, err := h.extractTableName(r)
 	if err != nil {
@@ -197,8 +193,6 @@ func (h *APIHandler) Insert(w http.ResponseWriter, r *http.Request) {
 
 // Pick gets a single row from a table in the database by id
 func (h *APIHandler) Pick(w http.ResponseWriter, r *http.Request) {
-	log.Println(r.Method, r.URL.String(), r.RemoteAddr)
-
 	// Get table from URL path
 	table, err := h.extractTableName(r)
 	if err != nil {
@@ -237,8 +231,6 @@ func (h *APIHandler) Pick(w http.ResponseWriter, r *http.Request) {
 // List gets rows from a table in the database, optionally filtering by query
 // params
 func (h *APIHandler) List(w http.ResponseWriter, r *http.Request) {
-	log.Println(r.Method, r.URL.String(), r.RemoteAddr)
-
 	// Get table from URL path
 	table, err := h.extractTableName(r)
 	if err != nil {
