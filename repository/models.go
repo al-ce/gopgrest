@@ -28,8 +28,8 @@ type Table struct {
 // ColData is a tuple of a column's name and its database type used for JSON
 // marshalling, vs. TableColumn which needs reflect.Type to get a type's size
 type ColData struct {
-	Name string
-	Type string
+	Name string `json:"col_name"`
+	Type string `json:"col_type"`
 }
 
 // TablesRepr is a map representing database tables and their cols, used for
