@@ -7,14 +7,14 @@ URL routing and SQL queries to the provided table schemas.
 
 The following endpoints are valid for each table in the database with an `id`:
 
-| Endpoint                     | Method | Description              | Request            | Response                                   |
-| ---------------------------- | ------ | ------------------------ | ------------------ | ------------------------------------------ |
-| `/{tablename}`               | POST   | Insert a new row         | `application/json` | `rows created in table {tablename}: [ids]` |
-| `/{tablename}/{id}`          | GET    | Get a row by ID          | ---                | `application/json` (found row)             |
-| `/{tablename}?{querystring}` | GET    | List rows matching query | ---                | `application/json` (matching rows)         |
-| `/{tablename}/{id}`          | PUT    | Update a row by ID       | `application/json` | `application/json` (updated row)           |
-| `/{tablename}/{id}`          | DELETE | Delete a row by ID       | ---                | `row {id} deleted from table {tablename}`  |
-
+| Endpoint                     | Method | Description                 | Request            | Response                                   |
+| ---------------------------- | ------ | --------------------------- | ------------------ | ------------------------------------------ |
+| `/`                          | GET    | Get structure of all tables | ---                | `application/json` (tables)                |
+| `/{tablename}`               | POST   | Insert a new row            | `application/json` | `rows created in table {tablename}: [ids]` |
+| `/{tablename}/{id}`          | GET    | Get a row by ID             | ---                | `application/json` (found row)             |
+| `/{tablename}?{querystring}` | GET    | List rows matching query    | ---                | `application/json` (matching rows)         |
+| `/{tablename}/{id}`          | PUT    | Update a row by ID          | `application/json` | `application/json` (updated row)           |
+| `/{tablename}/{id}`          | DELETE | Delete a row by ID          | ---                | `row {id} deleted from table {tablename}`  |
 
 ## Why this project?
 
@@ -66,6 +66,53 @@ These are the steps I took to be mindful of SQL injection in the service layer:
    invalid column name will throw an error before the query is executed
 
 ## Example usage
+
+### Get table structures
+
+Get a JSON object that describes all the tables in the database with their column names and column types:
+
+```http
+GET http://{HOST}:{PORT}/
+```
+
+Example:
+
+```bash
+curl -X GET 'http://localhost:8090/' | jq
+```
+
+```json
+{
+  "authors": [
+    {
+      "col_name": "id",
+      "col_type": "int32"
+    },
+    {
+      "col_name": "surname",
+      "col_type": "string"
+    },
+    {
+      "col_name": "forename",
+      "col_type": "string"
+    }
+  ],
+  "books": [
+    {
+      "col_name": "id",
+      "col_type": "int32"
+    },
+    {
+      "col_name": "title",
+      "col_type": "string"
+    },
+    {
+      "col_name": "author_id",
+      "col_type": "int32"
+    }
+  ]
+}
+```
 
 ### Insert
 
