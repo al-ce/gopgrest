@@ -25,6 +25,18 @@ type Table struct {
 	ColumnMap ColumnMap
 }
 
+// ColData is a tuple of a column's name and its database type used for JSON
+// marshalling, vs. TableColumn which needs reflect.Type to get a type's size
+type ColData struct {
+	Name string
+	Type string
+}
+
+// TablesRepr is a map representing database tables and their cols, used for
+// JSON marshalling, vs. an array of Table structs which is used for looking up
+// the byte size of column types
+type TablesRepr map[string][]ColData
+
 // QueryExecutor is an interface that can be satisfied by both *sql.DB and *sql.Tx
 type QueryExecutor interface {
 	Exec(query string, args ...any) (sql.Result, error)
@@ -34,8 +46,9 @@ type QueryExecutor interface {
 
 // Repository handles database transactions
 type Repository struct {
-	DB     QueryExecutor
-	Tables []Table
+	DB         QueryExecutor
+	Tables     []Table
+	TablesRepr TablesRepr
 }
 
 // ExecResult contains information from the result of an insert query
@@ -47,8 +60,9 @@ type ExecResult struct {
 // NewRepository returns a new Repository
 func NewRepository(db QueryExecutor, tables []Table) Repository {
 	return Repository{
-		DB:     db,
-		Tables: tables,
+		DB:         db,
+		Tables:     tables,
+		TablesRepr: NewTablesRepr(tables),
 	}
 }
 
@@ -142,4 +156,17 @@ func GetPublicTables(db QueryExecutor) ([]Table, error) {
 	log.Println()
 
 	return tables, nil
+}
+
+func NewTablesRepr(tables []Table) TablesRepr {
+	tablesRep := TablesRepr{}
+	for _, table := range tables {
+		columns := []ColData{}
+		for _, col := range table.Columns {
+			col := ColData{Name: col.Name, Type: col.Type.Name()}
+			columns = append(columns, col)
+		}
+		tablesRep[table.Name] = columns
+	}
+	return tablesRep
 }
