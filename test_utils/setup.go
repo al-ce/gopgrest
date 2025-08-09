@@ -23,6 +23,7 @@ var (
 )
 
 const TABLE1 = "exercise_sets"
+const TABLE2 = "library_branches"
 
 // NewTestDB returns a test database
 func NewTestDB(t *testing.T) *TestDB {
