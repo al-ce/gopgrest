@@ -41,6 +41,8 @@ func (h *APIHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	exists, err := h.tableExists(r)
 	switch {
+	case r.Method == http.MethodGet && r.URL.Path == "/":
+		h.ShowTables(w, r)
 	case !exists || err != nil:
 		log.Println(r.URL.Path, "not found")
 		NotFoundHandler(w, r)
@@ -57,6 +59,22 @@ func (h *APIHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	default:
 		NotFoundHandler(w, r)
 	}
+}
+
+// ShowTables responds with a JSON object of the tables, their column names,
+// and column types
+func (h *APIHandler) ShowTables(w http.ResponseWriter, r *http.Request) {
+	jsonData, err := json.Marshal(h.Repo.TablesRepr)
+	if err != nil {
+		log.Println(err)
+		InternalServerErrorHandler(w, r, fmt.Sprintf("%v", err))
+		return
+	}
+
+	// Write response
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(jsonData)
 }
 
 // Update updates a row in the table by id
