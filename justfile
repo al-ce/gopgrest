@@ -237,6 +237,12 @@ tstop:
 ## api calls
 ###############################################################################
 
+# Make a GET request to the homepage
+[group('api')]
+home:
+    curl -X GET -s http://localhost:{{ API_PORT }}/ \
+    | just jqparse
+
 # pick a single row by id
 [group('api')]
 pick table id:
