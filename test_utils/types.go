@@ -25,7 +25,7 @@ type SampleAuthor struct {
 type SampleBook struct {
 	ID       int64  `json:"id"`
 	Title    string `json:"title"`
-	AuthorID int    `json:"author_id"`
+	AuthorID int64  `json:"author_id"`
 }
 
 // SampleAuthorsMap is a map of authors by ID
