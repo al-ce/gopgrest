@@ -135,6 +135,8 @@ stop:
 [group('db')]
 init:
     #!/usr/bin/env sh
+    just stop
+    just remove
     # Init container if not created
     if docker ps --all --format json | jq -r .Names | grep -q "^{{ DB_CONTAINER }}$"; then
         echo "{{ PROJECT_NAME }} database already created"
