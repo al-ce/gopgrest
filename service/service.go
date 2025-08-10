@@ -129,17 +129,17 @@ func (s *Service) UpdateRow(tableName, id string, updateData *types.RowData) (ty
 }
 
 // DeleteRow removes a row from the table by id
-func (s *Service) DeleteRow(tableName, id string) error {
+func (s *Service) DeleteRow(tableName, id string) (int64, error) {
 	// Get table info for verification
 	_, err := s.Repo.GetTable(tableName)
 	if err != nil {
-		return err
+		return -1, err
 	}
 
 	// Convert id to int
 	idInt, err := strconv.ParseInt(id, 10, 64)
 	if err != nil {
-		return err
+		return -1, err
 	}
 
 	return s.Repo.DeleteRow(tableName, idInt)

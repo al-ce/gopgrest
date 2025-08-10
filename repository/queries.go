@@ -110,7 +110,7 @@ func (r *Repository) UpdateRowCol(tableName string, id int64, updatedRow *types.
 }
 
 // DeleteRow removes a row from a table by id
-func (r *Repository) DeleteRow(tableName string, id int64) error {
+func (r *Repository) DeleteRow(tableName string, id int64) (int64, error) {
 	deleteStmt := fmt.Sprintf("DELETE FROM %s WHERE id = $1", tableName)
 
 	log.Printf(
@@ -121,15 +121,11 @@ func (r *Repository) DeleteRow(tableName string, id int64) error {
 	// Execute delete query
 	result, err := r.DB.Exec(deleteStmt, id)
 	if err != nil {
-		return err
+		return -1, err
 	}
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
-		return err
+		return -1, err
 	}
-	if rowsAffected == 0 {
-		return apperrors.NewDeleteInvalidIDErr(tableName, id)
-	}
-
-	return nil
+	return rowsAffected, nil
 }

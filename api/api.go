@@ -141,7 +141,8 @@ func (h *APIHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	id := matches[1]
 
 	// Delete row by id
-	if err := h.Service.DeleteRow(table, id); err != nil {
+	rowsAffected, err := h.Service.DeleteRow(table, id)
+	if err != nil {
 		log.Println(err)
 		InternalServerErrorHandler(w, r, fmt.Sprintf("%v", err))
 		return
@@ -149,7 +150,7 @@ func (h *APIHandler) Delete(w http.ResponseWriter, r *http.Request) {
 
 	// Set response
 	w.WriteHeader(http.StatusOK)
-	fmt.Fprintf(w, "row %s deleted from table %s\n", id, table)
+	fmt.Fprintf(w, "deleted %d rows from table %s\n", rowsAffected, table)
 }
 
 // Insert adds a row to a table
