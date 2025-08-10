@@ -64,8 +64,7 @@ func (r *Repository) InsertRow(tableName string, newRow *types.RowData) (result 
 		strings.Join(cols, ", ") +
 		") values (" +
 		strings.Join(placeholders, ",") +
-		")" +
-		"RETURNING id"
+		") RETURNING id"
 
 	log.Printf("Exec query\n\t%s\nValues: %v\n", createStmnt, values)
 
