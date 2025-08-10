@@ -12,18 +12,30 @@ type TestDB struct {
 	Tables []repository.Table
 }
 
-// Authors matches the authors table in the test database so that rows
+// SampleAuthor matches the authors table in the test database so that rows
 // can be scanned into fields of appropriate size
-type Authors struct {
-	ID       int    `json:"id"`
+type SampleAuthor struct {
+	ID       int64  `json:"id"`
 	Surname  string `json:"surname"`
 	Forename string `json:"forename"`
 }
 
-// books matches the books table in the test database so that rows
+// SampleBook matches the books table in the test database so that rows
 // can be scanned into fields of appropriate size
-type Books struct {
-	ID       int    `json:"id"`
+type SampleBook struct {
+	ID       int64  `json:"id"`
 	Title    string `json:"title"`
 	AuthorID int    `json:"author_id"`
+}
+
+// SampleAuthorsMap is a map of authors by ID
+type SampleAuthorsMap map[int64]SampleAuthor
+
+// SampleBooksMap is a map of books by ID
+type SampleBooksMap map[int64]SampleBook
+
+// SampleRows holds arrays of inserted sample Author and Book structs
+type SampleRows struct {
+	Authors SampleAuthorsMap
+	Books   SampleBooksMap
 }
