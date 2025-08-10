@@ -72,8 +72,7 @@ func getSampleAuthors(repo repository.Repository, authorIDs []int64) SampleAutho
 	authors := SampleAuthorsMap{}
 	for _, id := range authorIDs {
 		row := repo.DB.QueryRow("SELECT * FROM authors WHERE id=$1", id)
-		author := SampleAuthor{}
-		err := row.Scan(&author.ID, &author.Surname, &author.Forename)
+		author, err := ScanAuthor(row)
 		if err != nil {
 			log.Fatalf("Author scan err: %s\n", err)
 		}

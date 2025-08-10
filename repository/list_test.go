@@ -24,8 +24,7 @@ func Test_ListRows(t *testing.T) {
 		// Make a SampleAuthorsMap that should match the expected one
 		gotAuthors := test_utils.SampleAuthorsMap{}
 		for rows.Next() {
-			got := test_utils.SampleAuthor{}
-			err := rows.Scan(&got.ID, &got.Surname, &got.Forename)
+			got, err := test_utils.ScanAuthorFromRows(rows)
 			if err != nil {
 				t.Fatalf("List all authors scan err: %s\n", err)
 			}
@@ -60,8 +59,7 @@ func Test_ListRows(t *testing.T) {
 		// Make a SampleAuthorsMap that should match the expected one
 		gotAuthors := test_utils.SampleAuthorsMap{}
 		for rows.Next() {
-			got := test_utils.SampleAuthor{}
-			err := rows.Scan(&got.ID, &got.Surname, &got.Forename)
+			got, err := test_utils.ScanAuthorFromRows(rows)
 			if err != nil {
 				t.Fatalf("List all authors scan err: %s\n", err)
 			}
