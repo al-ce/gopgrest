@@ -12,8 +12,8 @@
 # - gotestfmt https://github.com/GoTestTools/gotestfmt
 # Set this here:
 
-test_parser := "tparse"
-# test_parser := "gotestfmt"
+# test_parser := "tparse"
+test_parser := "gotestfmt"
 # test_parser := "gotestsum"
 
 set quiet := true
