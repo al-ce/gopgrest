@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 
 	"gopgrest/api"
 )
@@ -25,4 +26,16 @@ func MakeHttpRequest(ah api.APIHandler, method, path string, reqData any) (*http
 	rr := httptest.NewRecorder()
 	ah.ServeHTTP(rr, req)
 	return rr, nil
+}
+
+// Get an author in the SampleAuthorsMap by a field name and value
+func GetSampleAuthorByFieldValue(authors SampleAuthorsMap, fieldName string, value any) *SampleAuthor {
+	for _, author := range authors {
+		v := reflect.ValueOf(author)
+		f := v.FieldByName(fieldName)
+		if f.Interface() == value {
+			return &author
+		}
+	}
+	return nil
 }
