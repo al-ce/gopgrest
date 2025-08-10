@@ -16,6 +16,11 @@ func (r *Repository) GetTable(tableName string) (*Table, error) {
 	return nil, fmt.Errorf("table does not exist")
 }
 
+func (r *Repository) IsValidColumn(table Table, col string) bool {
+	_, ok := table.ColumnMap[col]
+	return ok
+}
+
 // buildConditionalClause builds a SQL WHERE clause to select a row. Ex: when
 // params == `[name:[bob alice] age:[45]]`, the name in the row must be either
 // bob or alice and the age must be 45.
