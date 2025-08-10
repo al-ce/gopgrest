@@ -21,11 +21,6 @@ var (
 	testDbName = os.Getenv("TEST_DB_NAME")
 )
 
-const (
-	TABLE1 = "authors"
-	TABLE2 = "books"
-)
-
 // NewTestDB returns a test database
 func NewTestDB(t *testing.T) *TestDB {
 	testParams := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
@@ -42,6 +37,8 @@ func NewTestDB(t *testing.T) *TestDB {
 	tables, err := repository.GetPublicTables(db)
 
 	t.Cleanup(func() {
+		db.Exec("DELETE FROM authors")
+		db.Exec("DELETE FROM books")
 		db.Close()
 	})
 
