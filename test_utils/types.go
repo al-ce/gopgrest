@@ -2,10 +2,8 @@ package test_utils
 
 import (
 	"database/sql"
-	"time"
 
 	"gopgrest/repository"
-	"gopgrest/types"
 )
 
 type TestDB struct {
@@ -14,45 +12,18 @@ type TestDB struct {
 	Tables []repository.Table
 }
 
-// ExerciseSet matches the exercise_set table in the test database so that rows
+// Authors matches the authors table in the test database so that rows
 // can be scanned into fields of appropriate size
-type ExerciseSet struct {
-	ID          int       `json:"id"`
-	Name        string    `json:"name"`
-	PerformedAt time.Time `json:"performed_at"`
-	Weight      int       `json:"weight"`
-	Unit        string    `json:"unit"`
-	Reps        int       `json:"reps"`
-	SetCount    int       `json:"set_count"`
-	Notes       string    `json:"notes"`
-	SplitDay    string    `json:"split_day"`
-	Program     string    `json:"program"`
-	Tags        string    `json:"tags"`
+type Authors struct {
+	ID       int    `json:"id"`
+	Surname  string `json:"surname"`
+	Forename string `json:"forename"`
 }
 
-type TagMap map[string]string
-
-type FilterTest struct {
-	TestName  string
-	Filters   types.QueryFilter
-	RowCount  int
-	PqErr     any
-	CustomErr any
-}
-
-type InsertTest struct {
-	Name       string
-	NewRow     types.RowData
-	ExpectRows int64
-	PqErr  any
-	CustomErr  any
-}
-
-type UpdateTest struct {
-	TestName  string
-	ID        int64
-	Col       string
-	Value     any
-	PqErr any
-	CustomErr any
+// books matches the books table in the test database so that rows
+// can be scanned into fields of appropriate size
+type Books struct {
+	ID       int    `json:"id"`
+	Title    string `json:"title"`
+	AuthorID int    `json:"author_id"`
 }

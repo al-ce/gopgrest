@@ -11,7 +11,6 @@ import (
 	"gopgrest/api"
 	"gopgrest/repository"
 	"gopgrest/service"
-	"gopgrest/types"
 )
 
 var (
@@ -22,8 +21,10 @@ var (
 	testDbName = os.Getenv("TEST_DB_NAME")
 )
 
-const TABLE1 = "exercise_sets"
-const TABLE2 = "library_branches"
+const (
+	TABLE1 = "authors"
+	TABLE2 = "books"
+)
 
 // NewTestDB returns a test database
 func NewTestDB(t *testing.T) *TestDB {
@@ -66,27 +67,25 @@ func (tdb *TestDB) BeginTX(t *testing.T) *sql.Tx {
 
 // NewTestRepo initializes a new test Repository with a transaction and
 // populates it with sample rows
-func NewTestRepo(t *testing.T) (repository.Repository, types.RowDataIdMap) {
+func NewTestRepo(t *testing.T) repository.Repository {
 	tdb := NewTestDB(t)
 	tx := tdb.BeginTX(t)
 	repo := repository.NewRepository(tx, tdb.Tables)
-	sampleRows := InsertSampleRows(repo)
-	return repo, sampleRows
+	return repo
 }
 
 // NewTestService initializes a new test Service with a test Repository, using
 // a transaction and returning the service plus some inserted sample rows
-func NewTestService(t *testing.T) (service.Service, types.RowDataIdMap) {
-	repo, sampleRows := NewTestRepo(t)
-	return service.NewService(repo), sampleRows
+func NewTestService(t *testing.T) service.Service {
+	repo := NewTestRepo(t)
+	return service.NewService(repo)
 }
 
 // NewTestAPIHandler initializes an api handler with a transaction and return
 // the handler plus some inserted sample rows
-func NewTestAPIHandler(t *testing.T) (api.APIHandler, types.RowDataIdMap) {
+func NewTestAPIHandler(t *testing.T) api.APIHandler {
 	tdb := NewTestDB(t)
 	tx := tdb.BeginTX(t)
 	apih := api.NewAPIHandler(tx, tdb.Tables)
-	sampleRows := InsertSampleRows(apih.Repo)
-	return apih, sampleRows
+	return apih
 }
