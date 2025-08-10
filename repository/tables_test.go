@@ -17,7 +17,7 @@ func Test_GetPublicTables(t *testing.T) {
 		t.Errorf("%s", err)
 	}
 
-	expectedTables := []string{test_utils.TABLE1, test_utils.TABLE2}
+	expectedTables := []string{"authors", "books"}
 	foundTables := []string{}
 	for _, table := range tables {
 		// Check for extraneous tables
