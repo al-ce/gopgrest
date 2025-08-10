@@ -74,8 +74,8 @@ func (r *Repository) InsertRow(tableName string, newRow *types.RowData) (result 
 	return
 }
 
-// UpdateRowCol updates a column in a table row by id
-func (r *Repository) UpdateRowCol(tableName string, id int64, updatedRow *types.RowData) error {
+// UpdateRow update columns in a table row by id
+func (r *Repository) UpdateRow(tableName string, id int64, updatedRow *types.RowData) error {
 	// Build update query
 	updateStmnt := fmt.Sprintf("UPDATE %s SET ", tableName)
 

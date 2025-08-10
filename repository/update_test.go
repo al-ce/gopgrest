@@ -20,7 +20,7 @@ func Test_UpdateRow(t *testing.T) {
 
 	// Update author attrs in DB
 	updatedRow := types.RowData{"surname": "Sappho", "forename": "", "id": author.ID}
-	err := repo.UpdateRowCol("authors", author.ID, &updatedRow)
+	err := repo.UpdateRow("authors", author.ID, &updatedRow)
 	if err != nil {
 		t.Errorf("Update err: %s\n", err)
 	}

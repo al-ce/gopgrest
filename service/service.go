@@ -104,8 +104,6 @@ func (s *Service) UpdateRow(tableName, id string, updateData *types.RowData) (ty
 		return types.RowData{}, err
 	}
 
-	//
-
 	// Each column in the update data must exist in the table
 	cols := slices.Collect(maps.Keys(*updateData))
 	if err := s.verifyColumns(table, cols); err != nil {
@@ -121,7 +119,7 @@ func (s *Service) UpdateRow(tableName, id string, updateData *types.RowData) (ty
 	}
 
 	// Update row
-	err = s.Repo.UpdateRowCol(tableName, idInt, updateData)
+	err = s.Repo.UpdateRow(tableName, idInt, updateData)
 	if err != nil {
 		return types.RowData{}, err
 	}
