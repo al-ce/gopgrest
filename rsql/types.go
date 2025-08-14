@@ -2,11 +2,20 @@ package rsql
 
 // PathQuery holds the parts of a RESTful GET request's URL that are translated
 // to a SQL SELECT query. In the example:
-// GET /authors?filter=forename=in=Ann,Anne;surname=Carson&fields=forename,surname
-// the Resource and Quey are split at the `?` character
+//
+// `GET /authors?filter=forename=in=Ann,Anne;surname=Carson&fields=forename,surname`
+//
+// the Resource and Query are split at the `?` character
 type PathQuery struct {
 	Resource string
 	Query    string
+}
+
+// Query is a parsed PathQuery that is used to build a SQL query.
+type Query struct {
+	Fields  Fields
+	Filters []Filter
+	Join    Joins
 }
 
 // FiltersMap is map of values to filter by. The expected use is that for a
@@ -14,6 +23,14 @@ type PathQuery struct {
 // filter must match the corresponding column value of the row.
 type FiltersMap map[string][]string
 
+// Filter is the parsed result of one of any `;` separated filter conditions in
+// a URL query. The example:
+//
+// `GET /authors?filter=forename=in=Ann,Anne;surname=!=Carson`
+//
+// would be parsed as two seaparte Filter values:
+// {Column: "forename", Values: []string{"Ann", "Anne"}, SQLOperator: "IN" }
+// {Column: "surname", Values: []string{"Carson"}, SQLOperator: "IN" }
 type Filter struct {
 	Column      string
 	Values      []string
@@ -31,20 +48,14 @@ type JoinRelation struct {
 	RightCol   string
 }
 
-type Query struct {
-	Fields  Fields
-	Filters []Filter
-	Join    Joins
-}
+// VALIDKEYWORDS are valid clause keywords for a URL query
+var VALIDKEYWORDS = []string{FILTER, FIELDS, JOIN}
 
 const (
 	FILTER = "filter"
 	FIELDS = "fields"
 	JOIN   = "join"
 )
-
-// VALIDKEYWORDS are valid clause keywords for a URL query
-var VALIDKEYWORDS = []string{FILTER, FIELDS, JOIN}
 
 // regexFilterOperators is an array of valid operators for a filter condition. We
 // use this to guarantee the order of the subexpressions, so that "<=" is
