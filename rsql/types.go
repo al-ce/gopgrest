@@ -18,11 +18,6 @@ type Query struct {
 	Join    Joins
 }
 
-// FiltersMap is map of values to filter by. The expected use is that for a
-// row to match the query filter, one of the elements from each key of the
-// filter must match the corresponding column value of the row.
-type FiltersMap map[string][]string
-
 // Filter is the parsed result of one of any `;` separated filter conditions in
 // a URL query. The example:
 //
