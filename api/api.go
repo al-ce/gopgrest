@@ -37,24 +37,28 @@ func NewAPIHandler(db repository.QueryExecutor, tables []repository.Table) APIHa
 // ServeHTTP routes the request by method and path, where the path begins with
 // an existing table name
 func (h *APIHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	log.Println(r.Method, r.URL.String(), r.RemoteAddr)
+	log.Println(r.Method, r.URL, r.RemoteAddr)
+
+	urlString := r.URL.String()
+	isRequestWithID := ReRequestWithId.MatchString(urlString)
+	isListRequest := ReListRequest.MatchString(urlString)
 
 	exists, err := h.tableExists(r)
 	switch {
-	case r.Method == http.MethodGet && r.URL.Path == "/":
+	case r.Method == http.MethodGet && urlString == "/":
 		h.ShowTables(w, r)
 	case !exists || err != nil:
-		log.Println(r.URL.Path, "not found")
+		log.Println(urlString, "not found")
 		NotFoundHandler(w, r)
-	case r.Method == http.MethodGet && ReRequestWithId.MatchString(r.URL.Path):
+	case r.Method == http.MethodGet && isRequestWithID:
 		h.Pick(w, r)
-	case r.Method == http.MethodGet && ReListRequest.MatchString(r.URL.Path):
+	case r.Method == http.MethodGet && isListRequest:
 		h.List(w, r)
 	case r.Method == http.MethodPost:
 		h.Insert(w, r)
-	case r.Method == http.MethodDelete && ReRequestWithId.MatchString(r.URL.Path):
+	case r.Method == http.MethodDelete && isRequestWithID:
 		h.Delete(w, r)
-	case r.Method == http.MethodPut && ReRequestWithId.MatchString(r.URL.Path):
+	case r.Method == http.MethodPut && isRequestWithID:
 		h.Update(w, r)
 	default:
 		NotFoundHandler(w, r)
@@ -257,7 +261,7 @@ func (h *APIHandler) List(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Retrieve listQueryResults from database
-	listQueryResults, err := h.Service.ListRows(table, types.QueryFilter(r.URL.Query()))
+	listQueryResults, err := h.Service.ListRows(table, r.URL.String())
 	if err != nil {
 		log.Println(err)
 		InternalServerErrorHandler(w, r, fmt.Sprintf("%v", err))

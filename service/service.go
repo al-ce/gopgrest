@@ -9,6 +9,7 @@ import (
 	"strconv"
 
 	"gopgrest/repository"
+	"gopgrest/rsql"
 	"gopgrest/types"
 )
 
@@ -33,7 +34,7 @@ func (s *Service) InsertRow(newRow *types.RowData, tableName string) (int64, err
 
 	// Each column in the insert data must exist in the table
 	cols := slices.Collect(maps.Keys(*newRow))
-	if err := s.verifyColumns(table, cols); err != nil {
+	if err := verifyColumns(table, cols); err != nil {
 		return -1, err
 	}
 
@@ -59,20 +60,23 @@ func (s *Service) PickRow(tableName, id string) (types.RowData, error) {
 }
 
 // ListRows gets rows from a table with optional filter params
-func (s *Service) ListRows(tableName string, qf types.QueryFilter) (*types.RowDataIdMap, error) {
+func (s *Service) ListRows(tableName string, url string) (*types.RowDataIdMap, error) {
 	// Get table info for verification
-	table, err := s.Repo.GetTable(tableName)
+	_, err := s.Repo.GetTable(tableName)
 	if err != nil {
 		return nil, err
 	}
 
-	// Each column in the query params must exist in the table
-	cols := slices.Collect(maps.Keys(qf))
-	if err := s.verifyColumns(table, cols); err != nil {
+	rsql, err := rsql.NewRSQLQuery(url)
+	if err != nil {
+		return nil, err
+	}
+	// Validate RSQL
+	if rsql != nil && s.validateRSQLQuery(rsql) != nil {
 		return nil, err
 	}
 
-	rows, err := s.Repo.ListRows(tableName, qf)
+	rows, err := s.Repo.ListRows(tableName, rsql)
 	if err != nil {
 		return nil, err
 	}
@@ -106,7 +110,7 @@ func (s *Service) UpdateRow(tableName, id string, updateData *types.RowData) (ty
 
 	// Each column in the update data must exist in the table
 	cols := slices.Collect(maps.Keys(*updateData))
-	if err := s.verifyColumns(table, cols); err != nil {
+	if err := verifyColumns(table, cols); err != nil {
 		return types.RowData{}, err
 	}
 

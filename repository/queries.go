@@ -7,17 +7,17 @@ import (
 	"strings"
 
 	"gopgrest/apperrors"
+	"gopgrest/rsql"
 	"gopgrest/types"
 )
 
 // ListRows gets rows from a table with optional filter params
-func (r *Repository) ListRows(tableName string, qf types.QueryFilter) (*sql.Rows, error) {
-	// Build list query with optional conditional filters
-	conditional, values, err := buildConditionalClause(qf)
+func (r *Repository) ListRows(tableName string, rsql *rsql.Query) (*sql.Rows, error) {
+	// Build list query with optional WHERE conditional filters
+	conditional, values, err := buildWhereConditions(rsql)
 	if err != nil {
 		return nil, err
 	}
-
 
 	listStmt := "SELECT * FROM " + tableName + conditional
 	log.Printf("Exec query\n\t%s\nValues: %v\n", listStmt, values)

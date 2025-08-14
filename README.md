@@ -1,35 +1,20 @@
 # gopgrest
 
 A dynamic RESTful HTTP server for a Postgres database. The app will adapt its
-URL routing and SQL queries to the provided table schemas.
+URL routing and SQL queries to the provided table schemas. Supports an RSQL based query language.
 
 ## API
 
 The following endpoints are valid for each table in the database with an `id`:
 
-| Endpoint                     | Method | Description                 | Request            | Response                                   |
-| ---------------------------- | ------ | --------------------------- | ------------------ | ------------------------------------------ |
-| `/`                          | GET    | Get structure of all tables | ---                | `application/json` (tables)                |
-| `/{tablename}`               | POST   | Insert a new row            | `application/json` | `rows created in table {tablename}: [ids]` |
-| `/{tablename}/{id}`          | GET    | Get a row by ID             | ---                | `application/json` (found row)             |
-| `/{tablename}?{querystring}` | GET    | List rows matching query    | ---                | `application/json` (matching rows)         |
-| `/{tablename}/{id}`          | PUT    | Update a row by ID          | `application/json` | `application/json` (updated row)           |
-| `/{tablename}/{id}`          | DELETE | Delete a row by ID          | ---                | `row {id} deleted from table {tablename}`  |
-
-## Why this project?
-
-This project allows me to get a backend server going as soon as I have my
-tables defined for a database. If I decide I need to make changes to the table
-structures, then I don't need to make any changes to the backend. This allows
-me to perform simple CRUD operations right away and put off writing a more
-robust backend until I know exactly what I need.
-
-This makes `gopgrest` good for simple data retrieval on a home server, like
-tracking exercise data, managing a personal library, language learning, etc.;
-or as a placeholder backend for local development on a frontend application.
-
-I would not use this for a project that publicly exposes sensitive personal
-data.
+| Endpoint                     | Method | Description                   | Request            | Response                                   |
+| ---------------------------- | ------ | ----------------------------- | ------------------ | ------------------------------------------ |
+| `/`                          | GET    | Get structure of all tables   | ---                | `application/json` (tables)                |
+| `/{tablename}`               | POST   | Insert a new row              | `application/json` | `rows created in table {tablename}: [ids]` |
+| `/{tablename}/{id}`          | GET    | Get a row by ID               | ---                | `application/json` (found row)             |
+| `/{tablename}?{querystring}` | GET    | List rows matching RSQL query | ---                | `application/json` (matching rows)         |
+| `/{tablename}/{id}`          | PUT    | Update a row by ID            | `application/json` | `application/json` (updated row)           |
+| `/{tablename}/{id}`          | DELETE | Delete a row by ID            | ---                | `row {id} deleted from table {tablename}`  |
 
 ## Limitations:
 
@@ -65,6 +50,69 @@ These are the steps I took to be mindful of SQL injection in the service layer:
 3. Columns in JSON requests are checked against the associated table. Any
    invalid column name will throw an error before the query is executed
 
+## REST Query language (based on RSQL)
+
+The project has a goal to be compatible with the [rsql-jpa-specification](https://github.com/perplexhub/rsql-jpa-specification) with additional features.
+
+### Filter
+
+A filter key can be added to the URL query to match a SQL `WHERE` clause. For example, the following SQL query and GET request are equivalent:
+
+```sql
+SELECT * FROM authors WHERE forename = 'Anne' AND born >= 1900
+```
+
+```
+ id | surname | forename | born | died
+----+---------+----------+------+------
+  1 | Carson  | Anne     | 1950 |
+(1 row)
+
+```
+
+```bash
+❯ curl -X GET -s 'http://localhost:8090/authors?filter=forename==Anne;born>=1900' | jq
+```
+
+```json
+{
+  "1": {
+    "born": 1950,
+    "died": null,
+    "forename": "Anne",
+    "id": 1,
+    "surname": "Carson"
+  }
+}
+```
+
+These are the currently supported filter operators:
+
+| Operator      | SQL equivalent |
+| ------------- | -------------- |
+| `==`          | `=`            |
+| `!=`          | `!=`           |
+| `=in=`        | `IN`           |
+| `=out=`       | `NOT IN`       |
+| `=like=`      | `LIKE`         |
+| `=!like=`     | `NOT LIKE`     |
+| `=notlike=`   | `NOT LIKE`     |
+| `=nk=`        | `NOT LIKE`     |
+| `=isnull=`    | `IS NULL`      |
+| `=na=`        | `IS NULL`      |
+| `=isnotnull=` | `IS NOT NULL`  |
+| `=notnull=`   | `IS NOT NULL`  |
+| `=nn=`        | `IS NOT NULL`  |
+| `=!null=`     | `IS NOT NULL`  |
+| `=le=`        | `<=`           |
+| `<=`          | `<=`           |
+| `=ge=`        | `>=`           |
+| `>=`          | `>=`           |
+| `=lt=`        | `<`            |
+| `<`           | `<`            |
+| `=gt=`        | `>`            |
+| `>`           | `>`            |
+
 ## Example usage
 
 ### Get table structures
@@ -95,6 +143,14 @@ curl -X GET 'http://localhost:8090/' | jq
     {
       "col_name": "forename",
       "col_type": "string"
+    },
+    {
+      "col_name": "born",
+      "col_type": "int16"
+    },
+    {
+      "col_name": "died",
+      "col_type": "int16"
     }
   ],
   "books": [
@@ -195,17 +251,19 @@ curl -X GET -s http://localhost:8090/authors
 }
 ```
 
-Example (multiple parameters connected by `&`):
+Example (multiple filter parameters connected by `;`):
 
 ```bash
-curl -X GET -s 'http://localhost:8090/authors?forename=Anne&surname=Carson'
+curl -X GET -s 'http://localhost:8090/authors?filter=forename==Anne;born>=1900'
 ```
 
 ```json
 {
-  "3": {
+  "1": {
+    "born": 1950,
+    "died": null,
     "forename": "Anne",
-    "id": 3,
+    "id": 1,
     "surname": "Carson"
   }
 }
@@ -300,3 +358,18 @@ Available recipes:
     tstart                # Start test database container
     tstop                 # Stop test database container
 ```
+
+## Why this project?
+
+This project allows me to get a backend server going as soon as I have my
+tables defined for a database. If I decide I need to make changes to the table
+structures, then I don't need to make any changes to the backend. This allows
+me to perform simple CRUD operations right away and put off writing a more
+robust backend until I know exactly what I need.
+
+This makes `gopgrest` good for simple data retrieval on a home server, like
+tracking exercise data, managing a personal library, language learning, etc.;
+or as a placeholder backend for local development on a frontend application.
+
+I would not use this for a project that publicly exposes sensitive personal
+data.

@@ -15,7 +15,7 @@ func Test_ListRows(t *testing.T) {
 		// Expected authors are the same as sample authors (no filter)
 		expAuthors := sampleRows.Authors
 		// Query DB for all authors, no filters
-		rows, err := repo.ListRows("authors", types.QueryFilter{})
+		rows, err := repo.ListRows("authors", types.RSQLFilters{})
 		if err != nil {
 			t.Fatalf("List err: %s", err)
 		}
@@ -50,7 +50,7 @@ func Test_ListRows(t *testing.T) {
 		}
 
 		// Query test db for authors with forename Anne
-		rows, err := repo.ListRows("authors", types.QueryFilter{"forename": []string{"Anne"}})
+		rows, err := repo.ListRows("authors", types.RSQLFilters{"forename": []string{"Anne"}})
 		if err != nil {
 			t.Fatalf("List err: %s", err)
 		}

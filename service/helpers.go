@@ -5,14 +5,17 @@ import (
 	"fmt"
 	"log"
 	"reflect"
+	"strings"
 
 	"gopgrest/repository"
+	"gopgrest/rsql"
 	"gopgrest/types"
 )
 
 // verifyColumns checks that all keys in a slice of cols, representing columns
 // in a database table, actually exist in that table
-func (s *Service) verifyColumns(t *repository.Table, cols []string) error {
+// TODO: replace all these refs with s.Repo.IsValidColumn
+func verifyColumns(t *repository.Table, cols []string) error {
 	for _, col := range cols {
 		if _, ok := t.ColumnMap[col]; !ok {
 			return fmt.Errorf("Column '%s' does not exist in table %s", col, t.Name)
@@ -120,4 +123,40 @@ func makeScannedRowMap(table *repository.Table, rowValues []any) (
 
 	}
 	return id, scannedRow, nil
+}
+
+func (s *Service) validateRSQLQuery(query *rsql.Query) error {
+	if err := s.validateRSQLFilters(query.Filters); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *Service) validateRSQLFilters(filters []rsql.Filter) error {
+	// Validate: each column in the query filter should be valid for its table
+	for _, f := range filters {
+		// Check if column is prefixed with a table, e.g. authors.forename
+		prefixedCol := strings.Split(f.Column, ".")
+		if len(prefixedCol) == 2 {
+			tableName := prefixedCol[0]
+			colName := prefixedCol[1]
+			table, err := s.Repo.GetTable(tableName)
+			if err != nil {
+				return err
+			}
+			if !s.Repo.IsValidColumn(*table, colName) {
+				return fmt.Errorf(
+					"Invalid col name %s for table %s",
+					colName,
+					tableName,
+				)
+			}
+		} else {
+			// TODO: get tables from JOINs
+			// We don't know which table this col could belong to, so check any
+			// tables from the url (the table in the FROM clause in the URL
+			// resource + any tables mentioned in the JOIN params of the URL)
+		}
+	}
+	return nil
 }
