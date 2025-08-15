@@ -60,7 +60,7 @@ func (s *Service) PickRow(tableName, id string) (types.RowData, error) {
 	if err != nil {
 		return nil, err
 	}
-	rowData, err := s.scanRows(rows)
+	rowData, err := scanRows(rows)
 	if err != nil {
 		return nil, err
 	}
@@ -100,7 +100,7 @@ func (s *Service) ListRows(tableName string, url string) ([]types.RowData, error
 	}()
 
 	// Scan rows into struct slice
-	listQueryResults, err := s.scanRows(rows)
+	listQueryResults, err := scanRows(rows)
 	if err != nil {
 		return nil, err
 	}

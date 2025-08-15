@@ -26,7 +26,7 @@ func verifyColumns(t *repository.Table, cols []string) error {
 }
 
 // scanRows scans rows from a query into a map
-func (s *Service) scanRows(rows *sql.Rows) ([]types.RowData, error) {
+func scanRows(rows *sql.Rows) ([]types.RowData, error) {
 	// Make arrays of pointers with sizes that match column type
 	cols, _ := rows.Columns()
 	rowValues, rowPtrs := makeScanDestination(rows, cols)
