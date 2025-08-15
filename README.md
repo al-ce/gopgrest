@@ -1,7 +1,8 @@
 # gopgrest
 
 A dynamic RESTful HTTP server for a Postgres database. The app will adapt its
-URL routing and SQL queries to the provided table schemas. Supports an RSQL based query language.
+URL routing and SQL queries to the provided table schemas. Supports an RSQL
+based query language.
 
 ## API
 
@@ -54,24 +55,42 @@ These are the steps I took to be mindful of SQL injection in the service layer:
 
 The project has a goal to be compatible with the [rsql-jpa-specification](https://github.com/perplexhub/rsql-jpa-specification) with additional features.
 
+Query parameters can be added to a GET request after a `?` query separator. Keys and their values are separated by `=`. Multiple keys can be joined with `&`.
+
+The following example contains `filter` and `fields` k/v pairs. Every character between the `=` after `filter` and the `&` before `fields` is the value for `filter`.
+
+```bash
+curl -X GET -s 'http://localhost:8090/authors?filter=born<1900;forename==Anne&fields=forename,surname' | jq
+```
+
+```json
+[
+  {
+    "forename": "Anne",
+    "surname": "Brontë"
+  }
+]
+```
+
+The above request results in this SQL query at the repository layer:
+
+```sql
+SELECT forename,surname FROM authors WHERE born < 1900 AND forename = 'Anne'
+```
+
+The following query keys are supported:
+
+| Key      | Description                                |
+| -------- | ------------------------------------------ |
+| `filter` | add `WHERE` conditions to a `SELECT` query |
+| `fields` | columns to return in a `SELECT` query      |
+
 ### Filter
 
 A filter key can be added to the URL query to match a SQL `WHERE` clause. For example, the following SQL query and GET request are equivalent:
 
-```sql
-SELECT * FROM authors WHERE forename = 'Anne' AND born >= 1900
-```
-
-```
- id | surname | forename | born | died
-----+---------+----------+------+------
-  1 | Carson  | Anne     | 1950 |
-(1 row)
-
-```
-
 ```bash
-❯ curl -X GET -s 'http://localhost:8090/authors?filter=forename==Anne;born>=1900' | jq
+curl -X GET -s 'http://localhost:8090/authors?filter=forename==Anne;born>=1900' | jq
 ```
 
 ```json
@@ -84,6 +103,18 @@ SELECT * FROM authors WHERE forename = 'Anne' AND born >= 1900
     "surname": "Carson"
   }
 }
+```
+
+```sql
+SELECT * FROM authors WHERE forename = 'Anne' AND born >= 1900
+```
+
+```
+ id | surname | forename | born | died
+----+---------+----------+------+------
+  1 | Carson  | Anne     | 1950 |
+(1 row)
+
 ```
 
 These are the currently supported filter operators:
@@ -112,6 +143,45 @@ These are the currently supported filter operators:
 | `<`           | `<`            |
 | `=gt=`        | `>`            |
 | `>`           | `>`            |
+
+### Fields
+
+A fields key can be added to the URL query to specify columns for the SQL `SELECT` clause. If no fields are specified, the query will be `SELECT *`. Fox example, the following queries and GET request are equivalent:
+
+```bash
+curl -X GET -s 'http://localhost:8090/authors?fields=surname,forename' | jq
+```
+
+```json
+[
+  {
+    "forename": "Virginia",
+    "surname": "Woolf"
+  },
+  {
+    "forename": "Anne",
+    "surname": "Brontë"
+  },
+  {
+    "forename": "Anne",
+    "surname": "Carson"
+  }
+]
+```
+
+```sql
+SELECT surname, forename from authors
+```
+
+```
+ surname | forename
+---------+----------
+ Woolf   | Virginia
+ Brontë  | Anne
+ Carson  | Anne
+(3 rows)
+
+```
 
 ## Example usage
 
@@ -232,23 +302,29 @@ curl -X GET -s http://localhost:8090/authors
 ```
 
 ```json
-{
-  "1": {
+[
+  {
+    "born": 1882,
+    "died": 1941,
     "forename": "Virginia",
-    "id": 1,
+    "id": 3,
     "surname": "Woolf"
   },
-  "2": {
+  {
+    "born": 1820,
+    "died": 1849,
     "forename": "Anne",
     "id": 2,
-    "surname": "Carson"
-  },
-  "3": {
-    "forename": "Anne",
-    "id": 3,
     "surname": "Brontë"
+  },
+  {
+    "born": 1950,
+    "died": null,
+    "forename": "Anne",
+    "id": 1,
+    "surname": "Carson"
   }
-}
+]
 ```
 
 Example (multiple filter parameters connected by `;`):
@@ -258,15 +334,15 @@ curl -X GET -s 'http://localhost:8090/authors?filter=forename==Anne;born>=1900'
 ```
 
 ```json
-{
-  "1": {
+[
+  {
     "born": 1950,
     "died": null,
     "forename": "Anne",
     "id": 1,
     "surname": "Carson"
   }
-}
+]
 ```
 
 ### Update

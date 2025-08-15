@@ -13,13 +13,16 @@ import (
 
 // ListRows gets rows from a table with optional filter params
 func (r *Repository) ListRows(tableName string, rsql *rsql.Query) (*sql.Rows, error) {
+	// Build list of columns to select
+	cols := buildColumnsToReturn(rsql)
+
 	// Build list query with optional WHERE conditional filters
 	conditional, values, err := buildWhereConditions(rsql)
 	if err != nil {
 		return nil, err
 	}
 
-	listStmt := "SELECT * FROM " + tableName + conditional
+	listStmt := fmt.Sprintf("SELECT %s FROM %s%s", cols, tableName, conditional)
 	log.Printf("Exec query\n\t%s\nValues: %v\n", listStmt, values)
 
 	// Execute list query
@@ -31,13 +34,13 @@ func (r *Repository) ListRows(tableName string, rsql *rsql.Query) (*sql.Rows, er
 }
 
 // GetRowByID gets a row from a table by id
-func (r *Repository) GetRowByID(tableName string, id int64) *sql.Row {
+func (r *Repository) GetRowByID(tableName string, id int64) (*sql.Rows, error) {
 	log.Printf(
 		"Exec query\n\tSELECT * FROM %s WHERE id = %d",
 		tableName, id,
 	)
 
-	return r.DB.QueryRow(
+	return r.DB.Query(
 		fmt.Sprintf("SELECT * FROM %s WHERE id=$1", tableName),
 		id,
 	)

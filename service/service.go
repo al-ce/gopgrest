@@ -50,32 +50,45 @@ func (s *Service) PickRow(tableName, id string) (types.RowData, error) {
 		return nil, err
 	}
 
+	// Parse ID
 	idInt, err := strconv.ParseInt(id, 10, 64)
-	row := s.Repo.GetRowByID(tableName, idInt)
-	gotId, rowData, err := s.scanSingleRow(tableName, row)
-	if fmt.Sprintf("%v", gotId) != id {
-		return types.RowData{}, fmt.Errorf("PickRow got id %v, requested %s", gotId, id)
+	if err != nil {
+		return nil, err
 	}
-	return rowData, err
+	// Get Row from database, expect 1 row
+	rows, err := s.Repo.GetRowByID(tableName, idInt)
+	if err != nil {
+		return nil, err
+	}
+	rowData, err := s.scanRows(rows)
+	if err != nil {
+		return nil, err
+	}
+	if len(rowData) != 1 {
+		return nil, fmt.Errorf("Expected 1 result for pick, got %d", len(rowData))
+	}
+	return rowData[0], err
 }
 
 // ListRows gets rows from a table with optional filter params
-func (s *Service) ListRows(tableName string, url string) (*types.RowDataIdMap, error) {
+func (s *Service) ListRows(tableName string, url string) ([]types.RowData, error) {
 	// Get table info for verification
 	_, err := s.Repo.GetTable(tableName)
 	if err != nil {
 		return nil, err
 	}
 
+	// Parse RSQL
 	rsql, err := rsql.NewRSQLQuery(url)
 	if err != nil {
 		return nil, err
 	}
 	// Validate RSQL
-	if rsql != nil && s.validateRSQLQuery(rsql) != nil {
+	if err := s.validateRSQLQuery(rsql); err != nil {
 		return nil, err
 	}
 
+	// Query db
 	rows, err := s.Repo.ListRows(tableName, rsql)
 	if err != nil {
 		return nil, err
@@ -87,7 +100,7 @@ func (s *Service) ListRows(tableName string, url string) (*types.RowDataIdMap, e
 	}()
 
 	// Scan rows into struct slice
-	listQueryResults, err := s.scanRows(tableName, rows)
+	listQueryResults, err := s.scanRows(rows)
 	if err != nil {
 		return nil, err
 	}

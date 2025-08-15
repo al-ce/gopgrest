@@ -15,7 +15,6 @@ func NewRSQLQuery(url string) (*Query, error) {
 	if err != nil || rp == nil {
 		return nil, err
 	}
-
 	query := Query{}
 
 	// Example URL query:
@@ -24,19 +23,26 @@ func NewRSQLQuery(url string) (*Query, error) {
 	// Parse clauses from URL query params, split at "&"
 	// e.g. "filter=..." + "fields=..."
 	for clause := range strings.SplitSeq(rp.Query, "&") {
-		keyword, conditionals, err := parseClause(url, clause)
+		keyword, namedArgs, err := parseClause(clause)
 		if err != nil {
 			return nil, err
 		}
 
+		var clauseErr error
 		switch keyword {
-		case FILTER:
+		case FILTER: // e.g ?filter=
 			// Query filters are split at ";" and checked with "==" or "=in="
-			filters, err := newFilters(conditionals)
-			if err != nil {
-				return nil, err
-			}
+			filters, err := newFilters(namedArgs)
+			clauseErr = err
 			query.Filters = filters
+		case FIELDS: // e.g. ?fields=
+			// Query fields are split at ","
+			fields, err := newFields(namedArgs)
+			clauseErr = err
+			query.Fields = fields
+		}
+		if clauseErr != nil {
+			return nil, clauseErr
 		}
 
 	}
@@ -61,24 +67,24 @@ func newPathQuery(url string) (*PathQuery, error) {
 // parseClause validates the lhs and rhs of a clause string, e.g.
 // `fields=forename,surname` should split into two substrings at the `=` char
 // and the keyword (lhs) should be an implemented clause keyword
-func parseClause(url, clauseStr string) (string, string, error) {
+func parseClause(clauseStr string) (string, string, error) {
 	// Split clause at assignment '=' char, not equality '==' chars
 	clause := strings.SplitN(clauseStr, "=", 2)
 	// Clause requires values on left and right of assignment
 	if len(clause) != 2 {
-		return "", "", fmt.Errorf("Malformed clause: %s in url %s\n", clauseStr, url)
+		return "", "", fmt.Errorf("Malformed clause: %s\n", clauseStr)
 	}
 	// Keyword must be one in a list of implemented clauses
 	keyword := clause[0]
 	if !slices.Contains(VALIDKEYWORDS, keyword) {
-		return "", "", fmt.Errorf("Invalid clause keyword '%s' in url %s\n", keyword, url)
+		return "", "", fmt.Errorf("Invalid clause keyword '%s'\n", keyword)
 	}
 	values := clause[1]
 	return keyword, values, nil
 }
 
 // newFilters makes a rsql.Filters value from the rhs of a URL query param
-// e.g. the rhs of `filters=forename=in=Anne,Ann;surname=Carson“
+// e.g. the rhs of `filters=forename=in=Anne,Ann;surname=Carson`
 func newFilters(filterConditionals string) ([]Filter, error) {
 	filters := []Filter{}
 	// Multiple filters allowed with ; separator
@@ -150,4 +156,14 @@ func hasNullCheck(operator string) bool {
 			"=!null=",
 		},
 		operator)
+}
+
+// newFields makes a rsql.Fields value from the RHS of a URL query param
+// e.g. the rhs of `fields=forename,surename`
+func newFields(selectedFields string) (Fields, error) {
+	fields := strings.Split(selectedFields, ",")
+	if slices.Contains(fields, "") {
+			return nil, fmt.Errorf("Empty field in %s", selectedFields)
+		}
+	return fields, nil
 }

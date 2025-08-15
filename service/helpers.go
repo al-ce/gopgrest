@@ -25,108 +25,64 @@ func verifyColumns(t *repository.Table, cols []string) error {
 }
 
 // scanRows scans rows from a query into a map
-func (s *Service) scanRows(tableName string, rows *sql.Rows) (*types.RowDataIdMap, error) {
-	// Get Table from Repository
-	table, err := s.Repo.GetTable(tableName)
-	if err != nil {
-		return nil, err
-	}
+func (s *Service) scanRows(rows *sql.Rows) ([]types.RowData, error) {
+	// Make arrays of pointers with sizes that match column type
+	cols, _ := rows.Columns()
+	rowValues, rowPtrs := makeScanDestination(rows, cols)
 
-	// Make a slice of zero values for this table and a slice of pointers to
-	// those zero values
-	rowValues, rowPtrs := makeScanDestination(table)
-
-	scannedRowIdMap := make(types.RowDataIdMap)
+	scannedRows := []types.RowData{}
 	for rows.Next() {
 		// Scan column values into pointer slice
 		err := rows.Scan(rowPtrs...)
 		if err != nil {
 			return nil, err
 		}
-		// Create row data map of column names and column values
-		id, scannedRow, err := makeScannedRowMap(table, rowValues)
-		if err != nil {
-			return nil, nil
-		}
-		scannedRowIdMap[id] = scannedRow
+		scannedRow:= makeScannedRowMap(cols, rowValues)
+		scannedRows = append(scannedRows, scannedRow)
 	}
 
-	if err = rows.Err(); err != nil {
-		log.Printf("Error after iterating rows in table %s: %v", tableName, err)
+	if err := rows.Err(); err != nil {
+		log.Printf("Error after iterating over rows: %v", err)
 		return nil, err
 	}
 
-	return &scannedRowIdMap, nil
+	return scannedRows, nil
 }
 
-// scanSingleRow scans a single row from a query into a map
-func (s *Service) scanSingleRow(tableName string, row *sql.Row) (
-	int64,
-	types.RowData,
-	error,
-) {
-	// Get Table from Repository
-	table, err := s.Repo.GetTable(tableName)
-	if err != nil {
-		return -1, types.RowData{}, err
-	}
-
-	// Make a slice of zero values for this table and a slice of pointers to
-	// those zero values
-	rowValues, rowPtrs := makeScanDestination(table)
-
-	// Scan column values into pointer slice
-	err = row.Scan(rowPtrs...)
-	if err != nil {
-		return -1, types.RowData{}, err
-	}
-	// Create row data map of column names and column values
-	id, scannedRowMap, err := makeScannedRowMap(table, rowValues)
-	if err != nil {
-		return -1, types.RowData{}, err
-	}
-	return id, scannedRowMap, nil
-}
-
-// makeScanDestination create slices to hold zero values for a given table and
+// makeScanDestination create slices to hold zero values for a given query and
 // a slice of pointers to those zero values
-func makeScanDestination(table *repository.Table) ([]any, []any) {
-	rowValues := make([]any, len(table.Columns))
-	rowPtrs := make([]any, len(table.Columns))
-	for i := range rowValues {
-		rowValues[i] = reflect.Zero(table.Columns[i].Type)
+func makeScanDestination(rows *sql.Rows, cols []string) ([]any, []any) {
+	ct, _ := rows.ColumnTypes()
+	rowValues := make([]any, len(cols))
+	rowPtrs := make([]any, len(cols))
+	for i, v := range ct {
+		scanType := v.ScanType()
+		zeroVal := reflect.Zero(scanType)
+		rowValues[i] = zeroVal
 		rowPtrs[i] = &rowValues[i]
 	}
 	return rowValues, rowPtrs
 }
 
 // makeScannedRowMap fills a RowDataMap with values from a scanned row
-func makeScannedRowMap(table *repository.Table, rowValues []any) (
-	int64,
-	types.RowData,
-	error,
-) {
-	var id int64
+func makeScannedRowMap(cols []string, rowValues []any) (types.RowData) {
 	scannedRow := make(types.RowData)
-	for i := range len(table.Columns) {
-		col := table.Columns[i].Name
+	for i, col := range cols {
 		val := rowValues[i]
-		if col == "id" && reflect.TypeOf(val) == reflect.TypeOf(int64(0)) {
-			idCast, isInt64 := val.(int64)
-			if !isInt64 {
-				return -1, types.RowData{}, fmt.Errorf("makeScannedRowMap could not convert ")
-			} else {
-				id = idCast
-			}
-		}
 		scannedRow[col] = val
 
 	}
-	return id, scannedRow, nil
+	return scannedRow
 }
 
 func (s *Service) validateRSQLQuery(query *rsql.Query) error {
+	if query == nil {
+		return nil
+	}
 	if err := s.validateRSQLFilters(query.Filters); err != nil {
+		return err
+	}
+	if err := s.validateRSQLFields(query.Fields); err != nil {
 		return err
 	}
 	return nil
@@ -156,6 +112,22 @@ func (s *Service) validateRSQLFilters(filters []rsql.Filter) error {
 			// We don't know which table this col could belong to, so check any
 			// tables from the url (the table in the FROM clause in the URL
 			// resource + any tables mentioned in the JOIN params of the URL)
+		}
+	}
+	return nil
+}
+
+func (s *Service) validateRSQLFields(fields rsql.Fields) error {
+	for _, f := range fields {
+		foundCol := false
+		for _, t := range s.Repo.Tables {
+			if s.Repo.IsValidColumn(t, f) {
+				foundCol = true
+				break
+			}
+		}
+		if !foundCol {
+			return fmt.Errorf("field %s not found in any tables", f)
 		}
 	}
 	return nil

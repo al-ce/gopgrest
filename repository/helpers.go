@@ -76,3 +76,11 @@ func buildWhereConditions(query *rsql.Query) (string, []any, error) {
 	conditional := fmt.Sprintf(" WHERE %s", strings.Join(conditions, " AND "))
 	return conditional, values, nil
 }
+
+func buildColumnsToReturn(query *rsql.Query) (string) {
+	// If no columns were specified, the SELECT statement should be `SELECT *`
+	if query == nil || len(query.Fields) == 0 {
+		return "*"
+	}
+	return strings.Join(query.Fields, ",")
+}
