@@ -56,37 +56,53 @@ These are the steps I took to be mindful of SQL injection in the service layer:
 
 The project has a goal to be compatible with the [rsql-jpa-specification](https://github.com/perplexhub/rsql-jpa-specification) with additional features.
 
-Query parameters can be added to a GET request after a `?` query separator. Keys and their values are separated by `=`. Multiple keys can be joined with `&`.
+Query parameters can be added to a GET request after a `?` query separator. Keys and their values are separated by `=`. Multiple subqueries can be joined with `&`.
 
-The following example contains `filter` and `fields` k/v pairs. Every character between the `=` after `filter` and the `&` before `fields` is the value for `filter`.
+The following example contains:
+- a `fields` subquery to select columns to return, with qualifiers and aliases on some fields
+- a `left_join` subquery to add two join relations
+- a `filter` subquery to add conditional filters to the query
 
 ```bash
-curl -X GET -s 'http://localhost:8090/authors?filter=born<1900;forename==Anne&fields=forename,surname' | jq
+curl -X GET -s 'http://localhost:8090/books?fields=title,genres.name:genre,authors.surname:author&left_join=authors:books.author_id==authors.id;genres:books.genre_id==genres.id&filter=born<1900' | jq
 ```
 
 ```json
 [
   {
-    "forename": "Anne",
-    "surname": "Brontë"
+    "author": "Brontë",
+    "genre": "Epistolary",
+    "title": "The Tenant of Wildfell Hall"
+  },
+  {
+    "author": "Woolf",
+    "genre": "Modernism",
+    "title": "To The Lighthouse"
+  },
+  {
+    "author": "Woolf",
+    "genre": null,
+    "title": "Mrs. Dalloway"
   }
 ]
 ```
 
-The above request results in this SQL query at the repository layer:
+The JSON output from the request is marshalled from the rows returned by this SQL query:
 
 ```sql
-SELECT forename,surname FROM authors
-WHERE born < 1900 AND forename = 'Anne'
+SELECT title,name AS genre, surname AS author FROM books
+LEFT JOIN authors ON books.author_id = authors.id
+LEFT JOIN genres ON books.genre_id = genres.id
+WHERE authors.born < ($1)
 ```
 
 The following query keys are supported:
 
-| Key      | Description                                |
-| -------- | ------------------------------------------ |
-| `filter` | add `WHERE` conditions to a `SELECT` query |
-| `fields` | columns to return in a `SELECT` query      |
-| `join`   | add `JOIN` relations to a `SELECT` query   |
+| Key              | Description                                |
+| ---------------- | ------------------------------------------ |
+| `filter`         | add `WHERE` conditions to a `SELECT` query |
+| `fields`         | columns to return in a `SELECT` query      |
+| `join` (various) | add `JOIN` relations to a `SELECT` query   |
 
 ### Filter
 
