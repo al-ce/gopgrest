@@ -27,7 +27,8 @@ The following endpoints are valid for each table in the database with an `id`:
   for any valid table found in the following example query:
 
 ```sql
-SELECT tablename FROM Pg_catalog.pg_tables WHERE schemaname='public'"
+SELECT tablename FROM Pg_catalog.pg_tables
+WHERE schemaname='public'"
 ```
 
 ```
@@ -75,7 +76,8 @@ curl -X GET -s 'http://localhost:8090/authors?filter=born<1900;forename==Anne&fi
 The above request results in this SQL query at the repository layer:
 
 ```sql
-SELECT forename,surname FROM authors WHERE born < 1900 AND forename = 'Anne'
+SELECT forename,surname FROM authors
+WHERE born < 1900 AND forename = 'Anne'
 ```
 
 The following query keys are supported:
@@ -84,10 +86,21 @@ The following query keys are supported:
 | -------- | ------------------------------------------ |
 | `filter` | add `WHERE` conditions to a `SELECT` query |
 | `fields` | columns to return in a `SELECT` query      |
+| `join`   | add `JOIN` relations to a `SELECT` query   |
 
 ### Filter
 
-A filter key can be added to the URL query to match a SQL `WHERE` clause. For example, the following SQL query and GET request are equivalent:
+A `filter` key can be added to the URL query to match a SQL `WHERE` clause.
+
+A filter subquery is in the following format:
+
+```
+filter={column_name}{operator}{value};...
+```
+
+where the right hand side is a conditional expression equivalent to a `WHERE` clause.
+
+ For example, the following SQL query and GET request are equivalent:
 
 ```bash
 curl -X GET -s 'http://localhost:8090/authors?filter=forename==Anne;born>=1900' | jq
@@ -106,7 +119,8 @@ curl -X GET -s 'http://localhost:8090/authors?filter=forename==Anne;born>=1900' 
 ```
 
 ```sql
-SELECT * FROM authors WHERE forename = 'Anne' AND born >= 1900
+SELECT * FROM author
+WHERE forename = 'Anne' AND born >= 1900
 ```
 
 ```
@@ -146,7 +160,17 @@ These are the currently supported filter operators:
 
 ### Fields
 
-A fields key can be added to the URL query to specify columns for the SQL `SELECT` clause. If no fields are specified, the query will be `SELECT *`. Fox example, the following queries and GET request are equivalent:
+A `fields` key can be added to the URL query to specify columns for the SQL `SELECT` clause. If no fields are specified, the query will be `SELECT *`.
+
+A fields subquery is in the following format:
+
+```
+fields={column_name,...}
+```
+
+where the right hand side of the subquery is a comma separated list of valid column names.
+
+For example, the following queries and GET request are equivalent:
 
 ```bash
 curl -X GET -s 'http://localhost:8090/authors?fields=surname,forename' | jq
@@ -170,7 +194,7 @@ curl -X GET -s 'http://localhost:8090/authors?fields=surname,forename' | jq
 ```
 
 ```sql
-SELECT surname, forename from authors
+SELECT surname, forename FROM authors
 ```
 
 ```
@@ -181,6 +205,72 @@ SELECT surname, forename from authors
  Carson  | Anne
 (3 rows)
 
+```
+
+### Joins
+
+Joins can be added to the URL query to add a Join statement to the `SELECT` query.
+
+A join subquery is in the following format:
+
+```
+{join_keyword}={table}:{left_qualifier}.{left_column}=={right_qualifier}.{right_coulmn};...
+```
+
+where everything after the first assignment character `=` is a `;` separated list of join relations.
+
+The following join keywords are supported:
+
+- `join`
+- `inner_join`
+- `left_join`
+- `right_join`
+
+For example, the following queries and GET request are equivalent:
+
+```bash
+curl -X GET -s 'http://localhost:8090/books?fields=title,name,surname&left_join=authors:books.author_id==authors.id;genres:books.genre_id==genres.id' | jq
+```
+
+```json
+[
+  {
+    "name": "Romance",
+    "surname": "Carson",
+    "title": "Autobiography of Red"
+  },
+  {
+    "name": "Epistolary",
+    "surname": "Brontë",
+    "title": "The Tenant of Wildfell Hall"
+  },
+  {
+    "name": "Modernism",
+    "surname": "Woolf",
+    "title": "To The Lighthouse"
+  },
+  {
+    "name": null,
+    "surname": "Woolf",
+    "title": "Mrs. Dalloway"
+  }
+]
+```
+
+```sql
+SELECT name, surname, title FROM books
+LEFT JOIN authors on books.author_id=authors.id
+LEFT JOIN genres ON books.genre_id=genres.id"
+```
+
+```
+    name    | surname |            title
+------------+---------+-----------------------------
+ Romance    | Carson  | Autobiography of Red
+ Epistolary | Brontë  | The Tenant of Wildfell Hall
+ Modernism  | Woolf   | To The Lighthouse
+            | Woolf   | Mrs. Dalloway
+(4 rows)
 ```
 
 ## Example usage
