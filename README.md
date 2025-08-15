@@ -89,15 +89,15 @@ curl -X GET -s 'http://localhost:8090/authors?filter=forename==Anne;born>=1900' 
 ```
 
 ```json
-{
-  "1": {
+[
+  {
     "born": 1950,
     "died": null,
     "forename": "Anne",
     "id": 1,
     "surname": "Carson"
   }
-}
+]
 ```
 
 ```sql
@@ -196,7 +196,7 @@ Joins can be added to the URL query to add a Join statement to the `SELECT` quer
 A join subquery is in the following format:
 
 ```
-{join_keyword}=[{table}:{left_qualifier}.{left_column}=={right_qualifier}.{right_coulmn};...]
+[{join_keyword}=[{table}:{left_qualifier}.{left_column}=={right_qualifier}.{right_coulmn};...]
 ```
 
 where right hand side of the subquery `;` separated list of join relations.
@@ -419,6 +419,8 @@ curl -X GET -s 'http://localhost:8090/authors?filter=forename==Anne;born>=1900'
 
 ### Update
 
+Update a row by ID, returning the updated row.
+
 ```http
 PUT http://{HOST}:{PORT}/{tablename}/{id}
 Accept: application/json
@@ -437,6 +439,8 @@ curl -X PUT -s http://localhost:8090/authors/5 --data '{"surname" : "Woolf"}'
 ```
 
 ### Delete
+
+Delete a row by ID, returning a message confirming the deletion.
 
 ```http
 DELETE http://{HOST}:{PORT}/{tablename}/{id}
