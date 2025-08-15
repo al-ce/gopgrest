@@ -59,7 +59,7 @@ The JSON output from the request is marshalled from the rows returned by this SQ
 SELECT title,name AS genre, surname AS author FROM books
 LEFT JOIN authors ON books.author_id = authors.id
 LEFT JOIN genres ON books.genre_id = genres.id
-WHERE authors.born < ($1)
+WHERE authors.born < 1900
 ```
 
 The following query keys are supported:
