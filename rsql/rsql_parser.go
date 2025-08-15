@@ -41,7 +41,7 @@ func NewRSQLQuery(url string) (*Query, error) {
 			clauseErr = err
 			query.Fields = fields
 		case JOIN: // e.g. ?join=
-			joins, err := newJoins(namedArgs)
+			joins, err := newJoins(JOIN, namedArgs)
 			clauseErr = err
 			query.Joins = joins
 		}
@@ -173,23 +173,25 @@ func newFields(selectedFields string) (Fields, error) {
 }
 
 // newJoins makes a rsql.Joins value from the RHS of a URL join query param
-// e.g. the rhs of `join=books.author_id=authors.id`
-func newJoins(joinRelations string) ([]JoinRelation, error) {
+// e.g. the rhs of `join=authors:books.author_id=authors.id`
+func newJoins(joinType, joinRelations string) ([]JoinRelation, error) {
 	jr := []JoinRelation{}
 
 	// Example:
-	// ?join=books.author_id==authors.id;books.genres_id==genres.id
-	ReJoin := regexp.MustCompile(`(\w+)\.(\w+)==(\w+)\.(\w+)`)
+	// GET /books?join=authors:books.author_id==authors.id;genres:books.genres_id==genres.id
+	// Note that this enforces qualified column names in a JOIN statement
+	ReJoin := regexp.MustCompile(`(\w+):(\w+)\.(\w+)==(\w+)\.(\w+)`)
 
 	// Multiple joins allowed with ; separator
 	for join := range strings.SplitSeq(joinRelations, ";") {
 		matches := ReJoin.FindStringSubmatch(join)
-		fmt.Println("🪚 matches:", matches)
 		jr = append(jr, JoinRelation{
-			LeftTable:  matches[1],
-			LeftCol:    matches[2],
-			RightTable: matches[3],
-			RightCol:   matches[4],
+			Type:           strings.ToUpper(joinType),
+			Table:          matches[1],
+			LeftQualifier:  matches[2],
+			LeftCol:        matches[3],
+			RightQualifier: matches[4],
+			RightCol:       matches[5],
 		})
 	}
 	return jr, nil

@@ -73,14 +73,37 @@ func buildWhereConditions(query *rsql.Query) (string, []any, error) {
 		conditions = append(conditions, condition)
 	}
 
-	conditional := fmt.Sprintf(" WHERE %s", strings.Join(conditions, " AND "))
+	conditional := fmt.Sprintf("WHERE %s", strings.Join(conditions, " AND "))
 	return conditional, values, nil
 }
 
-func buildColumnsToReturn(query *rsql.Query) (string) {
+func buildColumnsToReturn(query *rsql.Query) string {
 	// If no columns were specified, the SELECT statement should be `SELECT *`
 	if query == nil || len(query.Fields) == 0 {
 		return "*"
 	}
 	return strings.Join(query.Fields, ",")
+}
+
+// buildJoinRelations builds SQL JOIN clauses
+func buildJoinRelations(query *rsql.Query) string {
+	if query == nil || len(query.Joins) == 0 {
+		return ""
+	}
+	joins := []string{}
+	for _, j := range query.Joins {
+		joins = append(
+			joins,
+			fmt.Sprintf(
+				"%s %s ON %s.%s = %s.%s",
+				j.Type,
+				j.Table,
+				j.LeftQualifier,
+				j.LeftCol,
+				j.RightQualifier,
+				j.RightCol,
+			),
+		)
+	}
+	return strings.Join(joins, " ")
 }

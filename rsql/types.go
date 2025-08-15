@@ -15,7 +15,7 @@ type PathQuery struct {
 type Query struct {
 	Fields  Fields
 	Filters []Filter
-	Joins    []JoinRelation
+	Joins   []JoinRelation
 }
 
 // Filter is the parsed result of one of any `;` separated filter conditions in
@@ -35,9 +35,11 @@ type Filter struct {
 type Fields []string
 
 type JoinRelation struct {
-	LeftTable  string
+	Type       string
+	Table      string
+	LeftQualifier  string
 	LeftCol    string
-	RightTable string
+	RightQualifier string
 	RightCol   string
 }
 

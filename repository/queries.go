@@ -22,7 +22,11 @@ func (r *Repository) ListRows(tableName string, rsql *rsql.Query) (*sql.Rows, er
 		return nil, err
 	}
 
-	listStmt := fmt.Sprintf("SELECT %s FROM %s%s", cols, tableName, conditional)
+	// Build list of optional JOIN relations
+	joins := buildJoinRelations(rsql)
+	fmt.Println("🪚 joins:", joins)
+
+	listStmt := fmt.Sprintf("SELECT %s FROM %s %s %s", cols, tableName, conditional, joins)
 	log.Printf("Exec query\n\t%s\nValues: %v\n", listStmt, values)
 
 	// Execute list query

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"reflect"
+	"slices"
 	"strings"
 
 	"gopgrest/repository"
@@ -138,14 +139,24 @@ func (s *Service) validateRSQLFields(fields rsql.Fields) error {
 
 func (s *Service) validateRSQLJoins(joins []rsql.JoinRelation) error {
 	for _, j := range joins {
-		leftTable, err := s.Repo.GetTable(j.LeftTable)
+		// Check tables exist
+		if _, err := s.Repo.GetTable(j.Table); err != nil {
+			return err
+		}
+		leftTable, err := s.Repo.GetTable(j.LeftQualifier)
 		if err != nil {
 			return err
 		}
-		rightTable, err := s.Repo.GetTable(j.RightTable)
+		rightTable, err := s.Repo.GetTable(j.RightQualifier)
 		if err != nil {
 			return err
 		}
+		// Check table after JOIN keyword is in the qualified column names
+		// (LeftTable/RightTable)
+		if !slices.Contains([]string{j.LeftQualifier, j.RightQualifier}, j.Table) {
+			return fmt.Errorf("Table in JOIN statement missing from relation: %v", j)
+		}
+
 		if !s.Repo.IsValidColumn(*leftTable, j.LeftCol) {
 			return fmt.Errorf("col %s not found in table %s in join %v", j.LeftCol, leftTable, j)
 		}
