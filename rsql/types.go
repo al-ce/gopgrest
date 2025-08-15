@@ -35,21 +35,31 @@ type Filter struct {
 type Fields []string
 
 type JoinRelation struct {
-	Type       string
-	Table      string
+	Type           string
+	Table          string
 	LeftQualifier  string
-	LeftCol    string
+	LeftCol        string
 	RightQualifier string
-	RightCol   string
+	RightCol       string
 }
 
 // VALIDKEYWORDS are valid clause keywords for a URL query
-var VALIDKEYWORDS = []string{FILTER, FIELDS, JOIN}
+var VALIDKEYWORDS = []string{
+	FILTER,
+	FIELDS,
+	JOIN,
+	INNERJOIN,
+	LEFTJOIN,
+	RIGHTJOIN,
+}
 
 const (
-	FILTER = "filter"
-	FIELDS = "fields"
-	JOIN   = "join"
+	FILTER    = "filter"
+	FIELDS    = "fields"
+	JOIN      = "join"
+	INNERJOIN = "inner_join"
+	LEFTJOIN  = "left_join"
+	RIGHTJOIN = "right_join"
 )
 
 // regexFilterOperators is an array of valid operators for a filter condition. We

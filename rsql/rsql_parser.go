@@ -40,8 +40,14 @@ func NewRSQLQuery(url string) (*Query, error) {
 			fields, err := newFields(namedArgs)
 			clauseErr = err
 			query.Fields = fields
-		case JOIN: // e.g. ?join=
-			joins, err := newJoins(JOIN, namedArgs)
+		case JOIN:
+			fallthrough
+		case INNERJOIN:
+			fallthrough
+		case LEFTJOIN:
+			fallthrough
+		case RIGHTJOIN:
+			joins, err := newJoins(keyword, namedArgs)
 			clauseErr = err
 			query.Joins = joins
 		}
@@ -176,6 +182,9 @@ func newFields(selectedFields string) (Fields, error) {
 // e.g. the rhs of `join=authors:books.author_id=authors.id`
 func newJoins(joinType, joinRelations string) ([]JoinRelation, error) {
 	jr := []JoinRelation{}
+
+	// e.g. transform "inner_join" to INNER JOIN
+	joinType = strings.ToUpper(strings.ReplaceAll(joinType, "_", " "))
 
 	// Example:
 	// GET /books?join=authors:books.author_id==authors.id;genres:books.genres_id==genres.id
