@@ -82,7 +82,16 @@ func buildColumnsToReturn(query *rsql.Query) string {
 	if query == nil || len(query.Fields) == 0 {
 		return "*"
 	}
-	return strings.Join(query.Fields, ",")
+
+	cols := []string{}
+	for _, f := range query.Fields {
+		if f.Alias != "" {
+			cols = append(cols, fmt.Sprintf("%s AS %s", f.Column, f.Alias))
+		} else {
+			cols = append(cols, f.Column)
+		}
+	}
+	return strings.Join(cols, ", ")
 }
 
 // buildJoinRelations builds SQL JOIN clauses

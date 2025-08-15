@@ -121,11 +121,25 @@ func (s *Service) validateRSQLFilters(filters []rsql.Filter) error {
 	return nil
 }
 
-func (s *Service) validateRSQLFields(fields rsql.Fields) error {
+func (s *Service) validateRSQLFields(fields []rsql.Field) error {
 	for _, f := range fields {
+
+		// If the field has a qualifier, check the column against that table
+		if f.Qualifier != "" {
+			t, err := s.Repo.GetTable(f.Qualifier)
+			if err != nil {
+				return err
+			}
+			if !s.Repo.IsValidColumn(*t, f.Column) {
+				return fmt.Errorf("field %s not found in table %s", f, f.Qualifier)
+			}
+			continue
+		}
+
+		// Otherwise, check all tables
 		foundCol := false
 		for _, t := range s.Repo.Tables {
-			if s.Repo.IsValidColumn(t, f) {
+			if s.Repo.IsValidColumn(t, f.Column) {
 				foundCol = true
 				break
 			}

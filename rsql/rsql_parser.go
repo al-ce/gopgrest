@@ -170,10 +170,42 @@ func hasNullCheck(operator string) bool {
 
 // newFields makes a rsql.Fields value from the RHS of a URL fields query param
 // e.g. the rhs of `fields=forename,surename`
-func newFields(selectedFields string) (Fields, error) {
-	fields := strings.Split(selectedFields, ",")
-	if slices.Contains(fields, "") {
-		return nil, fmt.Errorf("Empty field in %s", selectedFields)
+func newFields(selectedFields string) ([]Field, error) {
+	fields := []Field{}
+	for sf := range strings.SplitSeq(selectedFields, ",") {
+		if sf == "" {
+			return nil, fmt.Errorf("Empty field in %s", selectedFields)
+		}
+
+		field := Field{}
+
+		// Check for alias indicated by `:` e.g. `genres.name:genre`
+		alias := strings.Split(sf, ":")
+		if len(alias) > 2 {
+			return nil, fmt.Errorf("Too many alias separators in %s", sf)
+		} else if len(alias) == 2 {
+			field.Alias = alias[1]
+		}
+		if slices.Contains(alias, "") {
+			return nil, fmt.Errorf("Empty column operand in %s", sf)
+		}
+
+		// Check for column quailifier indicated by `.` e.g. `books.author_id`
+		col := strings.Split(alias[0], ".")
+		if len(col) > 2 {
+			return nil, fmt.Errorf("Too many qualifier separators in %s", sf)
+		} else if len(col) == 2 {
+			field.Qualifier = col[0]
+			field.Column = col[1]
+		} else {
+			field.Column = col[0]
+		}
+		if slices.Contains(col, "") {
+			return nil, fmt.Errorf("Empty column operand in %s", sf)
+		}
+
+		fields = append(fields, field)
+
 	}
 	return fields, nil
 }
