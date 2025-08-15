@@ -15,7 +15,6 @@ import (
 
 // verifyColumns checks that all keys in a slice of cols, representing columns
 // in a database table, actually exist in that table
-// TODO: replace all these refs with s.Repo.IsValidColumn
 func verifyColumns(t *repository.Table, cols []string) error {
 	for _, col := range cols {
 		if _, ok := t.ColumnMap[col]; !ok {
@@ -25,8 +24,8 @@ func verifyColumns(t *repository.Table, cols []string) error {
 	return nil
 }
 
-// scanRows scans rows from a query into a map
-func scanRows(rows *sql.Rows) ([]types.RowData, error) {
+// ScanRows scans rows from a query into a map
+func ScanRows(rows *sql.Rows) ([]types.RowData, error) {
 	// Make arrays of pointers with sizes that match column type
 	cols, _ := rows.Columns()
 	rowValues, rowPtrs := makeScanDestination(rows, cols)
