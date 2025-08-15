@@ -95,12 +95,12 @@ A `filter` key can be added to the URL query to match a SQL `WHERE` clause.
 A filter subquery is in the following format:
 
 ```
-filter={column_name}{operator}{value};...
+filter=[{column_name}{operator}{value};...]
 ```
 
-where the right hand side is a conditional expression equivalent to a `WHERE` clause.
+where the right hand side is a `;` separated list of conditional expressions equivalent to a `WHERE` clause.
 
- For example, the following SQL query and GET request are equivalent:
+For example, the following SQL query and GET request are equivalent:
 
 ```bash
 curl -X GET -s 'http://localhost:8090/authors?filter=forename==Anne;born>=1900' | jq
@@ -165,30 +165,30 @@ A `fields` key can be added to the URL query to specify columns for the SQL `SEL
 A fields subquery is in the following format:
 
 ```
-fields={column_name,...}
+fields=[{column_name}:{alias},... ]
 ```
 
-where the right hand side of the subquery is a comma separated list of valid column names.
+where the right hand side of the subquery is a comma separated list of valid column names and an optional alias, with the column name and alias separated by a `:`.
 
 For example, the following queries and GET request are equivalent:
 
 ```bash
-curl -X GET -s 'http://localhost:8090/authors?fields=surname,forename' | jq
+curl -X GET -s 'http://localhost:8090/authors?fields=surname:last_name,forename' | jq
 ```
 
 ```json
 [
   {
+    "forename": "Anne",
+    "last_name": "Carson"
+  },
+  {
+    "forename": "Anne",
+    "last_name": "Brontë"
+  },
+  {
     "forename": "Virginia",
-    "surname": "Woolf"
-  },
-  {
-    "forename": "Anne",
-    "surname": "Brontë"
-  },
-  {
-    "forename": "Anne",
-    "surname": "Carson"
+    "last_name": "Woolf"
   }
 ]
 ```
@@ -214,10 +214,10 @@ Joins can be added to the URL query to add a Join statement to the `SELECT` quer
 A join subquery is in the following format:
 
 ```
-{join_keyword}={table}:{left_qualifier}.{left_column}=={right_qualifier}.{right_coulmn};...
+{join_keyword}=[{table}:{left_qualifier}.{left_column}=={right_qualifier}.{right_coulmn};...]
 ```
 
-where everything after the first assignment character `=` is a `;` separated list of join relations.
+where right hand side of the subquery `;` separated list of join relations.
 
 The following join keywords are supported:
 
