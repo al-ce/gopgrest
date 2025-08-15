@@ -40,6 +40,10 @@ func NewRSQLQuery(url string) (*Query, error) {
 			fields, err := newFields(namedArgs)
 			clauseErr = err
 			query.Fields = fields
+		case JOIN: // e.g. ?join=
+			joins, err := newJoins(namedArgs)
+			clauseErr = err
+			query.Joins = joins
 		}
 		if clauseErr != nil {
 			return nil, clauseErr
@@ -83,8 +87,8 @@ func parseClause(clauseStr string) (string, string, error) {
 	return keyword, values, nil
 }
 
-// newFilters makes a rsql.Filters value from the rhs of a URL query param
-// e.g. the rhs of `filters=forename=in=Anne,Ann;surname=Carson`
+// newFilters makes a rsql.Filters value from the rhs of a URL filter query param
+// e.g. the rhs of `filter=forename=in=Anne,Ann;surname=Carson`
 func newFilters(filterConditionals string) ([]Filter, error) {
 	filters := []Filter{}
 	// Multiple filters allowed with ; separator
@@ -158,12 +162,35 @@ func hasNullCheck(operator string) bool {
 		operator)
 }
 
-// newFields makes a rsql.Fields value from the RHS of a URL query param
+// newFields makes a rsql.Fields value from the RHS of a URL fields query param
 // e.g. the rhs of `fields=forename,surename`
 func newFields(selectedFields string) (Fields, error) {
 	fields := strings.Split(selectedFields, ",")
 	if slices.Contains(fields, "") {
-			return nil, fmt.Errorf("Empty field in %s", selectedFields)
-		}
+		return nil, fmt.Errorf("Empty field in %s", selectedFields)
+	}
 	return fields, nil
+}
+
+// newJoins makes a rsql.Joins value from the RHS of a URL join query param
+// e.g. the rhs of `join=books.author_id=authors.id`
+func newJoins(joinRelations string) ([]JoinRelation, error) {
+	jr := []JoinRelation{}
+
+	// Example:
+	// ?join=books.author_id==authors.id;books.genres_id==genres.id
+	ReJoin := regexp.MustCompile(`(\w+)\.(\w+)==(\w+)\.(\w+)`)
+
+	// Multiple joins allowed with ; separator
+	for join := range strings.SplitSeq(joinRelations, ";") {
+		matches := ReJoin.FindStringSubmatch(join)
+		fmt.Println("🪚 matches:", matches)
+		jr = append(jr, JoinRelation{
+			LeftTable:  matches[1],
+			LeftCol:    matches[2],
+			RightTable: matches[3],
+			RightCol:   matches[4],
+		})
+	}
+	return jr, nil
 }
