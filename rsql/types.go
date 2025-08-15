@@ -66,34 +66,6 @@ const (
 	RIGHTJOIN = "right_join"
 )
 
-// regexFilterOperators is an array of valid operators for a filter condition. We
-// use this to guarantee the order of the subexpressions, so that "<=" is
-// checked before "<" etc.
-var regexFilterOperators = []string{
-	"==",
-	"!=",
-	"=in=",
-	"=out=",
-	"=like=",
-	"=!like=",
-	"=notlike=",
-	"=nk=",
-	"=isnull=",
-	"=na=",
-	"=isnotnull=",
-	"=notnull=",
-	"=nn=",
-	"=!null=",
-	"=le=",
-	"=ge=",
-	"<=",
-	">=",
-	"=lt=",
-	"=gt=",
-	"<", // KEEP THIS AFTER <=
-	">", // KEEP THIS AFTER >=
-}
-
 // OperatorToSQLMap is a map of RSQL operators to their SQL counterpart
 var OperatorToSQLMap = map[string]string{
 	"==":          "=",

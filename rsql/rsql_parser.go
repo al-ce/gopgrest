@@ -150,8 +150,8 @@ func newFilter(cond string, ReFilterOperator *regexp.Regexp) (*Filter, error) {
 func getOperatorSplitRegex() *regexp.Regexp {
 	// Build valid operators to split at
 	opRegex := []string{}
-	for _, r := range regexFilterOperators {
-		opRegex = append(opRegex, fmt.Sprintf("(%s)", r))
+	for k := range OperatorToSQLMap {
+		opRegex = append(opRegex, fmt.Sprintf("(%s)", k))
 	}
 	return regexp.MustCompile(fmt.Sprintf("(%s)", strings.Join(opRegex, "|")))
 }
