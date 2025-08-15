@@ -36,4 +36,5 @@ INSERT INTO books (title, author_id, genre_id)
 VALUES
 ('Autobiography of Red', '1', '3'),
 ('The Tenant of Wildfell Hall', '2', '2'),
-('To The Lighthouse', '3', '1');
+('To The Lighthouse', '3', '1'),
+('Mrs. Dalloway', '3', null);
