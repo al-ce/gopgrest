@@ -37,7 +37,7 @@ func (s *Service) scanRows(rows *sql.Rows) ([]types.RowData, error) {
 		if err != nil {
 			return nil, err
 		}
-		scannedRow:= makeScannedRowMap(cols, rowValues)
+		scannedRow := makeScannedRowMap(cols, rowValues)
 		scannedRows = append(scannedRows, scannedRow)
 	}
 
@@ -65,7 +65,7 @@ func makeScanDestination(rows *sql.Rows, cols []string) ([]any, []any) {
 }
 
 // makeScannedRowMap fills a RowDataMap with values from a scanned row
-func makeScannedRowMap(cols []string, rowValues []any) (types.RowData) {
+func makeScannedRowMap(cols []string, rowValues []any) types.RowData {
 	scannedRow := make(types.RowData)
 	for i, col := range cols {
 		val := rowValues[i]
@@ -83,6 +83,9 @@ func (s *Service) validateRSQLQuery(query *rsql.Query) error {
 		return err
 	}
 	if err := s.validateRSQLFields(query.Fields); err != nil {
+		return err
+	}
+	if err := s.validateRSQLJoins(query.Joins); err != nil {
 		return err
 	}
 	return nil
@@ -128,6 +131,26 @@ func (s *Service) validateRSQLFields(fields rsql.Fields) error {
 		}
 		if !foundCol {
 			return fmt.Errorf("field %s not found in any tables", f)
+		}
+	}
+	return nil
+}
+
+func (s *Service) validateRSQLJoins(joins []rsql.JoinRelation) error {
+	for _, j := range joins {
+		leftTable, err := s.Repo.GetTable(j.LeftTable)
+		if err != nil {
+			return err
+		}
+		rightTable, err := s.Repo.GetTable(j.RightTable)
+		if err != nil {
+			return err
+		}
+		if !s.Repo.IsValidColumn(*leftTable, j.LeftCol) {
+			return fmt.Errorf("col %s not found in table %s in join %v", j.LeftCol, leftTable, j)
+		}
+		if !s.Repo.IsValidColumn(*rightTable, j.RightCol) {
+			return fmt.Errorf("col %s not found in table %s in join %v", j.LeftCol, leftTable, j)
 		}
 	}
 	return nil
