@@ -17,41 +17,6 @@ The following endpoints are valid for each table in the database with an `id`:
 | `/{tablename}/{id}`          | PUT    | Update a row by ID            | `application/json` | `application/json` (updated row)           |
 | `/{tablename}/{id}`          | DELETE | Delete a row by ID            | ---                | `row {id} deleted from table {tablename}`  |
 
-## Limitations:
-
-- Insert, update, or delete requests _cannot_ be made on tables without an `id`
-  column
-- Read requests ("pick" or "list") _can_ be made on tables without an `id`
-  column
-- The app will route a request with a RESTful HTTP method + path combination
-  for any valid table found in the following example query:
-
-```sql
-SELECT tablename FROM Pg_catalog.pg_tables
-WHERE schemaname='public'"
-```
-
-```
- tablename
------------
- authors
- books
-(2 rows)
-```
-
-- Requests with JSON content (insert/update) or query params (list) must use
-  valid column names and corresponding column types
-
-## Security measures
-
-These are the steps I took to be mindful of SQL injection in the service layer:
-
-1. Statements use parameter placeholders for all value
-2. Queries can only be made to tables from a whitelist, i.e.
-   `Pg_catalog.pg_tables`
-3. Columns in JSON requests are checked against the associated table. Any
-   invalid column name will throw an error before the query is executed
-
 ## REST Query language (based on RSQL)
 
 The project has a goal to be compatible with the [rsql-jpa-specification](https://github.com/perplexhub/rsql-jpa-specification) with additional features.
@@ -59,6 +24,7 @@ The project has a goal to be compatible with the [rsql-jpa-specification](https:
 Query parameters can be added to a GET request after a `?` query separator. Keys and their values are separated by `=`. Multiple subqueries can be joined with `&`.
 
 The following example contains:
+
 - a `fields` subquery to select columns to return, with qualifiers and aliases on some fields
 - a `left_join` subquery to add two join relations
 - a `filter` subquery to add conditional filters to the query
@@ -541,6 +507,31 @@ Available recipes:
     tstop                 # Stop test database container
 ```
 
+## Limitations:
+
+- Insert, update, or delete requests _cannot_ be made on tables without an `id`
+  column
+- Read requests ("pick" or "list") _can_ be made on tables without an `id`
+  column
+- The app will route a request with a RESTful HTTP method + path combination
+  for any valid table found in the following example query:
+
+```sql
+SELECT tablename FROM Pg_catalog.pg_tables
+WHERE schemaname='public'"
+```
+
+```
+ tablename
+-----------
+ authors
+ books
+(2 rows)
+```
+
+- Requests with JSON content (insert/update) or query params (list) must use
+  valid column names and corresponding column types
+
 ## Why this project?
 
 This project allows me to get a backend server going as soon as I have my
@@ -555,3 +546,13 @@ or as a placeholder backend for local development on a frontend application.
 
 I would not use this for a project that publicly exposes sensitive personal
 data.
+
+## Security measures
+
+These are the steps I took to be mindful of SQL injection in the service layer:
+
+1. Statements use parameter placeholders for all value
+2. Queries can only be made to tables from a whitelist, i.e.
+   `Pg_catalog.pg_tables`
+3. Columns in JSON requests are checked against the associated table. Any
+   invalid column name will throw an error before the query is executed
