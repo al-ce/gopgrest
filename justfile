@@ -239,6 +239,8 @@ tstop:
 ## api calls
 ###############################################################################
 
+# NOTE: need to surround params with '' or escape `&`, `;` etc. in params
+
 # Make a GET request to the homepage
 [group('api')]
 home:
@@ -254,7 +256,7 @@ pick table id:
 # list sets with optional query params e.g. `list authors 'surname=Plato'`
 [group('api')]
 list table params='':
-    curl -X GET -s http://localhost:{{ API_PORT }}/{{ table }}?{{ params }} \
+    curl -X GET -s http://localhost:{{ API_PORT }}/{{ table }}?'{{ params }}' \
     | just jqparse
 
 # Insert a row in a table e.g. `insert authors '{"surname": "Plato"}'`
