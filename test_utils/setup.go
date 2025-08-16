@@ -21,6 +21,12 @@ var (
 	testDbName = os.Getenv("TEST_DB_NAME")
 )
 
+type TestDB struct {
+	DB     *sql.DB
+	TX     *sql.Tx
+	Tables []repository.Table
+}
+
 // NewTestDB returns a test database
 func NewTestDB(t *testing.T) *TestDB {
 	testParams := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
@@ -64,27 +70,25 @@ func (tdb *TestDB) BeginTX(t *testing.T) *sql.Tx {
 
 // NewTestRepo initializes a new test Repository with a transaction and
 // populates it with sample rows
-func NewTestRepo(t *testing.T) (repository.Repository, SampleRows) {
+func NewTestRepo(t *testing.T) repository.Repository {
 	tdb := NewTestDB(t)
 	tx := tdb.BeginTX(t)
 	repo := repository.NewRepository(tx, tdb.Tables)
-	sampleRows := GetSampleRows(repo)
-	return repo, sampleRows
+	return repo
 }
 
 // NewTestService initializes a new test Service with a test Repository, using
 // a transaction and returning the service plus some inserted sample rows
-func NewTestService(t *testing.T) (service.Service, SampleRows) {
-	repo, sampleRows := NewTestRepo(t)
-	return service.NewService(repo), sampleRows
+func NewTestService(t *testing.T) service.Service {
+	repo := NewTestRepo(t)
+	return service.NewService(repo)
 }
 
 // NewTestAPIHandler initializes an api handler with a transaction and return
 // the handler plus some inserted sample rows
-func NewTestAPIHandler(t *testing.T) (api.APIHandler, SampleRows) {
+func NewTestAPIHandler(t *testing.T) api.APIHandler {
 	tdb := NewTestDB(t)
 	tx := tdb.BeginTX(t)
 	h := api.NewAPIHandler(tx, tdb.Tables)
-	sampleRows := GetSampleRows(h.Repo)
-	return h, sampleRows
+	return h
 }

@@ -1,77 +1,143 @@
 package repository_test
 
 import (
-	"reflect"
 	"testing"
 
+	"gopgrest/repository"
+	"gopgrest/rsql"
+	"gopgrest/service"
 	"gopgrest/test_utils"
 	"gopgrest/types"
 )
 
 func Test_ListRows(t *testing.T) {
-	repo, sampleRows := test_utils.NewTestRepo(t)
+	repo := test_utils.NewTestRepo(t)
 
-	t.Run("List all authors, no filter", func(t *testing.T) {
-		// Expected authors are the same as sample authors (no filter)
-		expAuthors := sampleRows.Authors
-		// Query DB for all authors, no filters
-		rows, err := repo.ListRows("authors", types.RSQLFilters{})
-		if err != nil {
-			t.Fatalf("List err: %s", err)
+	// Test no RSQL query
+	t.Run("GET /authors", func(t *testing.T) {
+		expRows := []types.RowData{
+			map[string]any{
+				"born":     int64(1950),
+				"died":     nil,
+				"forename": "Anne",
+				"id":       int64(1),
+				"surname":  "Carson",
+			},
+			map[string]any{
+				"born":     int64(1820),
+				"died":     int64(1849),
+				"forename": "Anne",
+				"id":       int64(2),
+				"surname":  "Brontë",
+			},
+			map[string]any{
+				"born":     int64(1882),
+				"died":     int64(1941),
+				"forename": "Virginia",
+				"id":       int64(3),
+				"surname":  "Woolf",
+			},
 		}
-		defer rows.Close()
 
-		// Make a SampleAuthorsMap that should match the expected one
-		gotAuthors := test_utils.SampleAuthorsMap{}
-		for rows.Next() {
-			got, err := test_utils.ScanAuthorFromRows(rows)
-			if err != nil {
-				t.Fatalf("List all authors scan err: %s\n", err)
-			}
-			gotAuthors[got.ID] = got
-		}
-
-		// Got should equal Expected
-		for _, got := range gotAuthors {
-			exp := expAuthors[got.ID]
-			if !reflect.DeepEqual(got, exp) {
-				t.Errorf("\nExp %v\nGot %v\n", exp, got)
-			}
-		}
+		listRowsTester(t, repo, "authors", &rsql.Query{}, expRows)
 	})
 
-	t.Run("List authors, filter for forename 'Anne'", func(t *testing.T) {
-		// Filter sample rows for authors with forname Anne
-		expAuthors := test_utils.SampleAuthorsMap{}
-		for id, author := range sampleRows.Authors {
-			if author.Forename == "Anne" {
-				expAuthors[id] = author
-			}
+	// Test single filter: equality (rsql `==`, SQL `=`)
+	t.Run("GET /authors?filter=forname==Anne", func(t *testing.T) {
+		filters := []rsql.Filter{
+			{Column: "forename", Values: []string{"Anne"}, SQLOperator: "="},
+		}
+		query := rsql.Query{Filters: filters}
+
+		expRows := []types.RowData{
+			map[string]any{
+				"born":     int64(1950),
+				"died":     nil,
+				"forename": "Anne",
+				"id":       int64(1),
+				"surname":  "Carson",
+			},
+			map[string]any{
+				"born":     int64(1820),
+				"died":     int64(1849),
+				"forename": "Anne",
+				"id":       int64(2),
+				"surname":  "Brontë",
+			},
 		}
 
-		// Query test db for authors with forename Anne
-		rows, err := repo.ListRows("authors", types.RSQLFilters{"forename": []string{"Anne"}})
-		if err != nil {
-			t.Fatalf("List err: %s", err)
-		}
-		defer rows.Close()
-
-		// Make a SampleAuthorsMap that should match the expected one
-		gotAuthors := test_utils.SampleAuthorsMap{}
-		for rows.Next() {
-			got, err := test_utils.ScanAuthorFromRows(rows)
-			if err != nil {
-				t.Fatalf("List all authors scan err: %s\n", err)
-			}
-			gotAuthors[got.ID] = got
-		}
-
-		// Got should equal Expected
-		for _, got := range gotAuthors {
-			exp := expAuthors[got.ID]
-			if !reflect.DeepEqual(got, exp) {
-				t.Errorf("\nExp %v\nGot %v\n", exp, got)
-			}
-		}
+		listRowsTester(t, repo, "authors", &query, expRows)
 	})
+
+	// Test multiple filter values (`;` separated)
+	t.Run("GET /authors?filter=forname==Anne;surname==Carson", func(t *testing.T) {
+		filters := []rsql.Filter{
+			{Column: "forename", Values: []string{"Anne"}, SQLOperator: "="},
+			{Column: "surname", Values: []string{"Carson"}, SQLOperator: "="},
+		}
+		query := rsql.Query{Filters: filters}
+
+		expRows := []types.RowData{
+			map[string]any{
+				"born":     int64(1950),
+				"died":     nil,
+				"forename": "Anne",
+				"id":       int64(1),
+				"surname":  "Carson",
+			},
+		}
+
+		listRowsTester(t, repo, "authors", &query, expRows)
+	})
+}
+
+func listRowsTester(
+	t *testing.T,
+	repo repository.Repository,
+	tableName string,
+	query *rsql.Query,
+	expRows []types.RowData,
+) {
+	rows, err := repo.ListRows(tableName, query)
+	if err != nil {
+		t.Fatalf("List err: %s", err)
+	}
+	defer rows.Close()
+
+	gotRows, err := service.ScanRows(rows)
+	if err != nil {
+		t.Errorf("Scan err: %s", err)
+	}
+	checkMapEquality(t, expRows, gotRows)
+}
+
+func checkMapEquality(t *testing.T, expRows, gotRows []types.RowData) {
+	if len(gotRows) != len(expRows) {
+		t.Fatalf(
+			"gotRows length %d does not match expRows length %d\nExp:\n%v\nGot:\n%v",
+			len(gotRows),
+			len(expRows),
+			expRows,
+			gotRows,
+		)
+	}
+	for idx, expRow := range expRows {
+		for k, expVal := range expRow {
+			gotRow := gotRows[idx]
+			gotVal, ok := gotRow[k]
+			if !ok {
+				t.Errorf("Expected key %s in row %v", k, gotRow)
+			}
+			if gotVal != expVal {
+				t.Errorf(
+					"Expected %s: %v (type %T)\nGot: %v (type %T)",
+					k,
+					expVal,
+					expVal,
+					gotVal,
+					gotVal,
+				)
+			}
+		}
+	}
 }
