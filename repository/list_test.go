@@ -74,6 +74,17 @@ func Test_RepoListRows(t *testing.T) {
 		listRowsTester(t, repo, "authors", &query, expRows)
 	})
 
+	// Test single filter: not in (rsql `=out=`, SQL `NOT IN`)
+	t.Run("GET /authors?filter=surname=out=Carson,Woolf", func(t *testing.T) {
+		filters := []rsql.Filter{
+			{Column: "surname", Values: []string{"Carson", "Woolf"}, SQLOperator: "NOT IN"},
+		}
+		query := rsql.Query{Filters: filters}
+
+		expRows := []types.RowData{AnneBrontë}
+		listRowsTester(t, repo, "authors", &query, expRows)
+	})
+
 	// Test multiple filter values (`;` separated)
 	t.Run("GET /authors?filter=forename==Anne;surname==Carson", func(t *testing.T) {
 		filters := []rsql.Filter{
