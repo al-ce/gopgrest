@@ -32,7 +32,7 @@ var VirginiaWoolf = map[string]any{
 	"surname":  "Woolf",
 }
 
-func Test_RepoListRows(t *testing.T) {
+func Test_RepoListRows_NoQuery(t *testing.T) {
 	repo := test_utils.NewTestRepo(t)
 
 	// Test no RSQL query
@@ -40,6 +40,10 @@ func Test_RepoListRows(t *testing.T) {
 		expRows := []types.RowData{AnneCarson, AnneBrontë, VirginiaWoolf}
 		listRowsTester(t, repo, "authors", &rsql.Query{}, expRows)
 	})
+}
+
+func Test_RepoListRows_Filters(t *testing.T) {
+	repo := test_utils.NewTestRepo(t)
 
 	// Test single filter: equality (rsql `==`, SQL `=`)
 	t.Run("GET /authors?filter=forname==Anne", func(t *testing.T) {
