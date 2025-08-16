@@ -10,7 +10,7 @@ import (
 	"gopgrest/types"
 )
 
-func Test_ListRows(t *testing.T) {
+func Test_RepoListRows(t *testing.T) {
 	repo := test_utils.NewTestRepo(t)
 
 	// Test no RSQL query
@@ -63,6 +63,33 @@ func Test_ListRows(t *testing.T) {
 				"forename": "Anne",
 				"id":       int64(2),
 				"surname":  "Brontë",
+			},
+		}
+
+		listRowsTester(t, repo, "authors", &query, expRows)
+	})
+
+	// Test single filter: inequality (rsql `!=`, SQL `!=`)
+	t.Run("GET /authors?filter=surname!=Carson", func(t *testing.T) {
+		filters := []rsql.Filter{
+			{Column: "surname", Values: []string{"Carson"}, SQLOperator: "!="},
+		}
+		query := rsql.Query{Filters: filters}
+
+		expRows := []types.RowData{
+			map[string]any{
+				"born":     int64(1820),
+				"died":     int64(1849),
+				"forename": "Anne",
+				"id":       int64(2),
+				"surname":  "Brontë",
+			},
+			map[string]any{
+				"born":     int64(1882),
+				"died":     int64(1941),
+				"forename": "Virginia",
+				"id":       int64(3),
+				"surname":  "Woolf",
 			},
 		}
 
