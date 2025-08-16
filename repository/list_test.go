@@ -96,6 +96,17 @@ func Test_RepoListRows(t *testing.T) {
 		listRowsTester(t, repo, "authors", &query, expRows)
 	})
 
+	// Test single filter: not like (rsql `=notlike=`, SQL `NOT LIKE`)
+	t.Run("GET /authors?filter=forename=notlike=Ann%", func(t *testing.T) {
+		filters := []rsql.Filter{
+			{Column: "forename", Values: []string{"Ann%"}, SQLOperator: "NOT LIKE"},
+		}
+		query := rsql.Query{Filters: filters}
+
+		expRows := []types.RowData{VirginiaWoolf}
+		listRowsTester(t, repo, "authors", &query, expRows)
+	})
+
 	// Test multiple filter values (`;` separated)
 	t.Run("GET /authors?filter=forename==Anne;surname==Carson", func(t *testing.T) {
 		filters := []rsql.Filter{
