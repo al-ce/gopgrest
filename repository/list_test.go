@@ -118,6 +118,17 @@ func Test_RepoListRows(t *testing.T) {
 		listRowsTester(t, repo, "authors", &query, expRows)
 	})
 
+	// Test single filter: is not null (rsql `=isnotnull=`, SQL `IS NOT NULL`)
+	t.Run("GET /authors?filter=died=isnotnull=", func(t *testing.T) {
+		filters := []rsql.Filter{
+			{Column: "died", Values: []string{}, SQLOperator: "IS NOT NULL"},
+		}
+		query := rsql.Query{Filters: filters}
+
+		expRows := []types.RowData{AnneBrontë, VirginiaWoolf}
+		listRowsTester(t, repo, "authors", &query, expRows)
+	})
+
 	// Test multiple filter values (`;` separated)
 	t.Run("GET /authors?filter=forename==Anne;surname==Carson", func(t *testing.T) {
 		filters := []rsql.Filter{
