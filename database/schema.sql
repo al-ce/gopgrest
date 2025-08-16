@@ -30,7 +30,8 @@ INSERT INTO genres (name)
 VALUES
 ('Modernism'),
 ('Epistolary'),
-('Romance');
+('Romance'),
+('Dystopian');
 
 INSERT INTO books (title, author_id, genre_id)
 VALUES
