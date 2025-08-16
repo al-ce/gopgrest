@@ -363,6 +363,87 @@ func Test_RepoListRows_Joins(t *testing.T) {
 			}
 			listRowsTester(t, "books", &query, expRows)
 		})
+
+	// Test single INNER JOIN relation (rsql `inner_join`, SQL `INNER JOIN`
+	t.Run("GET /books?fields=title,surname&inner_join=authors:books.author_id==authors.id", func(t *testing.T) {
+		joins := []rsql.JoinRelation{
+			{
+				Type:           "INNER JOIN",
+				Table:          "authors",
+				LeftQualifier:  "books",
+				LeftCol:        "author_id",
+				RightQualifier: "authors",
+				RightCol:       "id",
+			},
+		}
+		query := rsql.Query{Joins: joins}
+		expRows := []types.RowData{
+			map[string]any{
+				"surname": "Carson",
+				"title":   "Autobiography of Red",
+			},
+			map[string]any{
+				"surname": "Brontë",
+				"title":   "The Tenant of Wildfell Hall",
+			},
+			map[string]any{
+				"surname": "Woolf",
+				"title":   "To The Lighthouse",
+			},
+			map[string]any{
+				"surname": "Woolf",
+				"title":   "Mrs. Dalloway",
+			},
+		}
+		listRowsTester(t, "books", &query, expRows)
+	})
+
+	// Test multiple INNER JOIN relations (rsql `join`, SQL `INNER JOIN`
+	t.Run("GET /books?fields=title,name:genre,surname&inner_join=authors:books.author_id==authors.id;genres:books.genre_id==genres.id",
+		func(t *testing.T) {
+			fields := []rsql.Field{
+				{Column: "title"},
+				{Column: "name", Alias: "genre"},
+				{Column: "surname"},
+			}
+			joins := []rsql.JoinRelation{
+				{
+					Type:           "INNER JOIN",
+					Table:          "authors",
+					LeftQualifier:  "books",
+					LeftCol:        "author_id",
+					RightQualifier: "authors",
+					RightCol:       "id",
+				},
+				{
+					Type:           "INNER JOIN",
+					Table:          "genres",
+					LeftQualifier:  "books",
+					LeftCol:        "genre_id",
+					RightQualifier: "genres",
+					RightCol:       "id",
+				},
+			}
+			query := rsql.Query{Fields: fields, Joins: joins}
+			expRows := []types.RowData{
+				map[string]any{
+					"surname": "Carson",
+					"title":   "Autobiography of Red",
+					"genre":   "Romance",
+				},
+				map[string]any{
+					"surname": "Brontë",
+					"title":   "The Tenant of Wildfell Hall",
+					"genre":   "Epistolary",
+				},
+				map[string]any{
+					"surname": "Woolf",
+					"title":   "To The Lighthouse",
+					"genre":   "Modernism",
+				},
+			}
+			listRowsTester(t, "books", &query, expRows)
+		})
 }
 
 func listRowsTester(
