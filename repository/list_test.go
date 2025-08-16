@@ -177,6 +177,107 @@ func Test_RepoListRows_Filters(t *testing.T) {
 	})
 }
 
+func Test_RepoListRows_Fields(t *testing.T) {
+	repo := test_utils.NewTestRepo(t)
+
+	// Test fields, no qualifiers or aliases
+	t.Run("GET /authors?fields=forename,surname", func(t *testing.T) {
+		fields := []rsql.Field{
+			{Column: "forename"},
+			{Column: "surname"},
+		}
+		query := rsql.Query{Fields: fields}
+		expRows := []types.RowData{
+			map[string]any{
+				"forename": "Anne",
+				"surname":  "Carson",
+			},
+			map[string]any{
+				"forename": "Anne",
+				"surname":  "Brontë",
+			},
+			map[string]any{
+				"forename": "Virginia",
+				"surname":  "Woolf",
+			},
+		}
+		listRowsTester(t, repo, "authors", &query, expRows)
+
+	})
+
+	// Test fields with aliases
+	t.Run("GET /authors?fields=forename:first_name,surname:last_name", func(t *testing.T) {
+		fields := []rsql.Field{
+			{Column: "forename", Alias: "first_name"},
+			{Column: "surname", Alias: "last_name"},
+		}
+		query := rsql.Query{Fields: fields}
+		expRows := []types.RowData{
+			map[string]any{
+				"first_name": "Anne",
+				"last_name":  "Carson",
+			},
+			map[string]any{
+				"first_name": "Anne",
+				"last_name":  "Brontë",
+			},
+			map[string]any{
+				"first_name": "Virginia",
+				"last_name":  "Woolf",
+			},
+		}
+		listRowsTester(t, repo, "authors", &query, expRows)
+	})
+
+	// Test fields with qualifiers
+	t.Run("GET /authors?fields=authors.forename,authors.surname", func(t *testing.T) {
+		fields := []rsql.Field{
+			{Column: "forename", Qualifier: "authors"},
+			{Column: "surname", Qualifier: "authors"},
+		}
+		query := rsql.Query{Fields: fields}
+		expRows := []types.RowData{
+			map[string]any{
+				"forename": "Anne",
+				"surname":  "Carson",
+			},
+			map[string]any{
+				"forename": "Anne",
+				"surname":  "Brontë",
+			},
+			map[string]any{
+				"forename": "Virginia",
+				"surname":  "Woolf",
+			},
+		}
+		listRowsTester(t, repo, "authors", &query, expRows)
+	})
+
+	// Test fields with aliases and qualifiers
+	t.Run("GET /authors?fields=authors.forename:first_name,authors.surname:last_name", func(t *testing.T) {
+		fields := []rsql.Field{
+			{Column: "forename", Alias: "first_name", Qualifier: "authors"},
+			{Column: "surname", Alias: "last_name", Qualifier: "authors"},
+		}
+		query := rsql.Query{Fields: fields}
+		expRows := []types.RowData{
+			map[string]any{
+				"first_name": "Anne",
+				"last_name":  "Carson",
+			},
+			map[string]any{
+				"first_name": "Anne",
+				"last_name":  "Brontë",
+			},
+			map[string]any{
+				"first_name": "Virginia",
+				"last_name":  "Woolf",
+			},
+		}
+		listRowsTester(t, repo, "authors", &query, expRows)
+	})
+}
+
 func listRowsTester(
 	t *testing.T,
 	repo repository.Repository,
