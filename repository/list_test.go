@@ -10,34 +10,34 @@ import (
 	"gopgrest/types"
 )
 
+var AnneCarson = map[string]any{
+	"born":     int64(1950),
+	"died":     nil,
+	"forename": "Anne",
+	"id":       int64(1),
+	"surname":  "Carson",
+}
+var AnneBrontë = map[string]any{
+	"born":     int64(1820),
+	"died":     int64(1849),
+	"forename": "Anne",
+	"id":       int64(2),
+	"surname":  "Brontë",
+}
+var VirginiaWoolf = map[string]any{
+	"born":     int64(1882),
+	"died":     int64(1941),
+	"forename": "Virginia",
+	"id":       int64(3),
+	"surname":  "Woolf",
+}
+
 func Test_RepoListRows(t *testing.T) {
 	repo := test_utils.NewTestRepo(t)
 
 	// Test no RSQL query
 	t.Run("GET /authors", func(t *testing.T) {
-		expRows := []types.RowData{
-			map[string]any{
-				"born":     int64(1950),
-				"died":     nil,
-				"forename": "Anne",
-				"id":       int64(1),
-				"surname":  "Carson",
-			},
-			map[string]any{
-				"born":     int64(1820),
-				"died":     int64(1849),
-				"forename": "Anne",
-				"id":       int64(2),
-				"surname":  "Brontë",
-			},
-			map[string]any{
-				"born":     int64(1882),
-				"died":     int64(1941),
-				"forename": "Virginia",
-				"id":       int64(3),
-				"surname":  "Woolf",
-			},
-		}
+		expRows := []types.RowData{AnneCarson, AnneBrontë, VirginiaWoolf}
 		listRowsTester(t, repo, "authors", &rsql.Query{}, expRows)
 	})
 
@@ -48,22 +48,7 @@ func Test_RepoListRows(t *testing.T) {
 		}
 		query := rsql.Query{Filters: filters}
 
-		expRows := []types.RowData{
-			map[string]any{
-				"born":     int64(1950),
-				"died":     nil,
-				"forename": "Anne",
-				"id":       int64(1),
-				"surname":  "Carson",
-			},
-			map[string]any{
-				"born":     int64(1820),
-				"died":     int64(1849),
-				"forename": "Anne",
-				"id":       int64(2),
-				"surname":  "Brontë",
-			},
-		}
+		expRows := []types.RowData{AnneCarson, AnneBrontë}
 		listRowsTester(t, repo, "authors", &query, expRows)
 	})
 
@@ -74,22 +59,7 @@ func Test_RepoListRows(t *testing.T) {
 		}
 		query := rsql.Query{Filters: filters}
 
-		expRows := []types.RowData{
-			map[string]any{
-				"born":     int64(1820),
-				"died":     int64(1849),
-				"forename": "Anne",
-				"id":       int64(2),
-				"surname":  "Brontë",
-			},
-			map[string]any{
-				"born":     int64(1882),
-				"died":     int64(1941),
-				"forename": "Virginia",
-				"id":       int64(3),
-				"surname":  "Woolf",
-			},
-		}
+		expRows := []types.RowData{AnneBrontë, VirginiaWoolf}
 		listRowsTester(t, repo, "authors", &query, expRows)
 	})
 
@@ -100,22 +70,7 @@ func Test_RepoListRows(t *testing.T) {
 		}
 		query := rsql.Query{Filters: filters}
 
-		expRows := []types.RowData{
-			map[string]any{
-				"born":     int64(1950),
-				"died":     nil,
-				"forename": "Anne",
-				"id":       int64(1),
-				"surname":  "Carson",
-			},
-			map[string]any{
-				"born":     int64(1882),
-				"died":     int64(1941),
-				"forename": "Virginia",
-				"id":       int64(3),
-				"surname":  "Woolf",
-			},
-		}
+		expRows := []types.RowData{AnneCarson, VirginiaWoolf}
 		listRowsTester(t, repo, "authors", &query, expRows)
 	})
 
@@ -127,15 +82,7 @@ func Test_RepoListRows(t *testing.T) {
 		}
 		query := rsql.Query{Filters: filters}
 
-		expRows := []types.RowData{
-			map[string]any{
-				"born":     int64(1950),
-				"died":     nil,
-				"forename": "Anne",
-				"id":       int64(1),
-				"surname":  "Carson",
-			},
-		}
+		expRows := []types.RowData{AnneCarson}
 		listRowsTester(t, repo, "authors", &query, expRows)
 	})
 }
