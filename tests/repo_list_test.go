@@ -1,37 +1,12 @@
-package repository_test
+package tests
 
 import (
 	"testing"
 
 	"gopgrest/rsql"
 	"gopgrest/service"
-	"gopgrest/test_utils"
 	"gopgrest/types"
 )
-
-var AnneCarson = map[string]any{
-	"born":     int64(1950),
-	"died":     nil,
-	"forename": "Anne",
-	"id":       int64(1),
-	"surname":  "Carson",
-}
-
-var AnneBrontë = map[string]any{
-	"born":     int64(1820),
-	"died":     int64(1849),
-	"forename": "Anne",
-	"id":       int64(2),
-	"surname":  "Brontë",
-}
-
-var VirginiaWoolf = map[string]any{
-	"born":     int64(1882),
-	"died":     int64(1941),
-	"forename": "Virginia",
-	"id":       int64(3),
-	"surname":  "Woolf",
-}
 
 func Test_RepoListRows_NoQuery(t *testing.T) {
 	// GET /authors
@@ -481,7 +456,7 @@ func listRowsTester(
 	query *rsql.Query,
 	expRows []types.RowData,
 ) {
-	repo := test_utils.NewTestRepo(t)
+	repo := NewTestRepo(t)
 	rows, err := repo.ListRows(tableName, query)
 	if err != nil {
 		t.Fatalf("List err: %s", err)
@@ -493,35 +468,4 @@ func listRowsTester(
 		t.Errorf("Scan err: %s", err)
 	}
 	checkMapEquality(t, expRows, gotRows)
-}
-
-func checkMapEquality(t *testing.T, expRows, gotRows []types.RowData) {
-	if len(gotRows) != len(expRows) {
-		t.Fatalf(
-			"gotRows length %d does not match expRows length %d\nExp:\n%v\nGot:\n%v",
-			len(gotRows),
-			len(expRows),
-			expRows,
-			gotRows,
-		)
-	}
-	for idx, expRow := range expRows {
-		for k, expVal := range expRow {
-			gotRow := gotRows[idx]
-			gotVal, ok := gotRow[k]
-			if !ok {
-				t.Errorf("Expected key %s in row %v", k, gotRow)
-			}
-			if gotVal != expVal {
-				t.Errorf(
-					"Expected %s: %v (type %T)\nGot: %v (type %T)",
-					k,
-					expVal,
-					expVal,
-					gotVal,
-					gotVal,
-				)
-			}
-		}
-	}
 }

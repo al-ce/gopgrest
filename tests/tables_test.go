@@ -1,15 +1,14 @@
-package repository_test
+package tests
 
 import (
 	"slices"
 	"testing"
 
 	"gopgrest/repository"
-	"gopgrest/test_utils"
 )
 
 func Test_GetPublicTables(t *testing.T) {
-	tdb := test_utils.NewTestDB(t)
+	tdb := NewTestDB(t)
 
 	// Make an array of all the tables in the test db
 	tables, err := repository.GetPublicTables(tdb.DB)
@@ -17,7 +16,7 @@ func Test_GetPublicTables(t *testing.T) {
 		t.Errorf("%s", err)
 	}
 
-	expectedTables := []string{"authors", "books"}
+	expectedTables := []string{"authors", "books", "genres"}
 	foundTables := []string{}
 	for _, table := range tables {
 		// Check for extraneous tables
