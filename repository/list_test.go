@@ -85,6 +85,17 @@ func Test_RepoListRows(t *testing.T) {
 		listRowsTester(t, repo, "authors", &query, expRows)
 	})
 
+	// Test single filter: like (rsql `=like=`, SQL `LIKE`)
+	t.Run("GET /authors?filter=forename=like=Ann%", func(t *testing.T) {
+		filters := []rsql.Filter{
+			{Column: "forename", Values: []string{"Ann%"}, SQLOperator: "LIKE"},
+		}
+		query := rsql.Query{Filters: filters}
+
+		expRows := []types.RowData{AnneCarson, AnneBrontë}
+		listRowsTester(t, repo, "authors", &query, expRows)
+	})
+
 	// Test multiple filter values (`;` separated)
 	t.Run("GET /authors?filter=forename==Anne;surname==Carson", func(t *testing.T) {
 		filters := []rsql.Filter{
