@@ -365,7 +365,7 @@ func Test_RepoListRows_Joins(t *testing.T) {
 		})
 
 	// GET /books?fields=title,surname&inner_join=authors:books.author_id==authors.id
-	t.Run("Single INNER JOIN relation (rsql `inner_join`, SQL `INNER JOIN`)", func(t *testing.T) {
+	t.Run("INNER JOIN relation (rsql `inner_join`, SQL `INNER JOIN`)", func(t *testing.T) {
 		fields := []rsql.Field{
 			{Column: "title"},
 			{Column: "name", Alias: "genre"},
@@ -398,52 +398,81 @@ func Test_RepoListRows_Joins(t *testing.T) {
 		listRowsTester(t, "books", &query, expRows)
 	})
 
-	// Test multiple INNER JOIN relations (rsql `join`, SQL `INNER JOIN`
-	t.Run("GET /books?fields=title,name:genre,surname&inner_join=authors:books.author_id==authors.id;genres:books.genre_id==genres.id",
-		func(t *testing.T) {
-			fields := []rsql.Field{
-				{Column: "title"},
-				{Column: "name", Alias: "genre"},
-				{Column: "surname"},
-			}
-			joins := []rsql.JoinRelation{
-				{
-					Type:           "INNER JOIN",
-					Table:          "authors",
-					LeftQualifier:  "books",
-					LeftCol:        "author_id",
-					RightQualifier: "authors",
-					RightCol:       "id",
-				},
-				{
-					Type:           "INNER JOIN",
-					Table:          "genres",
-					LeftQualifier:  "books",
-					LeftCol:        "genre_id",
-					RightQualifier: "genres",
-					RightCol:       "id",
-				},
-			}
-			query := rsql.Query{Fields: fields, Joins: joins}
-			expRows := []types.RowData{
-				map[string]any{
-					"surname": "Carson",
-					"title":   "Autobiography of Red",
-					"genre":   "Romance",
-				},
-				map[string]any{
-					"surname": "Brontë",
-					"title":   "The Tenant of Wildfell Hall",
-					"genre":   "Epistolary",
-				},
-				map[string]any{
-					"surname": "Woolf",
-					"title":   "To The Lighthouse",
-					"genre":   "Modernism",
-				},
-			}
-			listRowsTester(t, "books", &query, expRows)
-		})
+	// GET /books?fields=title,name:genre&left_join=genres:books.genre_id==genres.id
+	t.Run("LEFT JOIN relation (rsql `left_join`, SQL `LEFT JOIN`", func(t *testing.T) {
+		fields := []rsql.Field{
+			{Column: "title"},
+			{Column: "name", Alias: "genre"},
+		}
+		joins := []rsql.JoinRelation{
+			{
+				Type:           "LEFT JOIN",
+				Table:          "genres",
+				LeftQualifier:  "books",
+				LeftCol:        "genre_id",
+				RightQualifier: "genres",
+				RightCol:       "id",
+			},
+		}
+		query := rsql.Query{Fields: fields, Joins: joins}
+		expRows := []types.RowData{
+			map[string]any{
+				"title": "Autobiography of Red",
+				"genre": "Romance",
+			},
+			map[string]any{
+				"title": "The Tenant of Wildfell Hall",
+				"genre": "Epistolary",
+			},
+			map[string]any{
+				"title": "To The Lighthouse",
+				"genre": "Modernism",
+			},
+			map[string]any{
+				"title": "Mrs. Dalloway",
+				"genre": nil,
+			},
+		}
+		listRowsTester(t, "books", &query, expRows)
+	})
+
+	// GET /books?fields=title,name:genre&right_join=genres:books.genre_id==genres.id
+	t.Run("RIGHT JOIN relation (rsql `right_join`, SQL `RIGHT JOIN`", func(t *testing.T) {
+		fields := []rsql.Field{
+			{Column: "title"},
+			{Column: "name", Alias: "genre"},
+		}
+		joins := []rsql.JoinRelation{
+			{
+				Type:           "RIGHT JOIN",
+				Table:          "genres",
+				LeftQualifier:  "books",
+				LeftCol:        "genre_id",
+				RightQualifier: "genres",
+				RightCol:       "id",
+			},
+		}
+		query := rsql.Query{Fields: fields, Joins: joins}
+		expRows := []types.RowData{
+			map[string]any{
+				"title": "Autobiography of Red",
+				"genre": "Romance",
+			},
+			map[string]any{
+				"title": "The Tenant of Wildfell Hall",
+				"genre": "Epistolary",
+			},
+			map[string]any{
+				"title": "To The Lighthouse",
+				"genre": "Modernism",
+			},
+			map[string]any{
+				"title": nil,
+				"genre": "Dystopian",
+			},
+		}
+		listRowsTester(t, "books", &query, expRows)
+	})
 }
 
 func listRowsTester(
