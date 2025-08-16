@@ -47,7 +47,6 @@ func Test_RepoListRows(t *testing.T) {
 			{Column: "forename", Values: []string{"Anne"}, SQLOperator: "="},
 		}
 		query := rsql.Query{Filters: filters}
-
 		expRows := []types.RowData{AnneCarson, AnneBrontë}
 		listRowsTester(t, repo, "authors", &query, expRows)
 	})
@@ -58,7 +57,6 @@ func Test_RepoListRows(t *testing.T) {
 			{Column: "surname", Values: []string{"Carson"}, SQLOperator: "!="},
 		}
 		query := rsql.Query{Filters: filters}
-
 		expRows := []types.RowData{AnneBrontë, VirginiaWoolf}
 		listRowsTester(t, repo, "authors", &query, expRows)
 	})
@@ -69,7 +67,6 @@ func Test_RepoListRows(t *testing.T) {
 			{Column: "surname", Values: []string{"Carson", "Woolf"}, SQLOperator: "IN"},
 		}
 		query := rsql.Query{Filters: filters}
-
 		expRows := []types.RowData{AnneCarson, VirginiaWoolf}
 		listRowsTester(t, repo, "authors", &query, expRows)
 	})
@@ -80,7 +77,6 @@ func Test_RepoListRows(t *testing.T) {
 			{Column: "surname", Values: []string{"Carson", "Woolf"}, SQLOperator: "NOT IN"},
 		}
 		query := rsql.Query{Filters: filters}
-
 		expRows := []types.RowData{AnneBrontë}
 		listRowsTester(t, repo, "authors", &query, expRows)
 	})
@@ -91,7 +87,6 @@ func Test_RepoListRows(t *testing.T) {
 			{Column: "forename", Values: []string{"Ann%"}, SQLOperator: "LIKE"},
 		}
 		query := rsql.Query{Filters: filters}
-
 		expRows := []types.RowData{AnneCarson, AnneBrontë}
 		listRowsTester(t, repo, "authors", &query, expRows)
 	})
@@ -102,7 +97,6 @@ func Test_RepoListRows(t *testing.T) {
 			{Column: "forename", Values: []string{"Ann%"}, SQLOperator: "NOT LIKE"},
 		}
 		query := rsql.Query{Filters: filters}
-
 		expRows := []types.RowData{VirginiaWoolf}
 		listRowsTester(t, repo, "authors", &query, expRows)
 	})
@@ -113,7 +107,6 @@ func Test_RepoListRows(t *testing.T) {
 			{Column: "died", Values: []string{}, SQLOperator: "IS NULL"},
 		}
 		query := rsql.Query{Filters: filters}
-
 		expRows := []types.RowData{AnneCarson}
 		listRowsTester(t, repo, "authors", &query, expRows)
 	})
@@ -124,7 +117,6 @@ func Test_RepoListRows(t *testing.T) {
 			{Column: "died", Values: []string{}, SQLOperator: "IS NOT NULL"},
 		}
 		query := rsql.Query{Filters: filters}
-
 		expRows := []types.RowData{AnneBrontë, VirginiaWoolf}
 		listRowsTester(t, repo, "authors", &query, expRows)
 	})
@@ -135,7 +127,6 @@ func Test_RepoListRows(t *testing.T) {
 			{Column: "born", Values: []string{"1882"}, SQLOperator: "<="},
 		}
 		query := rsql.Query{Filters: filters}
-
 		expRows := []types.RowData{AnneBrontë, VirginiaWoolf}
 		listRowsTester(t, repo, "authors", &query, expRows)
 	})
@@ -146,7 +137,6 @@ func Test_RepoListRows(t *testing.T) {
 			{Column: "born", Values: []string{"1882"}, SQLOperator: "<"},
 		}
 		query := rsql.Query{Filters: filters}
-
 		expRows := []types.RowData{AnneBrontë}
 		listRowsTester(t, repo, "authors", &query, expRows)
 	})
@@ -157,7 +147,6 @@ func Test_RepoListRows(t *testing.T) {
 			{Column: "born", Values: []string{"1882"}, SQLOperator: ">="},
 		}
 		query := rsql.Query{Filters: filters}
-
 		expRows := []types.RowData{AnneCarson, VirginiaWoolf}
 		listRowsTester(t, repo, "authors", &query, expRows)
 	})
@@ -168,11 +157,9 @@ func Test_RepoListRows(t *testing.T) {
 			{Column: "born", Values: []string{"1882"}, SQLOperator: ">"},
 		}
 		query := rsql.Query{Filters: filters}
-
 		expRows := []types.RowData{AnneCarson}
 		listRowsTester(t, repo, "authors", &query, expRows)
 	})
-
 
 	// Test multiple filter values (`;` separated)
 	t.Run("GET /authors?filter=forename==Anne;surname==Carson", func(t *testing.T) {
@@ -181,7 +168,6 @@ func Test_RepoListRows(t *testing.T) {
 			{Column: "surname", Values: []string{"Carson"}, SQLOperator: "="},
 		}
 		query := rsql.Query{Filters: filters}
-
 		expRows := []types.RowData{AnneCarson}
 		listRowsTester(t, repo, "authors", &query, expRows)
 	})
