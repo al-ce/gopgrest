@@ -170,6 +170,17 @@ func Test_RepoListRows_Filters(t *testing.T) {
 		expRows := []types.RowData{AnneCarson}
 		listRowsTester(t, "authors", &query, expRows)
 	})
+
+	// Test filter with qualifier
+	t.Run("GET /authors?filter=authors.forname==Anne", func(t *testing.T) {
+		filters := []rsql.Filter{
+			{Column: "forename", Values: []string{"Anne"}, SQLOperator: "="},
+		}
+		query := rsql.Query{Filters: filters}
+		expRows := []types.RowData{AnneCarson, AnneBrontë}
+		listRowsTester(t, "authors", &query, expRows)
+	})
+
 }
 
 func Test_RepoListRows_Fields(t *testing.T) {
