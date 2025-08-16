@@ -43,8 +43,6 @@ func NewTestDB(t *testing.T) *TestDB {
 	tables, err := repository.GetPublicTables(db)
 
 	t.Cleanup(func() {
-		db.Exec("DELETE FROM authors")
-		db.Exec("DELETE FROM books")
 		db.Close()
 	})
 
