@@ -129,6 +129,17 @@ func Test_RepoListRows(t *testing.T) {
 		listRowsTester(t, repo, "authors", &query, expRows)
 	})
 
+	// Test single filter: less than or equal to (rsql `=le=`, SQL `<=`)
+	t.Run("GET /authors?filter=born=le=1882", func(t *testing.T) {
+		filters := []rsql.Filter{
+			{Column: "born", Values: []string{"1882"}, SQLOperator: "<="},
+		}
+		query := rsql.Query{Filters: filters}
+
+		expRows := []types.RowData{AnneBrontë, VirginiaWoolf}
+		listRowsTester(t, repo, "authors", &query, expRows)
+	})
+
 	// Test multiple filter values (`;` separated)
 	t.Run("GET /authors?filter=forename==Anne;surname==Carson", func(t *testing.T) {
 		filters := []rsql.Filter{
