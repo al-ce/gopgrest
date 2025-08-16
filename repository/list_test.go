@@ -3,7 +3,6 @@ package repository_test
 import (
 	"testing"
 
-	"gopgrest/repository"
 	"gopgrest/rsql"
 	"gopgrest/service"
 	"gopgrest/test_utils"
@@ -33,18 +32,14 @@ var VirginiaWoolf = map[string]any{
 }
 
 func Test_RepoListRows_NoQuery(t *testing.T) {
-	repo := test_utils.NewTestRepo(t)
-
 	// Test no RSQL query
 	t.Run("GET /authors", func(t *testing.T) {
 		expRows := []types.RowData{AnneCarson, AnneBrontë, VirginiaWoolf}
-		listRowsTester(t, repo, "authors", &rsql.Query{}, expRows)
+		listRowsTester(t, "authors", &rsql.Query{}, expRows)
 	})
 }
 
 func Test_RepoListRows_Filters(t *testing.T) {
-	repo := test_utils.NewTestRepo(t)
-
 	// Test single filter: equality (rsql `==`, SQL `=`)
 	t.Run("GET /authors?filter=forname==Anne", func(t *testing.T) {
 		filters := []rsql.Filter{
@@ -52,7 +47,7 @@ func Test_RepoListRows_Filters(t *testing.T) {
 		}
 		query := rsql.Query{Filters: filters}
 		expRows := []types.RowData{AnneCarson, AnneBrontë}
-		listRowsTester(t, repo, "authors", &query, expRows)
+		listRowsTester(t, "authors", &query, expRows)
 	})
 
 	// Test single filter: inequality (rsql `!=`, SQL `!=`)
@@ -62,7 +57,7 @@ func Test_RepoListRows_Filters(t *testing.T) {
 		}
 		query := rsql.Query{Filters: filters}
 		expRows := []types.RowData{AnneBrontë, VirginiaWoolf}
-		listRowsTester(t, repo, "authors", &query, expRows)
+		listRowsTester(t, "authors", &query, expRows)
 	})
 
 	// Test single filter: in (rsql `=in=`, SQL `IN`)
@@ -72,7 +67,7 @@ func Test_RepoListRows_Filters(t *testing.T) {
 		}
 		query := rsql.Query{Filters: filters}
 		expRows := []types.RowData{AnneCarson, VirginiaWoolf}
-		listRowsTester(t, repo, "authors", &query, expRows)
+		listRowsTester(t, "authors", &query, expRows)
 	})
 
 	// Test single filter: not in (rsql `=out=`, SQL `NOT IN`)
@@ -82,7 +77,7 @@ func Test_RepoListRows_Filters(t *testing.T) {
 		}
 		query := rsql.Query{Filters: filters}
 		expRows := []types.RowData{AnneBrontë}
-		listRowsTester(t, repo, "authors", &query, expRows)
+		listRowsTester(t, "authors", &query, expRows)
 	})
 
 	// Test single filter: like (rsql `=like=`, SQL `LIKE`)
@@ -92,7 +87,7 @@ func Test_RepoListRows_Filters(t *testing.T) {
 		}
 		query := rsql.Query{Filters: filters}
 		expRows := []types.RowData{AnneCarson, AnneBrontë}
-		listRowsTester(t, repo, "authors", &query, expRows)
+		listRowsTester(t, "authors", &query, expRows)
 	})
 
 	// Test single filter: not like (rsql `=notlike=`, SQL `NOT LIKE`)
@@ -102,7 +97,7 @@ func Test_RepoListRows_Filters(t *testing.T) {
 		}
 		query := rsql.Query{Filters: filters}
 		expRows := []types.RowData{VirginiaWoolf}
-		listRowsTester(t, repo, "authors", &query, expRows)
+		listRowsTester(t, "authors", &query, expRows)
 	})
 
 	// Test single filter: is null (rsql `=isnull=`, SQL `IS NULL`)
@@ -112,7 +107,7 @@ func Test_RepoListRows_Filters(t *testing.T) {
 		}
 		query := rsql.Query{Filters: filters}
 		expRows := []types.RowData{AnneCarson}
-		listRowsTester(t, repo, "authors", &query, expRows)
+		listRowsTester(t, "authors", &query, expRows)
 	})
 
 	// Test single filter: is not null (rsql `=isnotnull=`, SQL `IS NOT NULL`)
@@ -122,7 +117,7 @@ func Test_RepoListRows_Filters(t *testing.T) {
 		}
 		query := rsql.Query{Filters: filters}
 		expRows := []types.RowData{AnneBrontë, VirginiaWoolf}
-		listRowsTester(t, repo, "authors", &query, expRows)
+		listRowsTester(t, "authors", &query, expRows)
 	})
 
 	// Test single filter: less than or equal to (rsql `=le=`, SQL `<=`)
@@ -132,7 +127,7 @@ func Test_RepoListRows_Filters(t *testing.T) {
 		}
 		query := rsql.Query{Filters: filters}
 		expRows := []types.RowData{AnneBrontë, VirginiaWoolf}
-		listRowsTester(t, repo, "authors", &query, expRows)
+		listRowsTester(t, "authors", &query, expRows)
 	})
 
 	// Test single filter: less than (rsql `=lt=`, SQL `<`)
@@ -142,7 +137,7 @@ func Test_RepoListRows_Filters(t *testing.T) {
 		}
 		query := rsql.Query{Filters: filters}
 		expRows := []types.RowData{AnneBrontë}
-		listRowsTester(t, repo, "authors", &query, expRows)
+		listRowsTester(t, "authors", &query, expRows)
 	})
 
 	// Test single filter: greater than or equal to (rsql `=ge=`, SQL `>=`)
@@ -152,7 +147,7 @@ func Test_RepoListRows_Filters(t *testing.T) {
 		}
 		query := rsql.Query{Filters: filters}
 		expRows := []types.RowData{AnneCarson, VirginiaWoolf}
-		listRowsTester(t, repo, "authors", &query, expRows)
+		listRowsTester(t, "authors", &query, expRows)
 	})
 
 	// Test single filter: greater than (rsql `=gt=`, SQL `>`)
@@ -162,7 +157,7 @@ func Test_RepoListRows_Filters(t *testing.T) {
 		}
 		query := rsql.Query{Filters: filters}
 		expRows := []types.RowData{AnneCarson}
-		listRowsTester(t, repo, "authors", &query, expRows)
+		listRowsTester(t, "authors", &query, expRows)
 	})
 
 	// Test multiple filter values (`;` separated)
@@ -173,13 +168,11 @@ func Test_RepoListRows_Filters(t *testing.T) {
 		}
 		query := rsql.Query{Filters: filters}
 		expRows := []types.RowData{AnneCarson}
-		listRowsTester(t, repo, "authors", &query, expRows)
+		listRowsTester(t, "authors", &query, expRows)
 	})
 }
 
 func Test_RepoListRows_Fields(t *testing.T) {
-	repo := test_utils.NewTestRepo(t)
-
 	// Test fields, no qualifiers or aliases
 	t.Run("GET /authors?fields=forename,surname", func(t *testing.T) {
 		fields := []rsql.Field{
@@ -201,7 +194,7 @@ func Test_RepoListRows_Fields(t *testing.T) {
 				"surname":  "Woolf",
 			},
 		}
-		listRowsTester(t, repo, "authors", &query, expRows)
+		listRowsTester(t, "authors", &query, expRows)
 
 	})
 
@@ -226,7 +219,7 @@ func Test_RepoListRows_Fields(t *testing.T) {
 				"last_name":  "Woolf",
 			},
 		}
-		listRowsTester(t, repo, "authors", &query, expRows)
+		listRowsTester(t, "authors", &query, expRows)
 	})
 
 	// Test fields with qualifiers
@@ -250,7 +243,7 @@ func Test_RepoListRows_Fields(t *testing.T) {
 				"surname":  "Woolf",
 			},
 		}
-		listRowsTester(t, repo, "authors", &query, expRows)
+		listRowsTester(t, "authors", &query, expRows)
 	})
 
 	// Test fields with aliases and qualifiers
@@ -274,17 +267,18 @@ func Test_RepoListRows_Fields(t *testing.T) {
 				"last_name":  "Woolf",
 			},
 		}
-		listRowsTester(t, repo, "authors", &query, expRows)
+		listRowsTester(t, "authors", &query, expRows)
 	})
 }
 
 func listRowsTester(
 	t *testing.T,
-	repo repository.Repository,
 	tableName string,
 	query *rsql.Query,
 	expRows []types.RowData,
 ) {
+
+	repo := test_utils.NewTestRepo(t)
 	rows, err := repo.ListRows(tableName, query)
 	if err != nil {
 		t.Fatalf("List err: %s", err)
