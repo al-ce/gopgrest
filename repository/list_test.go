@@ -16,6 +16,7 @@ var AnneCarson = map[string]any{
 	"id":       int64(1),
 	"surname":  "Carson",
 }
+
 var AnneBrontë = map[string]any{
 	"born":     int64(1820),
 	"died":     int64(1849),
@@ -23,6 +24,7 @@ var AnneBrontë = map[string]any{
 	"id":       int64(2),
 	"surname":  "Brontë",
 }
+
 var VirginiaWoolf = map[string]any{
 	"born":     int64(1882),
 	"died":     int64(1941),
@@ -180,7 +182,6 @@ func Test_RepoListRows_Filters(t *testing.T) {
 		expRows := []types.RowData{AnneCarson, AnneBrontë}
 		listRowsTester(t, "authors", &query, expRows)
 	})
-
 }
 
 func Test_RepoListRows_Fields(t *testing.T) {
@@ -206,7 +207,6 @@ func Test_RepoListRows_Fields(t *testing.T) {
 			},
 		}
 		listRowsTester(t, "authors", &query, expRows)
-
 	})
 
 	// Test fields with aliases
@@ -282,13 +282,95 @@ func Test_RepoListRows_Fields(t *testing.T) {
 	})
 }
 
+func Test_RepoListRows_Joins(t *testing.T) {
+	// Test single JOIN relation (rsql `join`, SQL `JOIN` (inner join))
+	t.Run("GET /books?fields=title,surname&join=authors:books.author_id==authors.id", func(t *testing.T) {
+		joins := []rsql.JoinRelation{
+			{
+				Type:           "JOIN",
+				Table:          "authors",
+				LeftQualifier:  "books",
+				LeftCol:        "author_id",
+				RightQualifier: "authors",
+				RightCol:       "id",
+			},
+		}
+		query := rsql.Query{Joins: joins}
+		expRows := []types.RowData{
+			map[string]any{
+				"surname": "Carson",
+				"title":   "Autobiography of Red",
+			},
+			map[string]any{
+				"surname": "Brontë",
+				"title":   "The Tenant of Wildfell Hall",
+			},
+			map[string]any{
+				"surname": "Woolf",
+				"title":   "To The Lighthouse",
+			},
+			map[string]any{
+				"surname": "Woolf",
+				"title":   "Mrs. Dalloway",
+			},
+		}
+		listRowsTester(t, "books", &query, expRows)
+	})
+
+	// Test multiple JOIN relations (rsql `join`, SQL `JOIN` (inner join))
+	t.Run("GET /books?fields=title,name:genre,surname&join=authors:books.author_id==authors.id;genres:books.genre_id==genres.id",
+		func(t *testing.T) {
+			fields := []rsql.Field{
+				{Column: "title"},
+				{Column: "name", Alias: "genre"},
+				{Column: "surname"},
+			}
+			joins := []rsql.JoinRelation{
+				{
+					Type:           "JOIN",
+					Table:          "authors",
+					LeftQualifier:  "books",
+					LeftCol:        "author_id",
+					RightQualifier: "authors",
+					RightCol:       "id",
+				},
+				{
+					Type:           "JOIN",
+					Table:          "genres",
+					LeftQualifier:  "books",
+					LeftCol:        "genre_id",
+					RightQualifier: "genres",
+					RightCol:       "id",
+				},
+			}
+			query := rsql.Query{Fields: fields, Joins: joins}
+			expRows := []types.RowData{
+				map[string]any{
+					"surname": "Carson",
+					"title":   "Autobiography of Red",
+					"genre":   "Romance",
+				},
+				map[string]any{
+					"surname": "Brontë",
+					"title":   "The Tenant of Wildfell Hall",
+					"genre":   "Epistolary",
+				},
+				map[string]any{
+					"surname": "Woolf",
+					"title":   "To The Lighthouse",
+					"genre":   "Modernism",
+				},
+			}
+			listRowsTester(t, "books", &query, expRows)
+		})
+}
+
 func listRowsTester(
 	t *testing.T,
 	tableName string,
 	query *rsql.Query,
 	expRows []types.RowData,
 ) {
-
 	repo := test_utils.NewTestRepo(t)
 	rows, err := repo.ListRows(tableName, query)
 	if err != nil {
