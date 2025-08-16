@@ -38,7 +38,6 @@ func Test_RepoListRows(t *testing.T) {
 				"surname":  "Woolf",
 			},
 		}
-
 		listRowsTester(t, repo, "authors", &rsql.Query{}, expRows)
 	})
 
@@ -65,7 +64,6 @@ func Test_RepoListRows(t *testing.T) {
 				"surname":  "Brontë",
 			},
 		}
-
 		listRowsTester(t, repo, "authors", &query, expRows)
 	})
 
@@ -92,12 +90,37 @@ func Test_RepoListRows(t *testing.T) {
 				"surname":  "Woolf",
 			},
 		}
+		listRowsTester(t, repo, "authors", &query, expRows)
+	})
 
+	// Test single filter: in (rsql `=in=`, SQL `IN`)
+	t.Run("GET /authors?filter=surname=in=Carson,Woolf", func(t *testing.T) {
+		filters := []rsql.Filter{
+			{Column: "surname", Values: []string{"Carson", "Woolf"}, SQLOperator: "IN"},
+		}
+		query := rsql.Query{Filters: filters}
+
+		expRows := []types.RowData{
+			map[string]any{
+				"born":     int64(1950),
+				"died":     nil,
+				"forename": "Anne",
+				"id":       int64(1),
+				"surname":  "Carson",
+			},
+			map[string]any{
+				"born":     int64(1882),
+				"died":     int64(1941),
+				"forename": "Virginia",
+				"id":       int64(3),
+				"surname":  "Woolf",
+			},
+		}
 		listRowsTester(t, repo, "authors", &query, expRows)
 	})
 
 	// Test multiple filter values (`;` separated)
-	t.Run("GET /authors?filter=forname==Anne;surname==Carson", func(t *testing.T) {
+	t.Run("GET /authors?filter=forename==Anne;surname==Carson", func(t *testing.T) {
 		filters := []rsql.Filter{
 			{Column: "forename", Values: []string{"Anne"}, SQLOperator: "="},
 			{Column: "surname", Values: []string{"Carson"}, SQLOperator: "="},
@@ -113,7 +136,6 @@ func Test_RepoListRows(t *testing.T) {
 				"surname":  "Carson",
 			},
 		}
-
 		listRowsTester(t, repo, "authors", &query, expRows)
 	})
 }
