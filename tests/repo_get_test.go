@@ -36,7 +36,7 @@ func Test_RepoGetRows_NoQuery(t *testing.T) {
 	// GET /authors
 	t.Run("No RSQL query", func(t *testing.T) {
 		rawQuery := "SELECT * from authors"
-		listRowsTester(t, rawQuery, "authors", rsql.Query{})
+		repoGetRowsTester(t, rawQuery, "authors", rsql.Query{})
 	})
 }
 
@@ -48,7 +48,7 @@ func Test_RepoGetRows_Filters(t *testing.T) {
 		}
 		rawQuery := "SELECT * FROM authors WHERE forename = 'Anne'"
 		rsqlQuery := rsql.Query{Filters: filters}
-		listRowsTester(t, rawQuery, "authors", rsqlQuery)
+		repoGetRowsTester(t, rawQuery, "authors", rsqlQuery)
 	})
 
 	// GET /authors?filter=surname!=Carson
@@ -58,7 +58,7 @@ func Test_RepoGetRows_Filters(t *testing.T) {
 		}
 		rawQuery := "SELECT * FROM authors WHERE surname != 'Carson'"
 		rsqlQuery := rsql.Query{Filters: filters}
-		listRowsTester(t, rawQuery, "authors", rsqlQuery)
+		repoGetRowsTester(t, rawQuery, "authors", rsqlQuery)
 	})
 
 	// GET /authors?filter=surname=in=Carson,Woolf
@@ -68,7 +68,7 @@ func Test_RepoGetRows_Filters(t *testing.T) {
 		}
 		rawQuery := "SELECT * FROM authors WHERE surname IN ('Carson', 'Woolf')"
 		rsqlQuery := rsql.Query{Filters: filters}
-		listRowsTester(t, rawQuery, "authors", rsqlQuery)
+		repoGetRowsTester(t, rawQuery, "authors", rsqlQuery)
 	})
 
 	// GET /authors?filter=surname=out=Carson,Woolf
@@ -78,7 +78,7 @@ func Test_RepoGetRows_Filters(t *testing.T) {
 		}
 		rawQuery := "SELECT * FROM authors WHERE surname NOT IN ('Carson', 'Woolf')"
 		rsqlQuery := rsql.Query{Filters: filters}
-		listRowsTester(t, rawQuery, "authors", rsqlQuery)
+		repoGetRowsTester(t, rawQuery, "authors", rsqlQuery)
 	})
 
 	// GET /authors?filter=forename=like=Ann%
@@ -88,7 +88,7 @@ func Test_RepoGetRows_Filters(t *testing.T) {
 		}
 		rawQuery := "SELECT * FROM authors WHERE forename LIKE 'Ann%'"
 		rsqlQuery := rsql.Query{Filters: filters}
-		listRowsTester(t, rawQuery, "authors", rsqlQuery)
+		repoGetRowsTester(t, rawQuery, "authors", rsqlQuery)
 	})
 
 	// GET /authors?filter=forename=notlike=Ann%
@@ -98,7 +98,7 @@ func Test_RepoGetRows_Filters(t *testing.T) {
 		}
 		rawQuery := "SELECT * FROM authors WHERE forename NOT LIKE 'Ann%'"
 		rsqlQuery := rsql.Query{Filters: filters}
-		listRowsTester(t, rawQuery, "authors", rsqlQuery)
+		repoGetRowsTester(t, rawQuery, "authors", rsqlQuery)
 	})
 
 	// GET /authors?filter=died=isnull=
@@ -108,7 +108,7 @@ func Test_RepoGetRows_Filters(t *testing.T) {
 		}
 		rawQuery := "SELECT * FROM authors WHERE died IS NULL"
 		rsqlQuery := rsql.Query{Filters: filters}
-		listRowsTester(t, rawQuery, "authors", rsqlQuery)
+		repoGetRowsTester(t, rawQuery, "authors", rsqlQuery)
 	})
 
 	// GET /authors?filter=died=isnotnull=
@@ -118,7 +118,7 @@ func Test_RepoGetRows_Filters(t *testing.T) {
 		}
 		rawQuery := "SELECT * FROM authors WHERE died IS NOT NULL"
 		rsqlQuery := rsql.Query{Filters: filters}
-		listRowsTester(t, rawQuery, "authors", rsqlQuery)
+		repoGetRowsTester(t, rawQuery, "authors", rsqlQuery)
 	})
 
 	// GET /authors?filter=born=le=1882
@@ -128,7 +128,7 @@ func Test_RepoGetRows_Filters(t *testing.T) {
 		}
 		rawQuery := "SELECT * FROM authors WHERE born <= 1882"
 		rsqlQuery := rsql.Query{Filters: filters}
-		listRowsTester(t, rawQuery, "authors", rsqlQuery)
+		repoGetRowsTester(t, rawQuery, "authors", rsqlQuery)
 	})
 
 	// GET /authors?filter=born=le=1882
@@ -138,7 +138,7 @@ func Test_RepoGetRows_Filters(t *testing.T) {
 		}
 		rawQuery := "SELECT * FROM authors WHERE born < 1882"
 		rsqlQuery := rsql.Query{Filters: filters}
-		listRowsTester(t, rawQuery, "authors", rsqlQuery)
+		repoGetRowsTester(t, rawQuery, "authors", rsqlQuery)
 	})
 
 	// GET /authors?filter=born=ge=1882
@@ -148,7 +148,7 @@ func Test_RepoGetRows_Filters(t *testing.T) {
 		}
 		rawQuery := "SELECT * FROM authors WHERE born >= 1882"
 		rsqlQuery := rsql.Query{Filters: filters}
-		listRowsTester(t, rawQuery, "authors", rsqlQuery)
+		repoGetRowsTester(t, rawQuery, "authors", rsqlQuery)
 	})
 
 	// GET /authors?filter=born=gt=1882
@@ -158,7 +158,7 @@ func Test_RepoGetRows_Filters(t *testing.T) {
 		}
 		rawQuery := "SELECT * FROM authors WHERE born > 1882"
 		rsqlQuery := rsql.Query{Filters: filters}
-		listRowsTester(t, rawQuery, "authors", rsqlQuery)
+		repoGetRowsTester(t, rawQuery, "authors", rsqlQuery)
 	})
 
 	// GET /authors?filter=forename==Anne;surname==Carson
@@ -169,7 +169,7 @@ func Test_RepoGetRows_Filters(t *testing.T) {
 		}
 		rawQuery := "SELECT * FROM authors WHERE forename = 'Anne' AND surname = 'Carson'"
 		rsqlQuery := rsql.Query{Filters: filters}
-		listRowsTester(t, rawQuery, "authors", rsqlQuery)
+		repoGetRowsTester(t, rawQuery, "authors", rsqlQuery)
 	})
 
 	// GET /authors?filter=authors.forname==Anne
@@ -179,7 +179,7 @@ func Test_RepoGetRows_Filters(t *testing.T) {
 		}
 		rawQuery := "SELECT * FROM authors WHERE authors.forename = 'Anne'"
 		rsqlQuery := rsql.Query{Filters: filters}
-		listRowsTester(t, rawQuery, "authors", rsqlQuery)
+		repoGetRowsTester(t, rawQuery, "authors", rsqlQuery)
 	})
 }
 
@@ -192,7 +192,7 @@ func Test_RepoGetRows_Fields(t *testing.T) {
 		}
 		rawQuery := "SELECT forename, surname FROM authors"
 		rsqlQuery := rsql.Query{Fields: fields}
-		listRowsTester(t, rawQuery, "authors", rsqlQuery)
+		repoGetRowsTester(t, rawQuery, "authors", rsqlQuery)
 	})
 
 	// GET /authors?fields=forename:first_name,surname:last_name
@@ -203,7 +203,7 @@ func Test_RepoGetRows_Fields(t *testing.T) {
 		}
 		rawQuery := "SELECT forename AS first_name, surname AS last_name FROM authors"
 		rsqlQuery := rsql.Query{Fields: fields}
-		listRowsTester(t, rawQuery, "authors", rsqlQuery)
+		repoGetRowsTester(t, rawQuery, "authors", rsqlQuery)
 	})
 
 	// GET /authors?fields=authors.forename,authors.surname
@@ -214,7 +214,7 @@ func Test_RepoGetRows_Fields(t *testing.T) {
 		}
 		rawQuery := "SELECT authors.forename, authors.surname FROM authors"
 		rsqlQuery := rsql.Query{Fields: fields}
-		listRowsTester(t, rawQuery, "authors", rsqlQuery)
+		repoGetRowsTester(t, rawQuery, "authors", rsqlQuery)
 	})
 
 	// GET /authors?fields=authors.forename:first_name,authors.surname:last_name
@@ -225,7 +225,7 @@ func Test_RepoGetRows_Fields(t *testing.T) {
 		}
 		rawQuery := "SELECT authors.forename AS first_name, authors.surname AS last_name FROM authors"
 		rsqlQuery := rsql.Query{Fields: fields}
-		listRowsTester(t, rawQuery, "authors", rsqlQuery)
+		repoGetRowsTester(t, rawQuery, "authors", rsqlQuery)
 	})
 }
 
@@ -248,7 +248,7 @@ func Test_RepoGetRows_Joins(t *testing.T) {
 		}
 		rawQuery := "SELECT title, name AS genre FROM books JOIN genres ON books.genre_id = genres.id"
 		rsqlQuery := rsql.Query{Fields: fields, Joins: joins}
-		listRowsTester(t, rawQuery, "books", rsqlQuery)
+		repoGetRowsTester(t, rawQuery, "books", rsqlQuery)
 	})
 
 	// GET /books?fields=title,name:genre,surname&join=authors:books.author_id==authors.id;genres:books.genre_id==genres.id
@@ -279,7 +279,7 @@ func Test_RepoGetRows_Joins(t *testing.T) {
 			}
 			rawQuery := "SELECT title, name AS genre, surname FROM books JOIN authors ON books.author_id = authors.id JOIN genres ON books.genre_id = genres.id"
 			rsqlQuery := rsql.Query{Fields: fields, Joins: joins}
-			listRowsTester(t, rawQuery, "books", rsqlQuery)
+			repoGetRowsTester(t, rawQuery, "books", rsqlQuery)
 		})
 
 	// GET /books?fields=title,surname&inner_join=genres:books.genre_id==genres.id
@@ -300,7 +300,7 @@ func Test_RepoGetRows_Joins(t *testing.T) {
 		}
 		rawQuery := "SELECT title, name AS genre FROM books INNER JOIN genres on books.genre_id = genres.id"
 		rsqlQuery := rsql.Query{Fields: fields, Joins: joins}
-		listRowsTester(t, rawQuery, "books", rsqlQuery)
+		repoGetRowsTester(t, rawQuery, "books", rsqlQuery)
 	})
 
 	// GET /books?fields=title,name:genre&left_join=genres:books.genre_id==genres.id
@@ -321,7 +321,7 @@ func Test_RepoGetRows_Joins(t *testing.T) {
 		}
 		rawQuery := "SELECT title, name AS genre FROM books LEFT JOIN genres ON books.genre_id = genres.id"
 		rsqlQuery := rsql.Query{Fields: fields, Joins: joins}
-		listRowsTester(t, rawQuery, "books", rsqlQuery)
+		repoGetRowsTester(t, rawQuery, "books", rsqlQuery)
 	})
 
 	// GET /books?fields=title,name:genre&right_join=genres:books.genre_id==genres.id
@@ -342,11 +342,11 @@ func Test_RepoGetRows_Joins(t *testing.T) {
 		}
 		rawQuery := "SELECT title, name AS genre FROM books RIGHT JOIN genres ON books.genre_id = genres.id"
 		rsqlQuery := rsql.Query{Fields: fields, Joins: joins}
-		listRowsTester(t, rawQuery, "books", rsqlQuery)
+		repoGetRowsTester(t, rawQuery, "books", rsqlQuery)
 	})
 }
 
-func listRowsTester(
+func repoGetRowsTester(
 	t *testing.T,
 	rawQuery string,
 	tableName string,
