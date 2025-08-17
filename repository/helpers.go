@@ -23,8 +23,10 @@ func (r *Repository) IsValidColumn(table Table, col string) bool {
 	return ok
 }
 
-// buildWhereConditions builds a SQL WHERE clause
-func buildWhereConditions(filters []rsql.Filter) (string, []any, error) {
+// buildWhereConditions builds a SQL WHERE clause from `filters`. Placeholders
+// values begin at `start`+1, e.g. if `start` == 5, a WHERE clause would begin
+// with `WHERE x = $6 AND ...`
+func buildWhereConditions(filters []rsql.Filter, start int) (string, []any, error) {
 	// If no params were passed, there should not be a WHERE clause
 	if len(filters) == 0 {
 		return "", []any{}, nil
@@ -35,7 +37,7 @@ func buildWhereConditions(filters []rsql.Filter) (string, []any, error) {
 	// conditions is an array of `col IN ([values])` statements joined by AND
 	conditions := []string{}
 	// n is the number of the placeholder in the statement e.g. $1
-	n := 0
+	n := start + 1
 
 	for _, f := range filters {
 		var condition string
@@ -56,9 +58,9 @@ func buildWhereConditions(filters []rsql.Filter) (string, []any, error) {
 		placeholders := []string{}
 		for _, v := range f.Values {
 			// Placeholder value +1 should match values index
-			n += 1
 			placeholders = append(placeholders, fmt.Sprintf("$%d", n))
 			values = append(values, v)
+			n++
 		}
 
 		// Add `col {keyword} (...placeholders)` e.g.

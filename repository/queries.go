@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"slices"
 	"strings"
 
 	"gopgrest/apperrors"
@@ -17,7 +18,7 @@ func (r *Repository) ListRowsByRSQL(tableName string, query rsql.Query) (*sql.Ro
 	cols := buildColumnsToReturn(query)
 
 	// Build list query with optional WHERE conditional filters
-	conditional, values, err := buildWhereConditions(query.Filters)
+	conditional, values, err := buildWhereConditions(query.Filters, 0)
 	if err != nil {
 		return nil, err
 	}
@@ -89,23 +90,17 @@ func (r *Repository) UpdateRowByID(tableName string, id int64, updatedRow *types
 		values = append(values, v)
 		i++
 	}
+	conditional := fmt.Sprintf("WHERE id = %d", id)
 
 	// Build update query
 	updateStmnt := fmt.Sprintf(
-		"UPDATE %s SET %s WHERE id = %d",
+		"UPDATE %s SET %s %s",
 		tableName,
 		strings.Join(assignments, ", "),
-		id,
+		conditional,
 	)
 
-	log.Printf("Exec query\n\t%s\nValues: %v", updateStmnt, values)
-
-	// Execute update query
-	result, err := r.DB.Exec(updateStmnt, values...)
-	if err != nil {
-		return err
-	}
-	rowsAffected, err := result.RowsAffected()
+	rowsAffected, err := r.execUpdateQuery(updateStmnt, values)
 	if err != nil {
 		return err
 	}
@@ -114,6 +109,56 @@ func (r *Repository) UpdateRowByID(tableName string, id int64, updatedRow *types
 	}
 
 	return nil
+}
+
+func (r *Repository) UpdateRowByRSQL(tableName string, filters []rsql.Filter, updatedRow *types.RowData) error {
+	var assignments []string
+	var values []any
+	var assignmentVals []any
+	var placeholder int
+	for k, v := range *updatedRow {
+		assignments = append(assignments, fmt.Sprintf("%s = $%d", k, placeholder+1))
+		assignmentVals = append(assignmentVals, v)
+		placeholder++
+	}
+	conditional, conditionalVals, err := buildWhereConditions(filters, placeholder)
+	if err != nil {
+		return err
+	}
+
+	values = slices.Concat(assignmentVals, conditionalVals)
+
+	// Build update query
+	updateStmnt := fmt.Sprintf(
+		"UPDATE %s SET %s %s",
+		tableName,
+		strings.Join(assignments, ", "),
+		conditional,
+	)
+
+	rowsAffected, err := r.execUpdateQuery(updateStmnt, values)
+	if err != nil {
+		return err
+	}
+	if rowsAffected == 0 {
+		return apperrors.NewUpdateNoMatchingFiltersErr(tableName, filters)
+	}
+	return nil
+}
+
+func (r *Repository) execUpdateQuery(updateStmnt string, values []any) (int64, error) {
+	log.Printf("Exec query\n\t%s\nValues: %v", updateStmnt, values)
+
+	// Execute update query
+	result, err := r.DB.Exec(updateStmnt, values...)
+	if err != nil {
+		return -1, err
+	}
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return -1, err
+	}
+	return rowsAffected, nil
 }
 
 // DeleteRowByID removes a row from a table by id
@@ -128,7 +173,7 @@ func (r *Repository) DeleteRowsByRSQL(tableName string, filters []rsql.Filter) (
 	if len(filters) == 0 {
 		return -1, apperrors.DeleteWithNoFilters
 	}
-	conditional, values, err := buildWhereConditions(filters)
+	conditional, values, err := buildWhereConditions(filters, 0)
 	if err != nil {
 		return -1, err
 	}
