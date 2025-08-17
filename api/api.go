@@ -21,7 +21,7 @@ type APIHandler struct {
 
 var (
 	ReRequestWithId = regexp.MustCompile(`^/\w+/([0-9]+)$`)
-	ReListRequest   = regexp.MustCompile(`^/\w+(\?.*)?$`)
+	ReRequestWithRSQL   = regexp.MustCompile(`^/\w+(\?.*)?$`)
 	ReTable         = regexp.MustCompile(`^/(\w+).*$`)
 )
 
@@ -41,7 +41,7 @@ func (h *APIHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	urlString := r.URL.String()
 	isRequestWithID := ReRequestWithId.MatchString(urlString)
-	isRSQLQuery := ReListRequest.MatchString(urlString)
+	isRequestWithRSQL := ReRequestWithRSQL.MatchString(urlString)
 
 	exists, err := h.tableExists(r)
 	switch {
@@ -52,8 +52,8 @@ func (h *APIHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		NotFoundHandler(w, r)
 	case r.Method == http.MethodGet && isRequestWithID:
 		h.GetRowByID(w, r)
-	case r.Method == http.MethodGet && isRSQLQuery:
-		h.ListRowsByRSQL(w, r)
+	case r.Method == http.MethodGet && isRequestWithRSQL:
+		h.GetRowsByRSQL(w, r)
 	case r.Method == http.MethodPost:
 		h.Insert(w, r)
 	case r.Method == http.MethodDelete && isRequestWithID:
@@ -251,9 +251,9 @@ func (h *APIHandler) GetRowByID(w http.ResponseWriter, r *http.Request) {
 	w.Write(jsonData)
 }
 
-// ListRowsByRSQL gets rows from a table in the database, optionally filtering by query
+// GetRowsByRSQL gets rows from a table in the database, optionally filtering by query
 // params
-func (h *APIHandler) ListRowsByRSQL(w http.ResponseWriter, r *http.Request) {
+func (h *APIHandler) GetRowsByRSQL(w http.ResponseWriter, r *http.Request) {
 	// Get table from URL path
 	table, err := h.extractTableName(r)
 	if err != nil {
@@ -261,7 +261,7 @@ func (h *APIHandler) ListRowsByRSQL(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Retrieve listQueryResults from database
-	listQueryResults, err := h.Service.ListRowsByRSQL(table, r.URL.String())
+	listQueryResults, err := h.Service.GetRowsByRSQL(table, r.URL.String())
 	if err != nil {
 		log.Println(err)
 		InternalServerErrorHandler(w, r, fmt.Sprintf("%v", err))

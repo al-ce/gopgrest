@@ -70,8 +70,8 @@ func (s *Service) GetRowByID(tableName, id string) (types.RowData, error) {
 	return rowData[0], err
 }
 
-// ListRowsByRSQL gets rows from a table with optional filter params
-func (s *Service) ListRowsByRSQL(tableName string, url string) ([]types.RowData, error) {
+// GetRowsByRSQL gets rows from a table with optional filter params
+func (s *Service) GetRowsByRSQL(tableName string, url string) ([]types.RowData, error) {
 	// Get table info for verification
 	_, err := s.Repo.GetTable(tableName)
 	if err != nil {
@@ -89,7 +89,7 @@ func (s *Service) ListRowsByRSQL(tableName string, url string) ([]types.RowData,
 	}
 
 	// Query db
-	rows, err := s.Repo.ListRowsByRSQL(tableName, query)
+	rows, err := s.Repo.GetRowsByRSQL(tableName, query)
 	if err != nil {
 		return nil, err
 	}

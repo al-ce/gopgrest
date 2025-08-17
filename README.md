@@ -8,14 +8,14 @@ based query language.
 
 The following endpoints are valid for each table in the database with an `id`:
 
-| Endpoint                     | Method | Description                   | Request            | Response                                   |
-| ---------------------------- | ------ | ----------------------------- | ------------------ | ------------------------------------------ |
-| `/`                          | GET    | Get structure of all tables   | ---                | `application/json` (tables)                |
-| `/{tablename}`               | POST   | Insert a new row              | `application/json` | `rows created in table {tablename}: [ids]` |
-| `/{tablename}/{id}`          | GET    | Get a row by ID               | ---                | `application/json` (found row)             |
-| `/{tablename}?{querystring}` | GET    | List rows matching RSQL query | ---                | `application/json` (matching rows)         |
-| `/{tablename}/{id}`          | PUT    | Update a row by ID            | `application/json` | `application/json` (updated row)           |
-| `/{tablename}/{id}`          | DELETE | Delete a row by ID            | ---                | `row {id} deleted from table {tablename}`  |
+| Endpoint                     | Method | Description                  | Request            | Response                                   |
+| ---------------------------- | ------ | ---------------------------- | ------------------ | ------------------------------------------ |
+| `/`                          | GET    | Get structure of all tables  | ---                | `application/json` (tables)                |
+| `/{tablename}`               | POST   | Insert a new row             | `application/json` | `rows created in table {tablename}: [ids]` |
+| `/{tablename}/{id}`          | GET    | Get a row by ID              | ---                | `application/json` (found row)             |
+| `/{tablename}?{querystring}` | GET    | Get rows matching RSQL query | ---                | `application/json` (matching rows)         |
+| `/{tablename}/{id}`          | PUT    | Update a row by ID           | `application/json` | `application/json` (updated row)           |
+| `/{tablename}/{id}`          | DELETE | Delete a row by ID           | ---                | `row {id} deleted from table {tablename}`  |
 
 ## REST Query language (based on RSQL)
 
@@ -337,7 +337,7 @@ curl -X POST http://localhost:8090/authors \
 # rows created in table authors: [2 3]⏎
 ```
 
-### Pick
+### Get Row (pick)
 
 Get a single row from a table by id in a JSON response
 
@@ -359,7 +359,7 @@ curl -X GET -s http://localhost:8090/authors/1 | jq
 }
 ```
 
-### List
+### Get Rows (list)
 
 Get all rows from a table matching a list of optional query parameters.
 

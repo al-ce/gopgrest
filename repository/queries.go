@@ -12,8 +12,8 @@ import (
 	"gopgrest/types"
 )
 
-// ListRowsByRSQL gets rows from a table with optional filter params
-func (r *Repository) ListRowsByRSQL(tableName string, query rsql.Query) (*sql.Rows, error) {
+// GetRowsByRSQL gets rows from a table with optional filter params
+func (r *Repository) GetRowsByRSQL(tableName string, query rsql.Query) (*sql.Rows, error) {
 	// Build list of columns to select
 	cols := buildColumnsToReturn(query)
 

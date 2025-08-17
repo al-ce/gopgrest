@@ -8,7 +8,7 @@ import (
 	"gopgrest/types"
 )
 
-func Test_RepoListRows_NoQuery(t *testing.T) {
+func Test_RepoGetRows_NoQuery(t *testing.T) {
 	// GET /authors
 	t.Run("No RSQL query", func(t *testing.T) {
 		expRows := []types.RowData{AnneCarson, AnneBrontë, VirginiaWoolf}
@@ -16,7 +16,7 @@ func Test_RepoListRows_NoQuery(t *testing.T) {
 	})
 }
 
-func Test_RepoListRows_Filters(t *testing.T) {
+func Test_RepoGetRows_Filters(t *testing.T) {
 	// GET /authors?filter=forname==Anne
 	t.Run("Single filter: equality (rsql `==`, SQL `=`)", func(t *testing.T) {
 		filters := []rsql.Filter{
@@ -159,7 +159,7 @@ func Test_RepoListRows_Filters(t *testing.T) {
 	})
 }
 
-func Test_RepoListRows_Fields(t *testing.T) {
+func Test_RepoGetRows_Fields(t *testing.T) {
 	// GET /authors?fields=forename,surname
 	t.Run("Fields, no qualifiers or aliases", func(t *testing.T) {
 		fields := []rsql.Field{
@@ -257,7 +257,7 @@ func Test_RepoListRows_Fields(t *testing.T) {
 	})
 }
 
-func Test_RepoListRows_Joins(t *testing.T) {
+func Test_RepoGetRows_Joins(t *testing.T) {
 	// GET /books?fields=title,surname&join=authors:books.author_id==authors.id;genres:book.genre_id==genres.id
 	t.Run("Single JOIN relation (rsql `join`, SQL `JOIN`) (inner join)", func(t *testing.T) {
 		fields := []rsql.Field{
@@ -457,7 +457,7 @@ func listRowsTester(
 	expRows []types.RowData,
 ) {
 	repo := NewTestRepo(t)
-	rows, err := repo.ListRowsByRSQL(tableName, query)
+	rows, err := repo.GetRowsByRSQL(tableName, query)
 	if err != nil {
 		t.Fatalf("List err: %s", err)
 	}
