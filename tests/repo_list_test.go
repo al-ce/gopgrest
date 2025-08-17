@@ -12,7 +12,7 @@ func Test_RepoListRows_NoQuery(t *testing.T) {
 	// GET /authors
 	t.Run("No RSQL query", func(t *testing.T) {
 		expRows := []types.RowData{AnneCarson, AnneBrontë, VirginiaWoolf}
-		listRowsTester(t, "authors", &rsql.Query{}, expRows)
+		listRowsTester(t, "authors", rsql.Query{}, expRows)
 	})
 }
 
@@ -24,7 +24,7 @@ func Test_RepoListRows_Filters(t *testing.T) {
 		}
 		query := rsql.Query{Filters: filters}
 		expRows := []types.RowData{AnneCarson, AnneBrontë}
-		listRowsTester(t, "authors", &query, expRows)
+		listRowsTester(t, "authors", query, expRows)
 	})
 
 	// GET /authors?filter=surname!=Carson
@@ -34,7 +34,7 @@ func Test_RepoListRows_Filters(t *testing.T) {
 		}
 		query := rsql.Query{Filters: filters}
 		expRows := []types.RowData{AnneBrontë, VirginiaWoolf}
-		listRowsTester(t, "authors", &query, expRows)
+		listRowsTester(t, "authors", query, expRows)
 	})
 
 	// GET /authors?filter=surname=in=Carson,Woolf
@@ -44,7 +44,7 @@ func Test_RepoListRows_Filters(t *testing.T) {
 		}
 		query := rsql.Query{Filters: filters}
 		expRows := []types.RowData{AnneCarson, VirginiaWoolf}
-		listRowsTester(t, "authors", &query, expRows)
+		listRowsTester(t, "authors", query, expRows)
 	})
 
 	// GET /authors?filter=surname=out=Carson,Woolf
@@ -54,7 +54,7 @@ func Test_RepoListRows_Filters(t *testing.T) {
 		}
 		query := rsql.Query{Filters: filters}
 		expRows := []types.RowData{AnneBrontë}
-		listRowsTester(t, "authors", &query, expRows)
+		listRowsTester(t, "authors", query, expRows)
 	})
 
 	// GET /authors?filter=forename=like=Ann%
@@ -64,7 +64,7 @@ func Test_RepoListRows_Filters(t *testing.T) {
 		}
 		query := rsql.Query{Filters: filters}
 		expRows := []types.RowData{AnneCarson, AnneBrontë}
-		listRowsTester(t, "authors", &query, expRows)
+		listRowsTester(t, "authors", query, expRows)
 	})
 
 	// GET /authors?filter=forename=notlike=Ann%
@@ -74,7 +74,7 @@ func Test_RepoListRows_Filters(t *testing.T) {
 		}
 		query := rsql.Query{Filters: filters}
 		expRows := []types.RowData{VirginiaWoolf}
-		listRowsTester(t, "authors", &query, expRows)
+		listRowsTester(t, "authors", query, expRows)
 	})
 
 	// GET /authors?filter=died=isnull=
@@ -84,7 +84,7 @@ func Test_RepoListRows_Filters(t *testing.T) {
 		}
 		query := rsql.Query{Filters: filters}
 		expRows := []types.RowData{AnneCarson}
-		listRowsTester(t, "authors", &query, expRows)
+		listRowsTester(t, "authors", query, expRows)
 	})
 
 	// GET /authors?filter=died=isnotnull=
@@ -94,7 +94,7 @@ func Test_RepoListRows_Filters(t *testing.T) {
 		}
 		query := rsql.Query{Filters: filters}
 		expRows := []types.RowData{AnneBrontë, VirginiaWoolf}
-		listRowsTester(t, "authors", &query, expRows)
+		listRowsTester(t, "authors", query, expRows)
 	})
 
 	// GET /authors?filter=born=le=1882
@@ -104,7 +104,7 @@ func Test_RepoListRows_Filters(t *testing.T) {
 		}
 		query := rsql.Query{Filters: filters}
 		expRows := []types.RowData{AnneBrontë, VirginiaWoolf}
-		listRowsTester(t, "authors", &query, expRows)
+		listRowsTester(t, "authors", query, expRows)
 	})
 
 	// GET /authors?filter=born=le=1882
@@ -114,7 +114,7 @@ func Test_RepoListRows_Filters(t *testing.T) {
 		}
 		query := rsql.Query{Filters: filters}
 		expRows := []types.RowData{AnneBrontë}
-		listRowsTester(t, "authors", &query, expRows)
+		listRowsTester(t, "authors", query, expRows)
 	})
 
 	// GET /authors?filter=born=ge=1882
@@ -124,7 +124,7 @@ func Test_RepoListRows_Filters(t *testing.T) {
 		}
 		query := rsql.Query{Filters: filters}
 		expRows := []types.RowData{AnneCarson, VirginiaWoolf}
-		listRowsTester(t, "authors", &query, expRows)
+		listRowsTester(t, "authors", query, expRows)
 	})
 
 	// GET /authors?filter=born=gt=1882
@@ -134,7 +134,7 @@ func Test_RepoListRows_Filters(t *testing.T) {
 		}
 		query := rsql.Query{Filters: filters}
 		expRows := []types.RowData{AnneCarson}
-		listRowsTester(t, "authors", &query, expRows)
+		listRowsTester(t, "authors", query, expRows)
 	})
 
 	// GET /authors?filter=forename==Anne;surname==Carson
@@ -145,7 +145,7 @@ func Test_RepoListRows_Filters(t *testing.T) {
 		}
 		query := rsql.Query{Filters: filters}
 		expRows := []types.RowData{AnneCarson}
-		listRowsTester(t, "authors", &query, expRows)
+		listRowsTester(t, "authors", query, expRows)
 	})
 
 	// GET /authors?filter=authors.forname==Anne
@@ -155,7 +155,7 @@ func Test_RepoListRows_Filters(t *testing.T) {
 		}
 		query := rsql.Query{Filters: filters}
 		expRows := []types.RowData{AnneCarson, AnneBrontë}
-		listRowsTester(t, "authors", &query, expRows)
+		listRowsTester(t, "authors", query, expRows)
 	})
 }
 
@@ -181,7 +181,7 @@ func Test_RepoListRows_Fields(t *testing.T) {
 				"surname":  "Woolf",
 			},
 		}
-		listRowsTester(t, "authors", &query, expRows)
+		listRowsTester(t, "authors", query, expRows)
 	})
 
 	// GET /authors?fields=forename:first_name,surname:last_name
@@ -205,7 +205,7 @@ func Test_RepoListRows_Fields(t *testing.T) {
 				"last_name":  "Woolf",
 			},
 		}
-		listRowsTester(t, "authors", &query, expRows)
+		listRowsTester(t, "authors", query, expRows)
 	})
 
 	// GET /authors?fields=authors.forename,authors.surname
@@ -229,7 +229,7 @@ func Test_RepoListRows_Fields(t *testing.T) {
 				"surname":  "Woolf",
 			},
 		}
-		listRowsTester(t, "authors", &query, expRows)
+		listRowsTester(t, "authors", query, expRows)
 	})
 
 	// GET /authors?fields=authors.forename:first_name,authors.surname:last_name
@@ -253,7 +253,7 @@ func Test_RepoListRows_Fields(t *testing.T) {
 				"last_name":  "Woolf",
 			},
 		}
-		listRowsTester(t, "authors", &query, expRows)
+		listRowsTester(t, "authors", query, expRows)
 	})
 }
 
@@ -289,7 +289,7 @@ func Test_RepoListRows_Joins(t *testing.T) {
 				"genre": "Modernism",
 			},
 		}
-		listRowsTester(t, "books", &query, expRows)
+		listRowsTester(t, "books", query, expRows)
 	})
 
 	// GET /books?fields=title,name:genre,surname&join=authors:books.author_id==authors.id;genres:books.genre_id==genres.id
@@ -336,7 +336,7 @@ func Test_RepoListRows_Joins(t *testing.T) {
 					"genre":   "Modernism",
 				},
 			}
-			listRowsTester(t, "books", &query, expRows)
+			listRowsTester(t, "books", query, expRows)
 		})
 
 	// GET /books?fields=title,surname&inner_join=authors:books.author_id==authors.id
@@ -370,7 +370,7 @@ func Test_RepoListRows_Joins(t *testing.T) {
 				"genre": "Modernism",
 			},
 		}
-		listRowsTester(t, "books", &query, expRows)
+		listRowsTester(t, "books", query, expRows)
 	})
 
 	// GET /books?fields=title,name:genre&left_join=genres:books.genre_id==genres.id
@@ -408,7 +408,7 @@ func Test_RepoListRows_Joins(t *testing.T) {
 				"genre": nil,
 			},
 		}
-		listRowsTester(t, "books", &query, expRows)
+		listRowsTester(t, "books", query, expRows)
 	})
 
 	// GET /books?fields=title,name:genre&right_join=genres:books.genre_id==genres.id
@@ -446,14 +446,14 @@ func Test_RepoListRows_Joins(t *testing.T) {
 				"genre": "Dystopian",
 			},
 		}
-		listRowsTester(t, "books", &query, expRows)
+		listRowsTester(t, "books", query, expRows)
 	})
 }
 
 func listRowsTester(
 	t *testing.T,
 	tableName string,
-	query *rsql.Query,
+	query rsql.Query,
 	expRows []types.RowData,
 ) {
 	repo := NewTestRepo(t)

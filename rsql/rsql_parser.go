@@ -9,11 +9,11 @@ import (
 )
 
 // newRSQLQuery builds a ParsedURL from the URL
-func NewRSQLQuery(url string) (*Query, error) {
+func NewRSQLQuery(url string) (Query, error) {
 	// Separate table (t) from URL query params (p)
 	rp, err := newPathQuery(url)
 	if err != nil || rp == nil {
-		return nil, err
+		return Query{}, err
 	}
 	query := Query{}
 	query.Tables = append(query.Tables, rp.Resource)
@@ -26,7 +26,7 @@ func NewRSQLQuery(url string) (*Query, error) {
 	for clause := range strings.SplitSeq(rp.Query, "&") {
 		keyword, namedArgs, err := parseClause(clause)
 		if err != nil {
-			return nil, err
+			return Query{}, err
 		}
 
 		var clauseErr error
@@ -57,11 +57,11 @@ func NewRSQLQuery(url string) (*Query, error) {
 			}
 		}
 		if clauseErr != nil {
-			return nil, clauseErr
+			return Query{}, clauseErr
 		}
 
 	}
-	return &query, nil
+	return query, nil
 }
 
 // newPathQuery splits the URL at the query string separator and returns a

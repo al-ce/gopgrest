@@ -77,9 +77,9 @@ func buildWhereConditions(filters []rsql.Filter) (string, []any, error) {
 	return conditional, values, nil
 }
 
-func buildColumnsToReturn(query *rsql.Query) string {
+func buildColumnsToReturn(query rsql.Query) string {
 	// If no columns were specified, the SELECT statement should be `SELECT *`
-	if query == nil || len(query.Fields) == 0 {
+	if len(query.Fields) == 0 {
 		return "*"
 	}
 
@@ -95,8 +95,8 @@ func buildColumnsToReturn(query *rsql.Query) string {
 }
 
 // buildJoinRelations builds SQL JOIN clauses
-func buildJoinRelations(query *rsql.Query) string {
-	if query == nil || len(query.Joins) == 0 {
+func buildJoinRelations(query rsql.Query) string {
+	if len(query.Joins) == 0 {
 		return ""
 	}
 	joins := []string{}

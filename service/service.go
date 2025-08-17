@@ -79,17 +79,17 @@ func (s *Service) ListRowsByRSQL(tableName string, url string) ([]types.RowData,
 	}
 
 	// Parse RSQL
-	rsql, err := rsql.NewRSQLQuery(url)
+	query, err := rsql.NewRSQLQuery(url)
 	if err != nil {
 		return nil, err
 	}
 	// Validate RSQL
-	if err := s.validateRSQLQuery(rsql); err != nil {
+	if err := s.validateRSQLQuery(query); err != nil {
 		return nil, err
 	}
 
 	// Query db
-	rows, err := s.Repo.ListRowsByRSQL(tableName, rsql)
+	rows, err := s.Repo.ListRowsByRSQL(tableName, query)
 	if err != nil {
 		return nil, err
 	}

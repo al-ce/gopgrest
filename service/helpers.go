@@ -75,10 +75,7 @@ func makeScannedRowMap(cols []string, rowValues []any) types.RowData {
 	return scannedRow
 }
 
-func (s *Service) validateRSQLQuery(query *rsql.Query) error {
-	if query == nil {
-		return nil
-	}
+func (s *Service) validateRSQLQuery(query rsql.Query) error {
 	if err := s.validateRSQLTables(query.Tables); err != nil {
 		return err
 	}
@@ -94,7 +91,7 @@ func (s *Service) validateRSQLQuery(query *rsql.Query) error {
 	return nil
 }
 
-func (s *Service) validateRSQLFilters(query *rsql.Query) error {
+func (s *Service) validateRSQLFilters(query rsql.Query) error {
 	// Validate: each column in the query filter should be valid for its table
 	for _, f := range query.Filters {
 		// Check if column is prefixed with a table, e.g. authors.forename

@@ -12,18 +12,18 @@ import (
 )
 
 // ListRowsByRSQL gets rows from a table with optional filter params
-func (r *Repository) ListRowsByRSQL(tableName string, rsql *rsql.Query) (*sql.Rows, error) {
+func (r *Repository) ListRowsByRSQL(tableName string, query rsql.Query) (*sql.Rows, error) {
 	// Build list of columns to select
-	cols := buildColumnsToReturn(rsql)
+	cols := buildColumnsToReturn(query)
 
 	// Build list query with optional WHERE conditional filters
-	conditional, values, err := buildWhereConditions(rsql.Filters)
+	conditional, values, err := buildWhereConditions(query.Filters)
 	if err != nil {
 		return nil, err
 	}
 
 	// Build list of optional JOIN relations
-	joins := buildJoinRelations(rsql)
+	joins := buildJoinRelations(query)
 
 	listStmt := fmt.Sprintf("SELECT %s FROM %s %s %s", cols, tableName, joins, conditional)
 	log.Printf("Exec query\n\t%s\nValues: %v\n", listStmt, values)
@@ -82,20 +82,23 @@ func (r *Repository) InsertRow(tableName string, newRow *types.RowData) (result 
 
 // UpdateRowByID update columns in a table row by id
 func (r *Repository) UpdateRowByID(tableName string, id int64, updatedRow *types.RowData) error {
-	// Build update query
-	updateStmnt := fmt.Sprintf("UPDATE %s SET ", tableName)
-
 	// Create cols/values/placeholders slices in consistent order
+	var assignments []string
 	var values []any
 	var i int
 	for k, v := range *updatedRow {
-		updateStmnt += fmt.Sprintf("%s = $%d, ", k, i+1)
+		assignments = append(assignments, fmt.Sprintf("%s = $%d", k, i+1))
 		values = append(values, v)
 		i++
 	}
-	// Strip final comma separator
-	updateStmnt = updateStmnt[:len(updateStmnt)-2]
-	updateStmnt += fmt.Sprintf(" WHERE id = %d", id)
+
+	// Build update query
+	updateStmnt := fmt.Sprintf(
+		"UPDATE %s SET %s WHERE id = %d",
+		tableName,
+		strings.Join(assignments, ", "),
+		id,
+	)
 
 	log.Printf("Exec query\n\t%s\nValues: %v", updateStmnt, values)
 
