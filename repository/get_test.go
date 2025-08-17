@@ -1,16 +1,17 @@
-package tests
+package repository_test
 
 import (
 	"testing"
 
 	"gopgrest/rsql"
 	"gopgrest/service"
+	"gopgrest/tests"
 	"gopgrest/types"
 )
 
 func Test_RepoGetRowById(t *testing.T) {
-	repo := NewTestRepo(t)
-	expAuthors, err := selectRows(repo, "SELECT * FROM authors ORDER BY id")
+	repo := tests.NewTestRepo(t)
+	expAuthors, err := tests.SelectRows(repo, "SELECT * FROM authors ORDER BY id")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -26,7 +27,7 @@ func Test_RepoGetRowById(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Could not scan author id %d: %s", id, err)
 		}
-		if err := checkMapEquality([]types.RowData{auth}, gotRows); err != nil {
+		if err := tests.CheckMapEquality([]types.RowData{auth}, gotRows); err != nil {
 			t.Error(err)
 		}
 	}
@@ -352,9 +353,9 @@ func repoGetRowsTester(
 	tableName string,
 	rsqlQuery rsql.Query,
 ) {
-	repo := NewTestRepo(t)
+	repo := tests.NewTestRepo(t)
 
-	expRows, err := selectRows(repo, rawQuery)
+	expRows, err := tests.SelectRows(repo, rawQuery)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -370,7 +371,7 @@ func repoGetRowsTester(
 		t.Fatal(err)
 	}
 
-	if err := checkMapEquality(expRows, gotRows); err != nil {
+	if err := tests.CheckMapEquality(expRows, gotRows); err != nil {
 		t.Error(err)
 	}
 }

@@ -1,16 +1,17 @@
-package tests
+package repository_test
 
 import (
 	"testing"
 
 	"gopgrest/repository"
 	"gopgrest/rsql"
+	"gopgrest/tests"
 	"gopgrest/types"
 )
 
 func Test_RepoUpdateRowById(t *testing.T) {
-	repo := NewTestRepo(t)
-	expAuthors, err := selectRows(repo, "SELECT * FROM authors")
+	repo := tests.NewTestRepo(t)
+	expAuthors, err := tests.SelectRows(repo, "SELECT * FROM authors")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -43,8 +44,8 @@ func Test_RepoUpdateRowById(t *testing.T) {
 }
 
 func Test_RepoUpdateRowByRSQL(t *testing.T) {
-	repo := NewTestRepo(t)
-	expAuthors, err := selectRows(repo, "SELECT * FROM authors WHERE forename = 'Anne'")
+	repo := tests.NewTestRepo(t)
+	expAuthors, err := tests.SelectRows(repo, "SELECT * FROM authors WHERE forename = 'Anne'")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -76,11 +77,11 @@ func Test_RepoUpdateRowByRSQL(t *testing.T) {
 }
 
 func verifyUpdatedColumns(repo repository.Repository, expAuthors []types.RowData, query string) error {
-	gotRows, err := selectRows(repo, query)
+	gotRows, err := tests.SelectRows(repo, query)
 	if err != nil {
 		return err
 	}
-	if err := checkMapEquality(expAuthors, gotRows); err != nil {
+	if err := tests.CheckMapEquality(expAuthors, gotRows); err != nil {
 		return err
 	}
 	return nil

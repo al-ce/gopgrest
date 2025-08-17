@@ -1,14 +1,15 @@
-package tests
+package repository_test
 
 import (
 	"slices"
 	"testing"
 
 	"gopgrest/repository"
+	"gopgrest/tests"
 )
 
 func Test_GetPublicTables(t *testing.T) {
-	tdb := NewTestDB(t)
+	tdb := tests.NewTestDB(t)
 
 	// Make an array of all the tables in the test db
 	tables, err := repository.GetPublicTables(tdb.DB)

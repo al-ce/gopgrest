@@ -31,7 +31,7 @@ func MakeHttpRequest(ah api.APIHandler, method, path string, reqData any) (*http
 	return rr, nil
 }
 
-func checkMapEquality(expRows, gotRows []types.RowData) error {
+func CheckMapEquality(expRows, gotRows []types.RowData) error {
 	if len(gotRows) != len(expRows) {
 		return fmt.Errorf(
 			"gotRows length %d does not match expRows length %d\nExp:\n%v\nGot:\n%v",
@@ -63,7 +63,7 @@ func checkMapEquality(expRows, gotRows []types.RowData) error {
 	return nil
 }
 
-func countRows(repo repository.Repository, tableName, condition string) (int64, error) {
+func CountRows(repo repository.Repository, tableName, condition string) (int64, error) {
 	var count int64
 	row := repo.DB.QueryRow(fmt.Sprintf(
 		"SELECT COUNT(*) FROM %s %s",
@@ -77,7 +77,7 @@ func countRows(repo repository.Repository, tableName, condition string) (int64, 
 	return count, nil
 }
 
-func selectRows(repo repository.Repository, query string) ([]types.RowData, error) {
+func SelectRows(repo repository.Repository, query string) ([]types.RowData, error) {
 	rows, err := repo.DB.Query(query)
 	if err != nil {
 		return []types.RowData{}, err

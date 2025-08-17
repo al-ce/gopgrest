@@ -1,14 +1,15 @@
-package tests
+package repository_test
 
 import (
 	"fmt"
 	"testing"
 
+	"gopgrest/tests"
 	"gopgrest/types"
 )
 
 func Test_RepoInsertRow(t *testing.T) {
-	repo := NewTestRepo(t)
+	repo := tests.NewTestRepo(t)
 	author := types.RowData{
 		"surname": "Sappho",
 	}
@@ -16,7 +17,7 @@ func Test_RepoInsertRow(t *testing.T) {
 	if result.Error != nil {
 		t.Fatalf("Could not insert author %v: %s", author, result.Error)
 	}
-	gotRows, err := selectRows(
+	gotRows, err := tests.SelectRows(
 		repo,
 		fmt.Sprintf("SELECT surname FROM authors WHERE id = %d", result.ID),
 	)

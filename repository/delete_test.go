@@ -1,4 +1,4 @@
-package tests
+package repository_test
 
 import (
 	"fmt"
@@ -6,11 +6,12 @@ import (
 
 	"gopgrest/apperrors"
 	"gopgrest/rsql"
+	"gopgrest/tests"
 )
 
 func Test_DeleteRowByID(t *testing.T) {
-	repo := NewTestRepo(t)
-	sampleAuthors, err := selectRows(repo, "SELECT * FROM authors")
+	repo := tests.NewTestRepo(t)
+	sampleAuthors, err := tests.SelectRows(repo, "SELECT * FROM authors")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -24,7 +25,7 @@ func Test_DeleteRowByID(t *testing.T) {
 			t.Fatalf("Expected to delete 1 row, deleted %d", rowsAffected)
 		}
 		// Confirm author no longer in DB
-		gotRows, err := selectRows(repo, fmt.Sprintf("SELECT * FROM AUTHORS WHERE id=%d", id))
+		gotRows, err := tests.SelectRows(repo, fmt.Sprintf("SELECT * FROM AUTHORS WHERE id=%d", id))
 		if len(gotRows) != 0 {
 			t.Errorf("Expected to not find author w/ id %d, but found it", id)
 		}
@@ -34,7 +35,7 @@ func Test_DeleteRowByID(t *testing.T) {
 func Test_DeleteRowsByRSQL(t *testing.T) {
 	// DELETE /authors?...
 	t.Run("No query", func(t *testing.T) {
-		repo := NewTestRepo(t)
+		repo := tests.NewTestRepo(t)
 		rowsAffected, err := repo.DeleteRowsByRSQL("authors", []rsql.Filter{})
 		if err != apperrors.DeleteWithNoFilters {
 			t.Errorf("Expected error '%s', got '%s'", apperrors.DeleteWithNoFilters, err)
@@ -46,8 +47,8 @@ func Test_DeleteRowsByRSQL(t *testing.T) {
 
 	// DELETE /authors?filter=forname==Anne
 	t.Run("Delete with single filter condition", func(t *testing.T) {
-		repo := NewTestRepo(t)
-		expCount, err := countRows(repo, "authors", "WHERE forename='Anne'")
+		repo := tests.NewTestRepo(t)
+		expCount, err := tests.CountRows(repo, "authors", "WHERE forename='Anne'")
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -62,7 +63,7 @@ func Test_DeleteRowsByRSQL(t *testing.T) {
 			t.Errorf("Expected %d rows deleted, got %d", expCount, rowsAffected)
 		}
 		// Confirm authors no longer in DB
-		gotRows, err := selectRows(repo, "SELECT * FROM authors WHERE forename = 'Anne'")
+		gotRows, err := tests.SelectRows(repo, "SELECT * FROM authors WHERE forename = 'Anne'")
 		if len(gotRows) != 0 {
 			t.Errorf("Expected to not find authors, found %d", len(gotRows))
 		}
@@ -70,8 +71,8 @@ func Test_DeleteRowsByRSQL(t *testing.T) {
 
 	// DELETE /authors?filter=forname==Anne;born<1900
 	t.Run("Delete with multiple filter conditions", func(t *testing.T) {
-		repo := NewTestRepo(t)
-		expCount, err := countRows(repo, "authors", "WHERE forename='Anne' and born<1900")
+		repo := tests.NewTestRepo(t)
+		expCount, err := tests.CountRows(repo, "authors", "WHERE forename='Anne' and born<1900")
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -87,7 +88,7 @@ func Test_DeleteRowsByRSQL(t *testing.T) {
 			t.Errorf("Expected %d rows deleted, got %d", expCount, rowsAffected)
 		}
 		// Confirm authors no longer in DB
-		gotRows, err := selectRows(
+		gotRows, err := tests.SelectRows(
 			repo,
 			"SELECT * FROM authors WHERE forename = 'Anne' AND born < 1900",
 		)
