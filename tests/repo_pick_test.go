@@ -22,6 +22,8 @@ func Test_RepoGetRowById(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Could not scan author id %d: %s", id, err)
 		}
-		checkMapEquality(t, []types.RowData{auth}, gotRows)
+		if err := checkMapEquality([]types.RowData{auth}, gotRows); err != nil {
+			t.Error(err)
+		}
 	}
 }

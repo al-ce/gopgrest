@@ -467,5 +467,7 @@ func listRowsTester(
 	if err != nil {
 		t.Errorf("Scan err: %s", err)
 	}
-	checkMapEquality(t, expRows, gotRows)
+	if err := checkMapEquality(expRows, gotRows); err != nil {
+		t.Error(err)
+	}
 }

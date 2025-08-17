@@ -6,43 +6,11 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"testing"
 
 	"gopgrest/api"
 	"gopgrest/repository"
 	"gopgrest/types"
 )
-
-func checkMapEquality(t *testing.T, expRows, gotRows []types.RowData) {
-	if len(gotRows) != len(expRows) {
-		t.Fatalf(
-			"gotRows length %d does not match expRows length %d\nExp:\n%v\nGot:\n%v",
-			len(gotRows),
-			len(expRows),
-			expRows,
-			gotRows,
-		)
-	}
-	for idx, expRow := range expRows {
-		for k, expVal := range expRow {
-			gotRow := gotRows[idx]
-			gotVal, ok := gotRow[k]
-			if !ok {
-				t.Errorf("Expected key %s in row %v", k, gotRow)
-			}
-			if gotVal != expVal {
-				t.Errorf(
-					"Expected %s: %v (type %T)\nGot: %v (type %T)",
-					k,
-					expVal,
-					expVal,
-					gotVal,
-					gotVal,
-				)
-			}
-		}
-	}
-}
 
 func MakeHttpRequest(ah api.APIHandler, method, path string, reqData any) (*httptest.ResponseRecorder, error) {
 	jsonData, err := json.Marshal(reqData)
@@ -60,6 +28,38 @@ func MakeHttpRequest(ah api.APIHandler, method, path string, reqData any) (*http
 	rr := httptest.NewRecorder()
 	ah.ServeHTTP(rr, req)
 	return rr, nil
+}
+
+func checkMapEquality(expRows, gotRows []types.RowData) error {
+	if len(gotRows) != len(expRows) {
+		return fmt.Errorf(
+			"gotRows length %d does not match expRows length %d\nExp:\n%v\nGot:\n%v",
+			len(gotRows),
+			len(expRows),
+			expRows,
+			gotRows,
+		)
+	}
+	for idx, expRow := range expRows {
+		for k, expVal := range expRow {
+			gotRow := gotRows[idx]
+			gotVal, ok := gotRow[k]
+			if !ok {
+				return fmt.Errorf("Expected key %s in row %v", k, gotRow)
+			}
+			if gotVal != expVal {
+				return fmt.Errorf(
+					"Expected %s: %v (type %T)\nGot: %v (type %T)",
+					k,
+					expVal,
+					expVal,
+					gotVal,
+					gotVal,
+				)
+			}
+		}
+	}
+	return nil
 }
 
 func countRows(repo repository.Repository, tableName, condition string) (int64, error) {
