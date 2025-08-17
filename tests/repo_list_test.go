@@ -459,13 +459,13 @@ func listRowsTester(
 	repo := NewTestRepo(t)
 	rows, err := repo.GetRowsByRSQL(tableName, query)
 	if err != nil {
-		t.Fatalf("List err: %s", err)
+		t.Fatal(err)
 	}
 	defer rows.Close()
 
 	gotRows, err := service.ScanRows(rows)
 	if err != nil {
-		t.Errorf("Scan err: %s", err)
+		t.Fatal(err)
 	}
 	if err := checkMapEquality(expRows, gotRows); err != nil {
 		t.Error(err)

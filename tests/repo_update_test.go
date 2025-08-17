@@ -35,7 +35,7 @@ func Test_RepoUpdateRowById(t *testing.T) {
 	defer rows.Close()
 	gotRows, err := service.ScanRows(rows)
 	if err != nil {
-		t.Fatalf("Could not scan author rows: %s", err)
+		t.Fatal(err)
 	}
 	if err := checkMapEquality(expAuthors, gotRows); err != nil {
 		t.Errorf("%s\nExp %v\nGot %v", err, expAuthors, gotRows)

@@ -62,7 +62,7 @@ func Test_DeleteRowsByRSQL(t *testing.T) {
 		}
 		rowsAffected, err := repo.DeleteRowsByRSQL("authors", filters)
 		if err != nil {
-			t.Errorf("Could not delete with filters %v: %s", filters, err)
+			t.Fatalf("Could not delete with filters %v: %s", filters, err)
 		}
 		if rowsAffected != expCount {
 			t.Errorf("Expected %d rows deleted, got %d", expCount, rowsAffected)
@@ -82,7 +82,7 @@ func Test_DeleteRowsByRSQL(t *testing.T) {
 		}
 		rowsAffected, err := repo.DeleteRowsByRSQL("authors", filters)
 		if err != nil {
-			t.Errorf("Could not delete with filters %v: %s", filters, err)
+			t.Fatalf("Could not delete with filters %v: %s", filters, err)
 		}
 		if rowsAffected != expCount {
 			t.Errorf("Expected %d rows deleted, got %d", expCount, rowsAffected)
