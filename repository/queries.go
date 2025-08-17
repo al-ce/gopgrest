@@ -118,14 +118,23 @@ func (r *Repository) UpdateRowByID(tableName string, id int64, updatedRow *types
 // DeleteRowByID removes a row from a table by id
 func (r *Repository) DeleteRowByID(tableName string, id int64) (int64, error) {
 	deleteStmt := fmt.Sprintf("DELETE FROM %s WHERE id = $1", tableName)
+	return r.execDeleteQuery(deleteStmt, []any{id})
+}
 
-	log.Printf(
-		"Exec query \n\tDELETE FROM %s WHERE id = %d\n",
-		tableName, id,
-	)
+// DeleteRowsByRSQL removes any rows matching the Filter in the Query
+func (r *Repository) DeleteRowsByRSQL(tableName string, rsql *rsql.Query) (int64, error) {
+	conditional, values, err := buildWhereConditions(rsql)
+	if err != nil {
+		return -1, err
+	}
+	deleteStmt := fmt.Sprintf("DELETE FROM %s %s", tableName, conditional)
+	return r.execDeleteQuery(deleteStmt, values)
+}
 
+func (r *Repository) execDeleteQuery(deleteStmt string, values []any) (int64, error) {
+	log.Printf("Exec query\n\t%s\nValues: %v\n", deleteStmt, values)
 	// Execute delete query
-	result, err := r.DB.Exec(deleteStmt, id)
+	result, err := r.DB.Exec(deleteStmt, values...)
 	if err != nil {
 		return -1, err
 	}
