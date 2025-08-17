@@ -298,7 +298,7 @@ func Test_RepoGetRows_Joins(t *testing.T) {
 				RightCol:       "id",
 			},
 		}
-		rawQuery := "SELECT title, name AS genre FROM books JOIN genres on books.genre_id = genres.id"
+		rawQuery := "SELECT title, name AS genre FROM books INNER JOIN genres on books.genre_id = genres.id"
 		rsqlQuery := rsql.Query{Fields: fields, Joins: joins}
 		listRowsTester(t, rawQuery, "books", rsqlQuery)
 	})
