@@ -11,8 +11,8 @@ import (
 	"gopgrest/types"
 )
 
-// ListRows gets rows from a table with optional filter params
-func (r *Repository) ListRows(tableName string, rsql *rsql.Query) (*sql.Rows, error) {
+// ListRowsByRSQL gets rows from a table with optional filter params
+func (r *Repository) ListRowsByRSQL(tableName string, rsql *rsql.Query) (*sql.Rows, error) {
 	// Build list of columns to select
 	cols := buildColumnsToReturn(rsql)
 
@@ -80,8 +80,8 @@ func (r *Repository) InsertRow(tableName string, newRow *types.RowData) (result 
 	return
 }
 
-// UpdateRow update columns in a table row by id
-func (r *Repository) UpdateRow(tableName string, id int64, updatedRow *types.RowData) error {
+// UpdateRowByID update columns in a table row by id
+func (r *Repository) UpdateRowByID(tableName string, id int64, updatedRow *types.RowData) error {
 	// Build update query
 	updateStmnt := fmt.Sprintf("UPDATE %s SET ", tableName)
 
@@ -115,8 +115,8 @@ func (r *Repository) UpdateRow(tableName string, id int64, updatedRow *types.Row
 	return nil
 }
 
-// DeleteRow removes a row from a table by id
-func (r *Repository) DeleteRow(tableName string, id int64) (int64, error) {
+// DeleteRowByID removes a row from a table by id
+func (r *Repository) DeleteRowByID(tableName string, id int64) (int64, error) {
 	deleteStmt := fmt.Sprintf("DELETE FROM %s WHERE id = $1", tableName)
 
 	log.Printf(

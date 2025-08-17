@@ -41,7 +41,7 @@ func (h *APIHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	urlString := r.URL.String()
 	isRequestWithID := ReRequestWithId.MatchString(urlString)
-	isListRequest := ReListRequest.MatchString(urlString)
+	isRSQLQuery := ReListRequest.MatchString(urlString)
 
 	exists, err := h.tableExists(r)
 	switch {
@@ -51,15 +51,15 @@ func (h *APIHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		log.Println(urlString, "not found")
 		NotFoundHandler(w, r)
 	case r.Method == http.MethodGet && isRequestWithID:
-		h.Pick(w, r)
-	case r.Method == http.MethodGet && isListRequest:
-		h.List(w, r)
+		h.GetRowByID(w, r)
+	case r.Method == http.MethodGet && isRSQLQuery:
+		h.ListRowsByRSQL(w, r)
 	case r.Method == http.MethodPost:
 		h.Insert(w, r)
 	case r.Method == http.MethodDelete && isRequestWithID:
-		h.Delete(w, r)
+		h.DeleteRowByID(w, r)
 	case r.Method == http.MethodPut && isRequestWithID:
-		h.Update(w, r)
+		h.UpdateRowByID(w, r)
 	default:
 		NotFoundHandler(w, r)
 	}
@@ -81,8 +81,8 @@ func (h *APIHandler) ShowTables(w http.ResponseWriter, r *http.Request) {
 	w.Write(jsonData)
 }
 
-// Update updates a row in the table by id
-func (h *APIHandler) Update(w http.ResponseWriter, r *http.Request) {
+// UpdateRowByID updates a row in the table by id
+func (h *APIHandler) UpdateRowByID(w http.ResponseWriter, r *http.Request) {
 	// Get table from URL path
 	table, err := h.extractTableName(r)
 	if err != nil {
@@ -107,7 +107,7 @@ func (h *APIHandler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Update row with request data
-	updateQueryResult, err := h.Service.UpdateRow(table, id, updateData)
+	updateQueryResult, err := h.Service.UpdateRowByID(table, id, updateData)
 	if err != nil {
 		log.Println(err)
 		InternalServerErrorHandler(w, r, fmt.Sprintf("%v", err))
@@ -128,8 +128,8 @@ func (h *APIHandler) Update(w http.ResponseWriter, r *http.Request) {
 	w.Write(jsonData)
 }
 
-// Delete adds removes a row from a table by id
-func (h *APIHandler) Delete(w http.ResponseWriter, r *http.Request) {
+// DeleteRowByID adds removes a row from a table by id
+func (h *APIHandler) DeleteRowByID(w http.ResponseWriter, r *http.Request) {
 	// Get table from URL path
 	table, err := h.extractTableName(r)
 	if err != nil {
@@ -145,7 +145,7 @@ func (h *APIHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	id := matches[1]
 
 	// Delete row by id
-	rowsAffected, err := h.Service.DeleteRow(table, id)
+	rowsAffected, err := h.Service.DeleteRowByID(table, id)
 	if err != nil {
 		log.Println(err)
 		InternalServerErrorHandler(w, r, fmt.Sprintf("%v", err))
@@ -214,8 +214,8 @@ func (h *APIHandler) Insert(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "rows created in table %s: %v", table, newIds)
 }
 
-// Pick gets a single row from a table in the database by id
-func (h *APIHandler) Pick(w http.ResponseWriter, r *http.Request) {
+// GetRowByID gets a single row from a table in the database by id
+func (h *APIHandler) GetRowByID(w http.ResponseWriter, r *http.Request) {
 	// Get table from URL path
 	table, err := h.extractTableName(r)
 	if err != nil {
@@ -230,7 +230,7 @@ func (h *APIHandler) Pick(w http.ResponseWriter, r *http.Request) {
 	rowID := matches[1]
 
 	// Retrieve pickQueryResult from database
-	pickQueryResult, err := h.Service.PickRow(table, rowID)
+	pickQueryResult, err := h.Service.GetRowByID(table, rowID)
 	if err != nil {
 		log.Println(err)
 		InternalServerErrorHandler(w, r, fmt.Sprintf("%v", err))
@@ -251,9 +251,9 @@ func (h *APIHandler) Pick(w http.ResponseWriter, r *http.Request) {
 	w.Write(jsonData)
 }
 
-// List gets rows from a table in the database, optionally filtering by query
+// ListRowsByRSQL gets rows from a table in the database, optionally filtering by query
 // params
-func (h *APIHandler) List(w http.ResponseWriter, r *http.Request) {
+func (h *APIHandler) ListRowsByRSQL(w http.ResponseWriter, r *http.Request) {
 	// Get table from URL path
 	table, err := h.extractTableName(r)
 	if err != nil {
@@ -261,7 +261,7 @@ func (h *APIHandler) List(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Retrieve listQueryResults from database
-	listQueryResults, err := h.Service.ListRows(table, r.URL.String())
+	listQueryResults, err := h.Service.ListRowsByRSQL(table, r.URL.String())
 	if err != nil {
 		log.Println(err)
 		InternalServerErrorHandler(w, r, fmt.Sprintf("%v", err))

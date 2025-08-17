@@ -457,7 +457,7 @@ func listRowsTester(
 	expRows []types.RowData,
 ) {
 	repo := NewTestRepo(t)
-	rows, err := repo.ListRows(tableName, query)
+	rows, err := repo.ListRowsByRSQL(tableName, query)
 	if err != nil {
 		t.Fatalf("List err: %s", err)
 	}

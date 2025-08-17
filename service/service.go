@@ -42,8 +42,8 @@ func (s *Service) InsertRow(newRow *types.RowData, tableName string) (int64, err
 	return result.ID, result.Error
 }
 
-// PickRow gets a row from a table by id
-func (s *Service) PickRow(tableName, id string) (types.RowData, error) {
+// GetRowByID gets a row from a table by id
+func (s *Service) GetRowByID(tableName, id string) (types.RowData, error) {
 	// Get table info for verification
 	_, err := s.Repo.GetTable(tableName)
 	if err != nil {
@@ -70,8 +70,8 @@ func (s *Service) PickRow(tableName, id string) (types.RowData, error) {
 	return rowData[0], err
 }
 
-// ListRows gets rows from a table with optional filter params
-func (s *Service) ListRows(tableName string, url string) ([]types.RowData, error) {
+// ListRowsByRSQL gets rows from a table with optional filter params
+func (s *Service) ListRowsByRSQL(tableName string, url string) ([]types.RowData, error) {
 	// Get table info for verification
 	_, err := s.Repo.GetTable(tableName)
 	if err != nil {
@@ -89,7 +89,7 @@ func (s *Service) ListRows(tableName string, url string) ([]types.RowData, error
 	}
 
 	// Query db
-	rows, err := s.Repo.ListRows(tableName, rsql)
+	rows, err := s.Repo.ListRowsByRSQL(tableName, rsql)
 	if err != nil {
 		return nil, err
 	}
@@ -107,9 +107,9 @@ func (s *Service) ListRows(tableName string, url string) ([]types.RowData, error
 	return listQueryResults, nil
 }
 
-// UpdateRow updates any number of valid columns with separate calls to
+// UpdateRowByID updates any number of valid columns with separate calls to
 // Repository.UpdateRowCol
-func (s *Service) UpdateRow(tableName, id string, updateData *types.RowData) (types.RowData, error) {
+func (s *Service) UpdateRowByID(tableName, id string, updateData *types.RowData) (types.RowData, error) {
 	table, err := s.Repo.GetTable(tableName)
 	if err != nil {
 		return types.RowData{}, err
@@ -136,15 +136,15 @@ func (s *Service) UpdateRow(tableName, id string, updateData *types.RowData) (ty
 	}
 
 	// Update row
-	err = s.Repo.UpdateRow(tableName, idInt, updateData)
+	err = s.Repo.UpdateRowByID(tableName, idInt, updateData)
 	if err != nil {
 		return types.RowData{}, err
 	}
-	return s.PickRow(tableName, id)
+	return s.GetRowByID(tableName, id)
 }
 
-// DeleteRow removes a row from the table by id
-func (s *Service) DeleteRow(tableName, id string) (int64, error) {
+// DeleteRowByID removes a row from the table by id
+func (s *Service) DeleteRowByID(tableName, id string) (int64, error) {
 	// Get table info for verification
 	_, err := s.Repo.GetTable(tableName)
 	if err != nil {
@@ -157,5 +157,5 @@ func (s *Service) DeleteRow(tableName, id string) (int64, error) {
 		return -1, err
 	}
 
-	return s.Repo.DeleteRow(tableName, idInt)
+	return s.Repo.DeleteRowByID(tableName, idInt)
 }
