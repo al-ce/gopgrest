@@ -16,6 +16,7 @@ func NewRSQLQuery(url string) (*Query, error) {
 		return nil, err
 	}
 	query := Query{}
+	query.Tables = append(query.Tables, rp.Resource)
 
 	// Example URL query:
 	// /authors?=filter=forename=in=Ann,Anne;surname=Carson&fields=forename,surname
@@ -50,6 +51,10 @@ func NewRSQLQuery(url string) (*Query, error) {
 			joins, err := newJoins(keyword, namedArgs)
 			clauseErr = err
 			query.Joins = joins
+			// Add all referenced tables to the query
+			for _, j := range joins {
+				query.Tables = append(query.Tables, j.Table)
+			}
 		}
 		if clauseErr != nil {
 			return nil, clauseErr

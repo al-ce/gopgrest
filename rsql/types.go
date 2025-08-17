@@ -13,9 +13,10 @@ type PathQuery struct {
 
 // Query is a parsed PathQuery that is used to build a SQL query.
 type Query struct {
-	Fields  []Field
-	Filters []Filter
-	Joins   []JoinRelation
+	Tables  []string       // Tables to SELECT in either FROM or JOIN
+	Fields  []Field        // Fields to return in SELECT query
+	Filters []Filter       // Conditionals for WHERE clause
+	Joins   []JoinRelation // Relations for JOIN clauses
 }
 
 // Filter is the parsed result of one of any `;` separated filter conditions in

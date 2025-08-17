@@ -79,7 +79,10 @@ func (s *Service) validateRSQLQuery(query *rsql.Query) error {
 	if query == nil {
 		return nil
 	}
-	if err := s.validateRSQLFilters(query.Filters); err != nil {
+	if err := s.validateRSQLTables(query.Tables); err != nil {
+		return err
+	}
+	if err := s.validateRSQLFilters(query); err != nil {
 		return err
 	}
 	if err := s.validateRSQLFields(query.Fields); err != nil {
@@ -91,9 +94,9 @@ func (s *Service) validateRSQLQuery(query *rsql.Query) error {
 	return nil
 }
 
-func (s *Service) validateRSQLFilters(filters []rsql.Filter) error {
+func (s *Service) validateRSQLFilters(query *rsql.Query) error {
 	// Validate: each column in the query filter should be valid for its table
-	for _, f := range filters {
+	for _, f := range query.Filters {
 		// Check if column is prefixed with a table, e.g. authors.forename
 		prefixedCol := strings.Split(f.Column, ".")
 		if len(prefixedCol) == 2 {
@@ -111,10 +114,34 @@ func (s *Service) validateRSQLFilters(filters []rsql.Filter) error {
 				)
 			}
 		} else {
-			// TODO: get tables from JOINs
-			// We don't know which table this col could belong to, so check any
-			// tables from the url (the table in the FROM clause in the URL
-			// resource + any tables mentioned in the JOIN params of the URL)
+			// Search for column in all tables referenced in query
+			found := false
+			for _, tableName := range query.Tables {
+				table, err := s.Repo.GetTable(tableName)
+				if err != nil {
+					return err
+				}
+				if s.Repo.IsValidColumn(*table, f.Column) {
+					found = true
+					break
+				}
+			}
+			if !found {
+				return fmt.Errorf(
+					"Could not find col %s in any referenced tables",
+					f.Column,
+				)
+			}
+		}
+	}
+	return nil
+}
+
+func (s *Service) validateRSQLTables(tables []string) error {
+	for _, t := range tables {
+		_, err := s.Repo.GetTable(t)
+		if err != nil {
+			return err
 		}
 	}
 	return nil
