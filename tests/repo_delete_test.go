@@ -3,6 +3,8 @@ package tests
 import (
 	"testing"
 
+	"gopgrest/apperrors"
+	"gopgrest/rsql"
 	"gopgrest/service"
 	"gopgrest/types"
 )
@@ -20,7 +22,7 @@ func Test_DeleteRowByID(t *testing.T) {
 			t.Fatalf("Expected to delete 1 row, deleted %d", rowsAffected)
 		}
 		// Confirm author no longer in DB
-		rows, err := repo.GetRowByID("authors", int64(id))
+		rows, err := repo.DB.Query("SELECT * FROM authors WHERE id=$1", id)
 		if err != nil {
 			t.Fatalf("Could not pick author id %d: %s", id, err)
 		}
