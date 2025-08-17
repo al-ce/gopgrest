@@ -67,16 +67,12 @@ func NewRSQLQuery(url string) (Query, error) {
 // newPathQuery splits the URL at the query string separator and returns a
 // PathQuery value
 func newPathQuery(url string) (*PathQuery, error) {
-	// Separate table (t) from URL query params (p)
-	tp := strings.Split(url, "?")
-	if len(tp) < 1 {
-		return nil, fmt.Errorf("Could not parse table from URL: %s", url)
+	RePathQuery := regexp.MustCompile(`/(\w+)\?(.*)`)
+	matches := RePathQuery.FindStringSubmatch(url)
+	if len(matches) < 3 {
+		return nil, fmt.Errorf("could not parse url %s", url)
 	}
-	// If there were no queries, return with nil reference
-	if len(tp) != 2 {
-		return nil, nil
-	}
-	return &PathQuery{Resource: tp[0], Query: tp[1]}, nil
+	return &PathQuery{Resource: matches[1], Query: matches[2]}, nil
 }
 
 // parseClause validates the lhs and rhs of a clause string, e.g.
