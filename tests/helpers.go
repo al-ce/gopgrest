@@ -3,11 +3,13 @@ package tests
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"gopgrest/api"
+	"gopgrest/repository"
 	"gopgrest/types"
 )
 
@@ -58,4 +60,18 @@ func MakeHttpRequest(ah api.APIHandler, method, path string, reqData any) (*http
 	rr := httptest.NewRecorder()
 	ah.ServeHTTP(rr, req)
 	return rr, nil
+}
+
+func countRows(repo repository.Repository, tableName, condition string) (int64, error) {
+	var count int64
+	row := repo.DB.QueryRow(fmt.Sprintf(
+		"SELECT COUNT(*) FROM %s %s",
+		tableName,
+		condition,
+	))
+	err := row.Scan(&count)
+	if err != nil {
+		return -1, err
+	}
+	return count, nil
 }

@@ -36,3 +36,36 @@ func Test_DeleteRowByID(t *testing.T) {
 		}
 	}
 }
+
+func Test_DeleteRowsByRSQL(t *testing.T) {
+	// DELETE /authors?...
+	t.Run("No query", func(t *testing.T) {
+		repo := NewTestRepo(t)
+		rowsAffected, err := repo.DeleteRowsByRSQL("authors", []rsql.Filter{})
+		if err != apperrors.DeleteWithNoFilters {
+			t.Errorf("Expected error '%s', got '%s'", apperrors.DeleteWithNoFilters, err)
+		}
+		if rowsAffected != -1 {
+			t.Errorf("Expected -1 rows affected (error), got %d", rowsAffected)
+		}
+	})
+
+	// DELETE /authors?filter=forname==Anne
+	t.Run("Delete with single parameter", func(t *testing.T) {
+		repo := NewTestRepo(t)
+		expCount, err := countRows(repo, "authors", "WHERE forename='Anne'")
+		if err != nil {
+			t.Fatal(err)
+		}
+		filters := []rsql.Filter{
+			{Column: "forename", Values: []string{"Anne"}, SQLOperator: "="},
+		}
+		rowsAffected, err := repo.DeleteRowsByRSQL("authors", filters)
+		if err != nil {
+			t.Errorf("Expected error '%s', got '%s'", apperrors.DeleteWithNoFilters, err)
+		}
+		if rowsAffected != expCount {
+			t.Errorf("Expected %d rows deleted, got %d", expCount, rowsAffected)
+		}
+	})
+}
