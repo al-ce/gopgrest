@@ -51,7 +51,7 @@ func Test_DeleteRowsByRSQL(t *testing.T) {
 	})
 
 	// DELETE /authors?filter=forname==Anne
-	t.Run("Delete with single parameter", func(t *testing.T) {
+	t.Run("Delete with single filter condition", func(t *testing.T) {
 		repo := NewTestRepo(t)
 		expCount, err := countRows(repo, "authors", "WHERE forename='Anne'")
 		if err != nil {
@@ -62,7 +62,27 @@ func Test_DeleteRowsByRSQL(t *testing.T) {
 		}
 		rowsAffected, err := repo.DeleteRowsByRSQL("authors", filters)
 		if err != nil {
-			t.Errorf("Expected error '%s', got '%s'", apperrors.DeleteWithNoFilters, err)
+			t.Errorf("Could not delete with filters %v: %s", filters, err)
+		}
+		if rowsAffected != expCount {
+			t.Errorf("Expected %d rows deleted, got %d", expCount, rowsAffected)
+		}
+	})
+
+	// DELETE /authors?filter=forname==Anne;born<1900
+	t.Run("Delete with multiple filter conditions", func(t *testing.T) {
+		repo := NewTestRepo(t)
+		expCount, err := countRows(repo, "authors", "WHERE forename='Anne' and born<1900")
+		if err != nil {
+			t.Fatal(err)
+		}
+		filters := []rsql.Filter{
+			{Column: "forename", Values: []string{"Anne"}, SQLOperator: "="},
+			{Column: "born", Values: []string{"1900"}, SQLOperator: "<"},
+		}
+		rowsAffected, err := repo.DeleteRowsByRSQL("authors", filters)
+		if err != nil {
+			t.Errorf("Could not delete with filters %v: %s", filters, err)
 		}
 		if rowsAffected != expCount {
 			t.Errorf("Expected %d rows deleted, got %d", expCount, rowsAffected)
