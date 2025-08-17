@@ -54,13 +54,11 @@ func (r *Repository) InsertRow(tableName string, newRow *types.RowData) (result 
 	// Create cols/values/placeholders slices in consistent order
 	var cols []string
 	var values []any
-	var valuesLog []string
 	var placeholders []string
 	var i int
 	for k, v := range *newRow {
 		cols = append(cols, k)
 		values = append(values, v)
-		valuesLog = append(valuesLog, fmt.Sprintf("%v", v))
 		placeholders = append(placeholders, fmt.Sprintf("$%d", i+1))
 		i++
 	}
