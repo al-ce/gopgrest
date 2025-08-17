@@ -1,6 +1,11 @@
 package apperrors
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+)
+
+var DeleteWithNoFilters = errors.New("Will not DELETE with no filters")
 
 func NewDeleteInvalidIDErr(tableName string, id int64) error {
 	return fmt.Errorf(

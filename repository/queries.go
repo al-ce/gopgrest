@@ -17,7 +17,7 @@ func (r *Repository) ListRowsByRSQL(tableName string, rsql *rsql.Query) (*sql.Ro
 	cols := buildColumnsToReturn(rsql)
 
 	// Build list query with optional WHERE conditional filters
-	conditional, values, err := buildWhereConditions(rsql)
+	conditional, values, err := buildWhereConditions(rsql.Filters)
 	if err != nil {
 		return nil, err
 	}
@@ -122,8 +122,12 @@ func (r *Repository) DeleteRowByID(tableName string, id int64) (int64, error) {
 }
 
 // DeleteRowsByRSQL removes any rows matching the Filter in the Query
-func (r *Repository) DeleteRowsByRSQL(tableName string, rsql *rsql.Query) (int64, error) {
-	conditional, values, err := buildWhereConditions(rsql)
+func (r *Repository) DeleteRowsByRSQL(tableName string, filters []rsql.Filter) (int64, error) {
+	// Do not exec delete with empty query
+	if len(filters) == 0 {
+		return -1, apperrors.DeleteWithNoFilters
+	}
+	conditional, values, err := buildWhereConditions(filters)
 	if err != nil {
 		return -1, err
 	}

@@ -24,9 +24,9 @@ func (r *Repository) IsValidColumn(table Table, col string) bool {
 }
 
 // buildWhereConditions builds a SQL WHERE clause
-func buildWhereConditions(query *rsql.Query) (string, []any, error) {
+func buildWhereConditions(filters []rsql.Filter) (string, []any, error) {
 	// If no params were passed, there should not be a WHERE clause
-	if query == nil || len(query.Filters) == 0 {
+	if len(filters) == 0 {
 		return "", []any{}, nil
 	}
 
@@ -37,7 +37,7 @@ func buildWhereConditions(query *rsql.Query) (string, []any, error) {
 	// n is the number of the placeholder in the statement e.g. $1
 	n := 0
 
-	for _, f := range query.Filters {
+	for _, f := range filters {
 		var condition string
 
 		// Null checks do not require placeholders or appending values array
