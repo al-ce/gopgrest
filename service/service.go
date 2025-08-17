@@ -26,7 +26,7 @@ func NewService(r repository.Repository) Service {
 }
 
 // GetRowByID gets a row from a table by id
-func (s *Service) GetRowByID(tableName, id string) (types.RowData, error) {
+func (s *Service) GetRowByID(tableName, idAsStr string) (types.RowData, error) {
 	// Get table info for verification
 	_, err := s.Repo.GetTable(tableName)
 	if err != nil {
@@ -34,12 +34,12 @@ func (s *Service) GetRowByID(tableName, id string) (types.RowData, error) {
 	}
 
 	// Parse ID
-	idInt, err := strconv.ParseInt(id, 10, 64)
+	idAsInt, err := strconv.ParseInt(idAsStr, 10, 64)
 	if err != nil {
 		return nil, err
 	}
 	// Get Row from database, expect 1 row
-	rows, err := s.Repo.GetRowByID(tableName, idInt)
+	rows, err := s.Repo.GetRowByID(tableName, idAsInt)
 	if err != nil {
 		return nil, err
 	}
