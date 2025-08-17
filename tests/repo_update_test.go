@@ -3,14 +3,18 @@ package tests
 import (
 	"testing"
 
+	"gopgrest/repository"
 	"gopgrest/rsql"
-	"gopgrest/service"
 	"gopgrest/types"
 )
 
 func Test_RepoUpdateRowById(t *testing.T) {
 	repo := NewTestRepo(t)
-	expAuthors := []types.RowData{AnneCarson, AnneBrontë, VirginiaWoolf}
+	expAuthors, err := selectRows(repo, "SELECT * FROM authors")
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	// Set forename column in expected author values
 	for _, expAuth := range expAuthors {
 		expAuth["forename"] = "Beatrice"
@@ -27,24 +31,24 @@ func Test_RepoUpdateRowById(t *testing.T) {
 		}
 	}
 
-	// Verify updated column
-	rows, err := repo.DB.Query("SELECT * FROM authors")
+	err = verifyUpdatedColumns(
+		repo,
+		expAuthors,
+		// Get all authors initially named 'Anne', i.e. all but Virginia
+		"SELECT * FROM authors",
+	)
 	if err != nil {
 		t.Fatal(err)
-	}
-	defer rows.Close()
-	gotRows, err := service.ScanRows(rows)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := checkMapEquality(expAuthors, gotRows); err != nil {
-		t.Errorf("%s\nExp %v\nGot %v", err, expAuthors, gotRows)
 	}
 }
 
 func Test_RepoUpdateRowByRSQL(t *testing.T) {
 	repo := NewTestRepo(t)
-	expAuthors := []types.RowData{AnneCarson, AnneBrontë}
+	expAuthors, err := selectRows(repo, "SELECT * FROM authors WHERE forename = 'Anne'")
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	// Set forename column in expected author values
 	for _, expAuth := range expAuthors {
 		expAuth["forename"] = "Beatrice"
@@ -55,23 +59,29 @@ func Test_RepoUpdateRowByRSQL(t *testing.T) {
 	filters := []rsql.Filter{
 		{Column: "forename", Values: []string{"Anne"}, SQLOperator: "="},
 	}
-	err := repo.UpdateRowByRSQL("authors", filters, &update)
+	err = repo.UpdateRowByRSQL("authors", filters, &update)
 	if err != nil {
 		t.Errorf("Update by RSQL err: %s", err)
 	}
 
-	// Get all authors initially named 'Anne', i.e. all but Virginia
-	rows, err := repo.DB.Query("SELECT * FROM authors WHERE forename != 'Virginia' ORDER BY id")
+	err = verifyUpdatedColumns(
+		repo,
+		expAuthors,
+		// Get all authors initially named 'Anne', i.e. all but Virginia
+		"SELECT * FROM authors WHERE forename != 'Virginia' ORDER BY id",
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer rows.Close()
-	gotRows, err := service.ScanRows(rows)
-	if err != nil {
-		t.Fatal(err)
-	}
+}
 
-	if err := checkMapEquality(expAuthors, gotRows); err != nil {
-		t.Errorf("%s\nExp %v\nGot %v", err, expAuthors, gotRows)
+func verifyUpdatedColumns(repo repository.Repository, expAuthors []types.RowData, query string) error {
+	gotRows, err := selectRows(repo, query)
+	if err != nil {
+		return err
 	}
+	if err := checkMapEquality(expAuthors, gotRows); err != nil {
+		return err
+	}
+	return nil
 }

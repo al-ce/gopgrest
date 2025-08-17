@@ -9,6 +9,7 @@ import (
 
 	"gopgrest/api"
 	"gopgrest/repository"
+	"gopgrest/service"
 	"gopgrest/types"
 )
 
@@ -74,4 +75,17 @@ func countRows(repo repository.Repository, tableName, condition string) (int64, 
 		return -1, err
 	}
 	return count, nil
+}
+
+func selectRows(repo repository.Repository, query string) ([]types.RowData, error) {
+	rows, err := repo.DB.Query(query)
+	if err != nil {
+		return []types.RowData{}, err
+	}
+	defer rows.Close()
+	gotRows, err := service.ScanRows(rows)
+	if err != nil {
+		return []types.RowData{}, err
+	}
+	return gotRows, nil
 }

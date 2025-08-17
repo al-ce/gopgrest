@@ -19,30 +19,6 @@ var (
 	user       = os.Getenv("TEST_DB_USER")
 	password   = os.Getenv("TEST_DB_PASS")
 	testDbName = os.Getenv("TEST_DB_NAME")
-
-	AnneCarson = map[string]any{
-		"born":     int64(1950),
-		"died":     nil,
-		"forename": "Anne",
-		"id":       int64(1),
-		"surname":  "Carson",
-	}
-
-	AnneBrontë = map[string]any{
-		"born":     int64(1820),
-		"died":     int64(1849),
-		"forename": "Anne",
-		"id":       int64(2),
-		"surname":  "Brontë",
-	}
-
-	VirginiaWoolf = map[string]any{
-		"born":     int64(1882),
-		"died":     int64(1941),
-		"forename": "Virginia",
-		"id":       int64(3),
-		"surname":  "Woolf",
-	}
 )
 
 type TestDB struct {

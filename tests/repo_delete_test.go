@@ -1,18 +1,20 @@
 package tests
 
 import (
+	"fmt"
 	"testing"
 
 	"gopgrest/apperrors"
 	"gopgrest/rsql"
-	"gopgrest/service"
-	"gopgrest/types"
 )
 
 func Test_DeleteRowByID(t *testing.T) {
 	repo := NewTestRepo(t)
-	expAuthors := []types.RowData{AnneCarson, AnneBrontë, VirginiaWoolf}
-	for index := range expAuthors {
+	sampleAuthors, err := selectRows(repo, "SELECT * FROM authors")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for index := range sampleAuthors {
 		id := index + 1
 		rowsAffected, err := repo.DeleteRowByID("authors", int64(id))
 		if err != nil {
@@ -22,15 +24,7 @@ func Test_DeleteRowByID(t *testing.T) {
 			t.Fatalf("Expected to delete 1 row, deleted %d", rowsAffected)
 		}
 		// Confirm author no longer in DB
-		rows, err := repo.DB.Query("SELECT * FROM authors WHERE id=$1", id)
-		if err != nil {
-			t.Fatalf("Could not pick author id %d: %s", id, err)
-		}
-		defer rows.Close()
-		gotRows, err := service.ScanRows(rows)
-		if err != nil {
-			t.Fatalf("Could not scan author id %d: %s", id, err)
-		}
+		gotRows, err := selectRows(repo, fmt.Sprintf("SELECT * FROM AUTHORS WHERE id=%d", id))
 		if len(gotRows) != 0 {
 			t.Errorf("Expected to not find author w/ id %d, but found it", id)
 		}
@@ -67,6 +61,11 @@ func Test_DeleteRowsByRSQL(t *testing.T) {
 		if rowsAffected != expCount {
 			t.Errorf("Expected %d rows deleted, got %d", expCount, rowsAffected)
 		}
+		// Confirm authors no longer in DB
+		gotRows, err := selectRows(repo, "SELECT * FROM authors WHERE forename = 'Anne'")
+		if len(gotRows) != 0 {
+			t.Errorf("Expected to not find authors, found %d", len(gotRows))
+		}
 	})
 
 	// DELETE /authors?filter=forname==Anne;born<1900
@@ -86,6 +85,14 @@ func Test_DeleteRowsByRSQL(t *testing.T) {
 		}
 		if rowsAffected != expCount {
 			t.Errorf("Expected %d rows deleted, got %d", expCount, rowsAffected)
+		}
+		// Confirm authors no longer in DB
+		gotRows, err := selectRows(
+			repo,
+			"SELECT * FROM authors WHERE forename = 'Anne' AND born < 1900",
+		)
+		if len(gotRows) != 0 {
+			t.Errorf("Expected to not find authors, found %d", len(gotRows))
 		}
 	})
 }

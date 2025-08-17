@@ -1,9 +1,9 @@
 package tests
 
 import (
+	"fmt"
 	"testing"
 
-	"gopgrest/service"
 	"gopgrest/types"
 )
 
@@ -16,14 +16,12 @@ func Test_RepoInsertRow(t *testing.T) {
 	if result.Error != nil {
 		t.Fatalf("Could not insert author %v: %s", author, result.Error)
 	}
-	rows, err := repo.DB.Query("SELECT surname FROM authors WHERE id = $1", result.ID)
+	gotRows, err := selectRows(
+		repo,
+		fmt.Sprintf("SELECT surname FROM authors WHERE id = %d", result.ID),
+	)
 	if err != nil {
-		t.Fatalf("Could not pick author id %d: %s", result.ID, err)
-	}
-	defer rows.Close()
-	gotRows, err := service.ScanRows(rows)
-	if err != nil {
-		t.Fatalf("Could not scan author id %d: %s", result.ID, err)
+		t.Fatal(err)
 	}
 	if len(gotRows) != 1 {
 		t.Fatalf("Expected 1 result for pick, got %d", len(gotRows))
