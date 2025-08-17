@@ -20,9 +20,9 @@ type APIHandler struct {
 }
 
 var (
-	ReRequestWithId = regexp.MustCompile(`^/\w+/([0-9]+)$`)
-	ReRequestWithRSQL   = regexp.MustCompile(`^/\w+(\?.*)?$`)
-	ReTable         = regexp.MustCompile(`^/(\w+).*$`)
+	ReRequestWithId   = regexp.MustCompile(`^/\w+/([0-9]+)$`)
+	ReRequestWithRSQL = regexp.MustCompile(`^/\w+(\?.*)?$`)
+	ReTable           = regexp.MustCompile(`^/(\w+).*$`)
 )
 
 func NewAPIHandler(db repository.QueryExecutor, tables []repository.Table) APIHandler {
@@ -65,10 +65,119 @@ func (h *APIHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// ShowTables responds with a JSON object of the tables, their column names,
-// and column types
-func (h *APIHandler) ShowTables(w http.ResponseWriter, r *http.Request) {
-	jsonData, err := json.Marshal(h.Repo.TablesRepr)
+// GetRowByID gets a single row from a table in the database by id
+func (h *APIHandler) GetRowByID(w http.ResponseWriter, r *http.Request) {
+	// Get table from URL path
+	table, err := h.extractTableName(r)
+	if err != nil {
+		InternalServerErrorHandler(w, r, err.Error())
+	}
+
+	matches := ReRequestWithId.FindStringSubmatch(r.URL.Path)
+	if len(matches) < 2 {
+		InternalServerErrorHandler(w, r, "Could not find id match")
+		return
+	}
+	rowID := matches[1]
+
+	// Retrieve pickQueryResult from database
+	pickQueryResult, err := h.Service.GetRowByID(table, rowID)
+	if err != nil {
+		log.Println(err)
+		InternalServerErrorHandler(w, r, fmt.Sprintf("%v", err))
+		return
+	}
+
+	// Encode to JSON
+	jsonData, err := json.Marshal(pickQueryResult)
+	if err != nil {
+		log.Println(err)
+		InternalServerErrorHandler(w, r, fmt.Sprintf("%v", err))
+		return
+	}
+
+	// Write response
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(jsonData)
+}
+
+// Insert adds a row to a table
+func (h *APIHandler) Insert(w http.ResponseWriter, r *http.Request) {
+	// Get table from URL path
+	table, err := h.extractTableName(r)
+	if err != nil {
+		InternalServerErrorHandler(w, r, err.Error())
+	}
+
+	// Store body for potential multiple reads
+	bodyBytes, _ := io.ReadAll(r.Body)
+	// Set a fresh ReadCloser with the body bytes
+	r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
+	r.Body.Close()
+
+	var data *[]types.RowData
+	// Try decoding an array of JSON objects
+	if err = json.NewDecoder(r.Body).Decode(&data); err != nil {
+
+		// The request may not have been an array of JSON objects
+		// Try decoding a single JSON object
+
+		// Set a fresh ReadCloser with the body bytes
+		r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
+		r.Body.Close()
+		var singleRow *types.RowData
+
+		if err = json.NewDecoder(r.Body).Decode(&singleRow); err != nil {
+
+			// If we fail again, give up
+			log.Println("Decode second attempt err", err)
+			InternalServerErrorHandler(w, r, fmt.Sprintf("%v", err))
+			return
+
+		} else {
+			// If it was a single object, assign it as the only item in the
+			// data array
+			data = &[]types.RowData{*singleRow}
+		}
+	}
+
+	// Insert new rows into the database one at a time so we can validate data
+	newIds := []int64{}
+	for _, row := range *data {
+		newRowId, err := h.Service.InsertRow(&row, table)
+		newIds = append(newIds, newRowId)
+		if err != nil {
+			log.Println(err)
+			InternalServerErrorHandler(w, r, fmt.Sprintf("%v", err))
+			return
+		}
+	}
+
+	// Set response
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprintf(w, "rows created in table %s: %v", table, newIds)
+}
+
+// GetRowsByRSQL gets rows from a table in the database, optionally filtering by query
+// params
+func (h *APIHandler) GetRowsByRSQL(w http.ResponseWriter, r *http.Request) {
+	// Get table from URL path
+	table, err := h.extractTableName(r)
+	if err != nil {
+		InternalServerErrorHandler(w, r, err.Error())
+	}
+
+	// Retrieve listQueryResults from database
+	listQueryResults, err := h.Service.GetRowsByRSQL(table, r.URL.String())
+	if err != nil {
+		log.Println(err)
+		InternalServerErrorHandler(w, r, fmt.Sprintf("%v", err))
+		return
+	}
+
+	// Encode to JSON
+	jsonData, err := json.Marshal(listQueryResults)
 	if err != nil {
 		log.Println(err)
 		InternalServerErrorHandler(w, r, fmt.Sprintf("%v", err))
@@ -157,119 +266,10 @@ func (h *APIHandler) DeleteRowByID(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "deleted %d rows from table %s\n", rowsAffected, table)
 }
 
-// Insert adds a row to a table
-func (h *APIHandler) Insert(w http.ResponseWriter, r *http.Request) {
-	// Get table from URL path
-	table, err := h.extractTableName(r)
-	if err != nil {
-		InternalServerErrorHandler(w, r, err.Error())
-	}
-
-	// Store body for potential multiple reads
-	bodyBytes, _ := io.ReadAll(r.Body)
-	// Set a fresh ReadCloser with the body bytes
-	r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
-	r.Body.Close()
-
-	var data *[]types.RowData
-	// Try decoding an array of JSON objects
-	if err = json.NewDecoder(r.Body).Decode(&data); err != nil {
-
-		// The request may not have been an array of JSON objects
-		// Try decoding a single JSON object
-
-		// Set a fresh ReadCloser with the body bytes
-		r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
-		r.Body.Close()
-		var singleRow *types.RowData
-
-		if err = json.NewDecoder(r.Body).Decode(&singleRow); err != nil {
-
-			// If we fail again, give up
-			log.Println("Decode second attempt err", err)
-			InternalServerErrorHandler(w, r, fmt.Sprintf("%v", err))
-			return
-
-		} else {
-			// If it was a single object, assign it as the only item in the
-			// data array
-			data = &[]types.RowData{*singleRow}
-		}
-	}
-
-	// Insert new rows into the database one at a time so we can validate data
-	newIds := []int64{}
-	for _, row := range *data {
-		newRowId, err := h.Service.InsertRow(&row, table)
-		newIds = append(newIds, newRowId)
-		if err != nil {
-			log.Println(err)
-			InternalServerErrorHandler(w, r, fmt.Sprintf("%v", err))
-			return
-		}
-	}
-
-	// Set response
-	w.WriteHeader(http.StatusOK)
-	fmt.Fprintf(w, "rows created in table %s: %v", table, newIds)
-}
-
-// GetRowByID gets a single row from a table in the database by id
-func (h *APIHandler) GetRowByID(w http.ResponseWriter, r *http.Request) {
-	// Get table from URL path
-	table, err := h.extractTableName(r)
-	if err != nil {
-		InternalServerErrorHandler(w, r, err.Error())
-	}
-
-	matches := ReRequestWithId.FindStringSubmatch(r.URL.Path)
-	if len(matches) < 2 {
-		InternalServerErrorHandler(w, r, "Could not find id match")
-		return
-	}
-	rowID := matches[1]
-
-	// Retrieve pickQueryResult from database
-	pickQueryResult, err := h.Service.GetRowByID(table, rowID)
-	if err != nil {
-		log.Println(err)
-		InternalServerErrorHandler(w, r, fmt.Sprintf("%v", err))
-		return
-	}
-
-	// Encode to JSON
-	jsonData, err := json.Marshal(pickQueryResult)
-	if err != nil {
-		log.Println(err)
-		InternalServerErrorHandler(w, r, fmt.Sprintf("%v", err))
-		return
-	}
-
-	// Write response
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write(jsonData)
-}
-
-// GetRowsByRSQL gets rows from a table in the database, optionally filtering by query
-// params
-func (h *APIHandler) GetRowsByRSQL(w http.ResponseWriter, r *http.Request) {
-	// Get table from URL path
-	table, err := h.extractTableName(r)
-	if err != nil {
-		InternalServerErrorHandler(w, r, err.Error())
-	}
-
-	// Retrieve listQueryResults from database
-	listQueryResults, err := h.Service.GetRowsByRSQL(table, r.URL.String())
-	if err != nil {
-		log.Println(err)
-		InternalServerErrorHandler(w, r, fmt.Sprintf("%v", err))
-		return
-	}
-
-	// Encode to JSON
-	jsonData, err := json.Marshal(listQueryResults)
+// ShowTables responds with a JSON object of the tables, their column names,
+// and column types
+func (h *APIHandler) ShowTables(w http.ResponseWriter, r *http.Request) {
+	jsonData, err := json.Marshal(h.Repo.TablesRepr)
 	if err != nil {
 		log.Println(err)
 		InternalServerErrorHandler(w, r, fmt.Sprintf("%v", err))

@@ -25,23 +25,6 @@ func NewService(r repository.Repository) Service {
 	}
 }
 
-// InsertRow inserts a new row in a specified table
-func (s *Service) InsertRow(newRow *types.RowData, tableName string) (int64, error) {
-	table, err := s.Repo.GetTable(tableName)
-	if err != nil {
-		return -1, err
-	}
-
-	// Each column in the insert data must exist in the table
-	cols := slices.Collect(maps.Keys(*newRow))
-	if err := verifyColumns(table, cols); err != nil {
-		return -1, err
-	}
-
-	result := s.Repo.InsertRow(tableName, newRow)
-	return result.ID, result.Error
-}
-
 // GetRowByID gets a row from a table by id
 func (s *Service) GetRowByID(tableName, id string) (types.RowData, error) {
 	// Get table info for verification
@@ -105,6 +88,23 @@ func (s *Service) GetRowsByRSQL(tableName string, url string) ([]types.RowData, 
 		return nil, err
 	}
 	return listQueryResults, nil
+}
+
+// InsertRow inserts a new row in a specified table
+func (s *Service) InsertRow(newRow *types.RowData, tableName string) (int64, error) {
+	table, err := s.Repo.GetTable(tableName)
+	if err != nil {
+		return -1, err
+	}
+
+	// Each column in the insert data must exist in the table
+	cols := slices.Collect(maps.Keys(*newRow))
+	if err := verifyColumns(table, cols); err != nil {
+		return -1, err
+	}
+
+	result := s.Repo.InsertRow(tableName, newRow)
+	return result.ID, result.Error
 }
 
 // UpdateRowByID updates any number of valid columns with separate calls to

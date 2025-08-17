@@ -12,6 +12,19 @@ import (
 	"gopgrest/types"
 )
 
+// GetRowByID gets a row from a table by id
+func (r *Repository) GetRowByID(tableName string, id int64) (*sql.Rows, error) {
+	log.Printf(
+		"Exec query\n\tSELECT * FROM %s WHERE id = %d",
+		tableName, id,
+	)
+
+	return r.DB.Query(
+		fmt.Sprintf("SELECT * FROM %s WHERE id=$1", tableName),
+		id,
+	)
+}
+
 // GetRowsByRSQL gets rows from a table with optional filter params
 func (r *Repository) GetRowsByRSQL(tableName string, query rsql.Query) (*sql.Rows, error) {
 	// Build list of columns to select
@@ -35,19 +48,6 @@ func (r *Repository) GetRowsByRSQL(tableName string, query rsql.Query) (*sql.Row
 		return nil, err
 	}
 	return rows, nil
-}
-
-// GetRowByID gets a row from a table by id
-func (r *Repository) GetRowByID(tableName string, id int64) (*sql.Rows, error) {
-	log.Printf(
-		"Exec query\n\tSELECT * FROM %s WHERE id = %d",
-		tableName, id,
-	)
-
-	return r.DB.Query(
-		fmt.Sprintf("SELECT * FROM %s WHERE id=$1", tableName),
-		id,
-	)
 }
 
 // InsertRow inserts a new row into a specified table
