@@ -49,7 +49,7 @@ func checkMapEquality(expRows, gotRows []types.RowData) error {
 			}
 			if gotVal != expVal {
 				return fmt.Errorf(
-					"Expected %s: %v (type %T)\nGot: %v (type %T)",
+					"\nExpected %s: %v (type %T)\nGot: %v (type %T)",
 					k,
 					expVal,
 					expVal,
