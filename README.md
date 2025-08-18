@@ -8,15 +8,16 @@ based query language.
 
 The following endpoints are valid for each table in the database with an `id`:
 
-| Endpoint                     | Method | Description                      | Request            | Response                                   |
-| ---------------------------- | ------ | -------------------------------- | ------------------ | ------------------------------------------ |
-| `/`                          | GET    | Get structure of all tables      | ---                | `application/json` (tables)                |
-| `/{tablename}`               | POST   | Insert new row(s)                | `application/json` | `rows created in table {tablename}: [ids]` |
-| `/{tablename}/{id}`          | GET    | Get a row by ID                  | ---                | `application/json` (found row)             |
-| `/{tablename}?{querystring}` | GET    | Get rows matching RSQL query     | ---                | `application/json` (matching rows)         |
-| `/{tablename}/{id}`          | PUT    | Update a row by ID               | `application/json` | `application/json` (updated row)           |
-| `/{tablename}?{querystring}` | PUT    | Update row matching query params | `application/json` | `application/json` (updated row)           |
-| `/{tablename}/{id}`          | DELETE | Delete a row by ID               | ---                | `row {id} deleted from table {tablename}`  |
+| Endpoint                     | Method | Description                 | Request            | Response                                   |
+| ---------------------------- | ------ | --------------------------- | ------------------ | ------------------------------------------ |
+| `/`                          | GET    | Get structure of all tables | ---                | `application/json` (tables)                |
+| `/{tablename}`               | POST   | Insert new row(s)           | `application/json` | `rows created in table {tablename}: [ids]` |
+| `/{tablename}/{id}`          | GET    | Get a row by ID             | ---                | `application/json` (found row)             |
+| `/{tablename}?{querystring}` | GET    | Get rows by query params    | ---                | `application/json` (matching rows)         |
+| `/{tablename}/{id}`          | PUT    | Update a row by ID          | `application/json` | `row {id} deleted from table {tablename}`  |
+| `/{tablename}?{querystring}` | PUT    | Update rows by query params | `application/json` | `rows updated in table {tablename}: {n}`   |
+| `/{tablename}/{id}`          | DELETE | Delete a row by ID          | ---                | `row {id} deleted from table {tablename}`  |
+| `/{tablename}?{querystring}` | DELETE | Delete rows by query params | ---                | `rows deleted in table {tablename}: {n}`   |
 
 ## REST Query language (based on RSQL)
 
@@ -72,7 +73,7 @@ The following query keys are supported:
 | `join` (various) | add `JOIN` relations to a `SELECT` query   |
 
 ```
-NOTE: (DELETE query param handling in progress)
+
 ```
 
 Query parameters matching the `filter` format for an RSQL query can be added to PUT and DELETE requests to update/delete rows matching the filters.
@@ -167,6 +168,16 @@ curl -X PUT 'http://localhost:8090/authors?forename==Anne;born<1900' --data '{"f
 
 ```sql
 UPDATE authors SET forename = 'Emily' WHERE forename = 'Anne' AND born < 1900
+```
+
+And the following SQL query and DELETE request are equivalent:
+
+```bash
+curl -X DELETE 'http://localhost:8090/books?title=like=Autobiography%'
+```
+
+```sql
+DELETE FROM books WHERE title LIKE
 ```
 
 ### Fields
@@ -488,6 +499,18 @@ DELETE http://{HOST}:{PORT}/{tablename}/{id}
 ```bash
 curl -X DELETE -s http://localhost:8090/authors/5
 # stdout: "row 5 deleted from table authors"
+```
+
+By query parameters:
+
+```http
+PUT http://{HOST}:{PORT}/{tablename}?{querystring}
+```
+
+```bash
+curl -X DELETE 'http://localhost:8090/books?title=like=Autobiography%'
+# stdout: "rows deleted in table books: 1"
+
 ```
 
 ## Setup
