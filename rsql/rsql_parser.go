@@ -11,19 +11,19 @@ import (
 // newRSQLQuery builds a ParsedURL from the URL
 func NewRSQLQuery(url string) (Query, error) {
 	// Separate table (t) from URL query params (p)
-	rp, err := newPathQuery(url)
-	if err != nil || rp == nil {
+	pq, err := newPathQuery(url)
+	if err != nil || pq == nil {
 		return Query{}, err
 	}
 	query := Query{}
-	query.Tables = append(query.Tables, rp.Resource)
+	query.Tables = append(query.Tables, pq.Resource)
 
 	// Example URL query:
 	// /authors?=filter=forename=in=Ann,Anne;surname=Carson&fields=forename,surname
 
 	// Parse clauses from URL query params, split at "&"
 	// e.g. "filter=..." + "fields=..."
-	for clause := range strings.SplitSeq(rp.Query, "&") {
+	for clause := range strings.SplitSeq(pq.Query, "&") {
 		keyword, namedArgs, err := parseClause(clause)
 		if err != nil {
 			return Query{}, err
@@ -64,15 +64,21 @@ func NewRSQLQuery(url string) (Query, error) {
 	return query, nil
 }
 
-// newPathQuery splits the URL at the query string separator and returns a
-// PathQuery value
+// newPathQuery parses a URL, checking for a table name and an optional query
 func newPathQuery(url string) (*PathQuery, error) {
-	RePathQuery := regexp.MustCompile(`/(\w+)\?(.*)`)
-	matches := RePathQuery.FindStringSubmatch(url)
-	if len(matches) < 3 {
-		return nil, fmt.Errorf("could not parse url %s", url)
+	// Has table in URL but no query
+	RePathNoQuery := regexp.MustCompile(`^/(\w+)$`)
+	if RePathNoQuery.MatchString(url) {
+		return nil, nil
 	}
-	return &PathQuery{Resource: matches[1], Query: matches[2]}, nil
+	// Has table in URL and query
+	RePathQuery := regexp.MustCompile(`^/(\w+)\?(.*)$`)
+	queryMatches := RePathQuery.FindStringSubmatch(url)
+	if RePathQuery.MatchString(url) {
+		return &PathQuery{Resource: queryMatches[1], Query: queryMatches[2]}, nil
+	}
+	// Bad URL
+	return nil, fmt.Errorf("could not parse url %s", url)
 }
 
 // parseClause validates the lhs and rhs of a clause string, e.g.
