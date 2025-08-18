@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"maps"
+	"regexp"
 	"slices"
 	"strconv"
 
@@ -63,12 +64,8 @@ func (s *Service) GetRowsByRSQL(tableName string, url string) ([]types.RowData, 
 	}
 
 	// Parse RSQL
-	query, err := rsql.NewRSQLQuery(url)
+	query, err := s.newRSQLQuery(url)
 	if err != nil {
-		return nil, err
-	}
-	// Validate RSQL
-	if err := s.validateRSQLQuery(query); err != nil {
 		return nil, err
 	}
 
@@ -147,25 +144,41 @@ func (s *Service) InsertRows(newRows []types.RowData, tableName string) ([]int64
 	return s.Repo.InsertRows(tableName, newRows)
 }
 
-// UpdateRowByID updates any number of valid columns with separate calls to
-// Repository.UpdateRowCol
-func (s *Service) UpdateRowByID(tableName, id string, updateData *types.RowData) (types.RowData, error) {
+// UpdateRowsByRSQL updates any number of rows that match the optional query
+// params in the url
+func (s *Service) UpdateRowsByRSQL(tableName, url string, updateData *types.RowData) (int64, error) {
+	// Verify table
 	table, err := s.Repo.GetTable(tableName)
 	if err != nil {
-		return types.RowData{}, err
+		return -1, err
 	}
 
-	// Convert id to int
-	idInt, err := strconv.ParseInt(id, 10, 64)
-	if err != nil {
-		return types.RowData{}, err
+	filters := []rsql.Filter{}
+
+	// Parse and validate any filters
+	ReURLWithParams := regexp.MustCompile(`^/\w+\?(.*)?$`)
+	if ReURLWithParams.MatchString(url) {
+		queryParams := ReURLWithParams.FindStringSubmatch(url)[1]
+		// Make Filter struct array from URL query params
+		filters, err = rsql.NewFilters(queryParams)
+		if err != nil {
+			return -1, err
+		}
+		rsqlQuery := rsql.Query{
+			Tables:  []string{tableName},
+			Filters: filters,
+		}
+		// Each col in query params must exist in given table
+		if err := s.ValidateRSQLFilters(rsqlQuery); err != nil {
+			return -1, err
+		}
 	}
 
 	// Each column in the update data must exist in the table
 	cols := slices.Collect(maps.Keys(*updateData))
 	badCol, err := verifyColumns(table, cols)
 	if err != nil {
-		return types.RowData{}, fmt.Errorf("%w (%s:%s) ", err, table.Name, badCol)
+		return -1, fmt.Errorf("%w (%s:%s) ", err, table.Name, badCol)
 	}
 
 	// Decode request body into a dummy row value to validate column names
@@ -173,15 +186,11 @@ func (s *Service) UpdateRowByID(tableName, id string, updateData *types.RowData)
 	b, _ := json.Marshal(updateData)
 	err = json.Unmarshal(b, &dummyRow)
 	if err != nil {
-		return types.RowData{}, err
+		return -1, err
 	}
 
 	// Update row
-	err = s.Repo.UpdateRowByID(tableName, idInt, updateData)
-	if err != nil {
-		return types.RowData{}, err
-	}
-	return s.GetRowByID(tableName, id)
+	return s.Repo.UpdateRowsByRSQL(tableName, filters, updateData)
 }
 
 // DeleteRowByID removes a row from the table by id

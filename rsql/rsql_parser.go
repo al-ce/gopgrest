@@ -33,7 +33,7 @@ func NewRSQLQuery(url string) (Query, error) {
 		switch keyword {
 		case FILTER: // e.g ?filter=
 			// Query filters are split at ";" and checked with "==" or "=in="
-			filters, err := newFilters(namedArgs)
+			filters, err := NewFilters(namedArgs)
 			clauseErr = err
 			query.Filters = filters
 		case FIELDS: // e.g. ?fields=
@@ -100,14 +100,13 @@ func parseClause(clauseStr string) (string, string, error) {
 	return keyword, values, nil
 }
 
-// newFilters makes a rsql.Filters value from the rhs of a URL filter query param
+// NewFilters makes a rsql.Filters value from the rhs of a URL filter query param
 // e.g. the rhs of `filter=forename=in=Anne,Ann;surname=Carson`
-func newFilters(filterConditionals string) ([]Filter, error) {
+func NewFilters(filterConditionals string) ([]Filter, error) {
 	filters := []Filter{}
 	// Multiple filters allowed with ; separator
 	for cond := range strings.SplitSeq(filterConditionals, ";") {
-		ReFilterOperator := getOperatorSplitRegex()
-		f, err := newFilter(cond, ReFilterOperator)
+		f, err := newFilter(cond)
 		if err != nil {
 			return []Filter{}, err
 		}
@@ -118,8 +117,9 @@ func newFilters(filterConditionals string) ([]Filter, error) {
 
 // newFilter creates a new Filter from an item in a ';' separated string of
 // `{col}=[values]` filter conditionals
-func newFilter(cond string, ReFilterOperator *regexp.Regexp) (*Filter, error) {
+func newFilter(cond string) (*Filter, error) {
 	// Split filter at "==" or "=in=" or "=out=" etc.
+	ReFilterOperator := getOperatorSplitRegex()
 	splitFilter := ReFilterOperator.Split(cond, -1)
 	if len(splitFilter) != 2 {
 		return nil, fmt.Errorf("Malformed FILTERS clause in url: %s\n", cond)

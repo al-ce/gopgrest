@@ -107,39 +107,7 @@ func (r *Repository) InsertRows(tableName string, newRows []types.RowData) ([]in
 	return ids, nil
 }
 
-// UpdateRowByID update columns in a table row by id
-func (r *Repository) UpdateRowByID(tableName string, id int64, updatedRow *types.RowData) error {
-	// Create cols/values/placeholders slices in consistent order
-	var assignments []string
-	var values []any
-	var i int
-	for k, v := range *updatedRow {
-		assignments = append(assignments, fmt.Sprintf("%s = $%d", k, i+1))
-		values = append(values, v)
-		i++
-	}
-	conditional := fmt.Sprintf("WHERE id = %d", id)
-
-	// Build update query
-	updateStmnt := fmt.Sprintf(
-		"UPDATE %s SET %s %s",
-		tableName,
-		strings.Join(assignments, ", "),
-		conditional,
-	)
-
-	rowsAffected, err := r.execUpdateQuery(updateStmnt, values)
-	if err != nil {
-		return err
-	}
-	if rowsAffected == 0 {
-		return apperrors.NewUpdateInvalidIDErr(tableName, id)
-	}
-
-	return nil
-}
-
-func (r *Repository) UpdateRowByRSQL(tableName string, filters []rsql.Filter, updatedRow *types.RowData) error {
+func (r *Repository) UpdateRowsByRSQL(tableName string, filters []rsql.Filter, updatedRow *types.RowData) (int64, error) {
 	var assignments []string
 	var values []any
 	var assignmentVals []any
@@ -151,7 +119,7 @@ func (r *Repository) UpdateRowByRSQL(tableName string, filters []rsql.Filter, up
 	}
 	conditional, conditionalVals, err := buildWhereConditions(filters, placeholder)
 	if err != nil {
-		return err
+		return -1, err
 	}
 
 	values = slices.Concat(assignmentVals, conditionalVals)
@@ -164,17 +132,6 @@ func (r *Repository) UpdateRowByRSQL(tableName string, filters []rsql.Filter, up
 		conditional,
 	)
 
-	rowsAffected, err := r.execUpdateQuery(updateStmnt, values)
-	if err != nil {
-		return err
-	}
-	if rowsAffected == 0 {
-		return apperrors.NewUpdateNoMatchingFiltersErr(tableName, filters)
-	}
-	return nil
-}
-
-func (r *Repository) execUpdateQuery(updateStmnt string, values []any) (int64, error) {
 	log.Printf("Exec query\n\t%s\nValues: %v", updateStmnt, values)
 
 	// Execute update query
@@ -182,9 +139,13 @@ func (r *Repository) execUpdateQuery(updateStmnt string, values []any) (int64, e
 	if err != nil {
 		return -1, err
 	}
+
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
 		return -1, err
+	}
+	if rowsAffected == 0 {
+		return -1, apperrors.NewUpdateNoMatchingFiltersErr(tableName, filters)
 	}
 	return rowsAffected, nil
 }

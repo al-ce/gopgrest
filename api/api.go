@@ -20,9 +20,9 @@ type APIHandler struct {
 }
 
 var (
-	ReRequestWithId   = regexp.MustCompile(`^/\w+/([0-9]+)$`)
-	ReRequestWithRSQL = regexp.MustCompile(`^/\w+(\?.*)?$`)
-	ReTable           = regexp.MustCompile(`^/(\w+).*$`)
+	ReRequestWithId     = regexp.MustCompile(`^/\w+/([0-9]+)$`)
+	ReRequestWithParams = regexp.MustCompile(`^/\w+(\?.*)?$`)
+	ReTable             = regexp.MustCompile(`^/(\w+).*$`)
 )
 
 func NewAPIHandler(db repository.QueryExecutor, tables []repository.Table) APIHandler {
@@ -41,7 +41,7 @@ func (h *APIHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	urlString := r.URL.String()
 	isRequestWithID := ReRequestWithId.MatchString(urlString)
-	isRequestWithRSQL := ReRequestWithRSQL.MatchString(urlString)
+	isRequestWithParams := ReRequestWithParams.MatchString(urlString)
 
 	exists, err := h.tableExists(r)
 	switch {
@@ -52,7 +52,7 @@ func (h *APIHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		NotFoundHandler(w, r)
 	case r.Method == http.MethodGet && isRequestWithID:
 		h.GetRowByID(w, r)
-	case r.Method == http.MethodGet && isRequestWithRSQL:
+	case r.Method == http.MethodGet && isRequestWithParams:
 		h.GetRowsByRSQL(w, r)
 	case r.Method == http.MethodPost:
 		h.Insert(w, r)
@@ -60,6 +60,8 @@ func (h *APIHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		h.DeleteRowByID(w, r)
 	case r.Method == http.MethodPut && isRequestWithID:
 		h.UpdateRowByID(w, r)
+	case r.Method == http.MethodPut && isRequestWithParams:
+		h.UpdateRowByRSQL(w, r)
 	default:
 		NotFoundHandler(w, r)
 	}
@@ -189,11 +191,10 @@ func (h *APIHandler) Insert(w http.ResponseWriter, r *http.Request) {
 // UpdateRowByID updates a row in the table by id
 func (h *APIHandler) UpdateRowByID(w http.ResponseWriter, r *http.Request) {
 	// Get table from URL path
-	table, err := h.extractTableName(r)
+	tableName, err := h.extractTableName(r)
 	if err != nil {
 		InternalServerErrorHandler(w, r, err.Error())
 	}
-
 	// Get id
 	matches := ReRequestWithId.FindStringSubmatch(r.URL.Path)
 	if len(matches) < 2 {
@@ -202,9 +203,24 @@ func (h *APIHandler) UpdateRowByID(w http.ResponseWriter, r *http.Request) {
 	}
 	id := matches[1]
 
+	url := fmt.Sprintf("/%s?id==%s", tableName, id)
+	h.updateRow(w, r, tableName, url)
+}
+
+// UpdateRowByRSQL updates any rows in the table matching the filters in an RSQL query
+func (h *APIHandler) UpdateRowByRSQL(w http.ResponseWriter, r *http.Request) {
+	// Get table from URL path
+	tableName, err := h.extractTableName(r)
+	if err != nil {
+		InternalServerErrorHandler(w, r, err.Error())
+	}
+	h.updateRow(w, r, tableName, r.URL.String())
+}
+
+func (h *APIHandler) updateRow(w http.ResponseWriter, r *http.Request, tableName, url string) {
 	// Decode request body into map to dynamically update row
 	var updateData *types.RowData
-	err = json.NewDecoder(r.Body).Decode(&updateData)
+	err := json.NewDecoder(r.Body).Decode(&updateData)
 	if err != nil {
 		log.Println(err)
 		InternalServerErrorHandler(w, r, fmt.Sprintf("%v", err))
@@ -212,15 +228,7 @@ func (h *APIHandler) UpdateRowByID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Update row with request data
-	updateQueryResult, err := h.Service.UpdateRowByID(table, id, updateData)
-	if err != nil {
-		log.Println(err)
-		InternalServerErrorHandler(w, r, fmt.Sprintf("%v", err))
-		return
-	}
-
-	// Encode to JSON
-	jsonData, err := json.Marshal(updateQueryResult)
+	rowsAffected, err := h.Service.UpdateRowsByRSQL(tableName, url, updateData)
 	if err != nil {
 		log.Println(err)
 		InternalServerErrorHandler(w, r, fmt.Sprintf("%v", err))
@@ -228,9 +236,8 @@ func (h *APIHandler) UpdateRowByID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Write response
-	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	w.Write(jsonData)
+	fmt.Fprintf(w, "rows updated in table %s: %d", tableName, rowsAffected)
 }
 
 // DeleteRowByID adds removes a row from a table by id
