@@ -80,7 +80,7 @@ func (s *Service) validateRSQLQuery(query rsql.Query) error {
 	if err := s.validateRSQLTables(query.Tables); err != nil {
 		return err
 	}
-	if err := s.ValidateRSQLFilters(query); err != nil {
+	if err := s.ValidateRSQLFilters(query.Tables, query.Filters); err != nil {
 		return err
 	}
 	if err := s.validateRSQLFields(query.Fields); err != nil {
@@ -92,9 +92,9 @@ func (s *Service) validateRSQLQuery(query rsql.Query) error {
 	return nil
 }
 
-func (s *Service) ValidateRSQLFilters(query rsql.Query) error {
+func (s *Service) ValidateRSQLFilters(tableNames []string, filters []rsql.Filter) error {
 	// Validate: each column in the query filter should be valid for its table
-	for _, f := range query.Filters {
+	for _, f := range filters {
 		// Check if column is prefixed with a table, e.g. authors.forename
 		prefixedCol := strings.Split(f.Column, ".")
 		if len(prefixedCol) == 2 {
@@ -114,7 +114,7 @@ func (s *Service) ValidateRSQLFilters(query rsql.Query) error {
 		} else {
 			// Search for column in all tables referenced in query
 			found := false
-			for _, tableName := range query.Tables {
+			for _, tableName := range tableNames {
 				table, err := s.Repo.GetTable(tableName)
 				if err != nil {
 					return err

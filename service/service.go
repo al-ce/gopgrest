@@ -153,25 +153,9 @@ func (s *Service) UpdateRowsByRSQL(tableName, url string, updateData *types.RowD
 		return -1, err
 	}
 
-	filters := []rsql.Filter{}
-
-	// Parse and validate any filters
-	ReURLWithParams := regexp.MustCompile(`^/\w+\?(.*)?$`)
-	if ReURLWithParams.MatchString(url) {
-		queryParams := ReURLWithParams.FindStringSubmatch(url)[1]
-		// Make Filter struct array from URL query params
-		filters, err = rsql.NewFilters(queryParams)
-		if err != nil {
-			return -1, err
-		}
-		rsqlQuery := rsql.Query{
-			Tables:  []string{tableName},
-			Filters: filters,
-		}
-		// Each col in query params must exist in given table
-		if err := s.ValidateRSQLFilters(rsqlQuery); err != nil {
-			return -1, err
-		}
+	filters, err := s.parseFilters(tableName, url)
+	if err != nil {
+		return -1, err
 	}
 
 	// Each column in the update data must exist in the table
@@ -208,4 +192,27 @@ func (s *Service) DeleteRowByID(tableName, id string) (int64, error) {
 	}
 
 	return s.Repo.DeleteRowByID(tableName, idInt)
+}
+
+// parsFilters parses and validates any filters found in a url
+func (s *Service) parseFilters(tableName, url string) ([]rsql.Filter, error) {
+	filters := []rsql.Filter{}
+	ReURLWithParams := regexp.MustCompile(`^/\w+\?(.*)?$`)
+	if !ReURLWithParams.MatchString(url) {
+		return filters, nil
+	}
+
+	// Make new Filter struct array from the query params
+	queryParams := ReURLWithParams.FindStringSubmatch(url)[1]
+	filters, err := rsql.NewFilters(queryParams)
+	if err != nil {
+		return []rsql.Filter{}, err
+	}
+
+	// Each col in query params must exist in given table
+	if err := s.ValidateRSQLFilters([]string{tableName}, filters); err != nil {
+		return []rsql.Filter{}, err
+	}
+
+	return filters, nil
 }
