@@ -54,7 +54,7 @@ func (r *Repository) GetRowsByRSQL(tableName string, query rsql.Query) (*sql.Row
 func (r *Repository) InsertRows(tableName string, newRows []types.RowData) ([]int64, error) {
 	ids := make([]int64, len(newRows))
 	if len(newRows) == 0 {
-		return ids, fmt.Errorf("Nothing to insert")
+		return ids, apperrors.InsertWithNoRows
 	}
 
 	var cols []string         // column names for `INSERT INTO (col1, col2...)`

@@ -1,6 +1,7 @@
 package repository_test
 
 import (
+	"errors"
 	"fmt"
 	"testing"
 
@@ -37,7 +38,7 @@ func Test_DeleteRowsByRSQL(t *testing.T) {
 	t.Run("No query", func(t *testing.T) {
 		repo := tests.NewTestRepo(t)
 		rowsAffected, err := repo.DeleteRowsByRSQL("authors", []rsql.Filter{})
-		if err != apperrors.DeleteWithNoFilters {
+		if !errors.Is(err, apperrors.DeleteWithNoFilters) {
 			t.Errorf("Expected error '%s', got '%s'", apperrors.DeleteWithNoFilters, err)
 		}
 		if rowsAffected != -1 {

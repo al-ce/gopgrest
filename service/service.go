@@ -8,6 +8,7 @@ import (
 	"slices"
 	"strconv"
 
+	"gopgrest/apperrors"
 	"gopgrest/repository"
 	"gopgrest/rsql"
 	"gopgrest/types"
@@ -95,7 +96,7 @@ func (s *Service) GetRowsByRSQL(tableName string, url string) ([]types.RowData, 
 func (s *Service) InsertRows(newRows []types.RowData, tableName string) ([]int64, error) {
 	var ids []int64
 	if len(newRows) == 0 {
-		return ids, fmt.Errorf("No rows to insert")
+		return ids, apperrors.InsertWithNoRows
 	}
 	table, err := s.Repo.GetTable(tableName)
 	if err != nil {

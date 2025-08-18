@@ -1,10 +1,12 @@
 package service_test
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 	"testing"
 
+	"gopgrest/apperrors"
 	"gopgrest/tests"
 	"gopgrest/types"
 )
@@ -55,5 +57,13 @@ func Test_ServiceInsertRow_Single(t *testing.T) {
 				t.Errorf("Exp %s %v %T:\nGot %v %T", k, v, v, gotAuthor[k], gotAuthor[k])
 			}
 		}
+	}
+}
+
+func Test_ServiceInsertRow_NoRows(t *testing.T) {
+	repo := tests.NewTestRepo(t)
+	_, err := repo.InsertRows("authors", []types.RowData{})
+	if !errors.Is(err, apperrors.InsertWithNoRows) {
+		t.Errorf("Expected err '%s' got '%s'", apperrors.InsertWithNoRows, err)
 	}
 }

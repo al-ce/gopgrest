@@ -7,7 +7,10 @@ import (
 	"gopgrest/rsql"
 )
 
-var DeleteWithNoFilters = errors.New("Will not DELETE with no filters")
+var (
+	InsertWithNoRows = errors.New("Cannot insert with no rows")
+	DeleteWithNoFilters = errors.New("Will not DELETE with no filters")
+)
 
 func NewDeleteInvalidIDErr(tableName string, id int64) error {
 	return fmt.Errorf(
