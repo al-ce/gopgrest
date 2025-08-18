@@ -8,6 +8,7 @@ import (
 	"slices"
 	"strings"
 
+	"gopgrest/apperrors"
 	"gopgrest/repository"
 	"gopgrest/rsql"
 	"gopgrest/types"
@@ -15,13 +16,13 @@ import (
 
 // verifyColumns checks that all keys in a slice of cols, representing columns
 // in a database table, actually exist in that table
-func verifyColumns(t *repository.Table, cols []string) error {
+func verifyColumns(t *repository.Table, cols []string) (string, error) {
 	for _, col := range cols {
 		if _, ok := t.ColumnMap[col]; !ok {
-			return fmt.Errorf("Column '%s' does not exist in table %s", col, t.Name)
+			return col, apperrors.ColDoesNotExist
 		}
 	}
-	return nil
+	return "", nil
 }
 
 // ScanRows scans rows from a query into a map

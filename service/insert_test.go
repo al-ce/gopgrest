@@ -61,9 +61,52 @@ func Test_ServiceInsertRow_Single(t *testing.T) {
 }
 
 func Test_ServiceInsertRow_NoRows(t *testing.T) {
-	repo := tests.NewTestRepo(t)
-	_, err := repo.InsertRows("authors", []types.RowData{})
+	repo := tests.NewTestService(t)
+	_, err := repo.InsertRows([]types.RowData{}, "authors")
 	if !errors.Is(err, apperrors.InsertWithNoRows) {
 		t.Errorf("Expected err '%s' got '%s'", apperrors.InsertWithNoRows, err)
+	}
+}
+
+func Test_ServiceInsertRow_BadTable(t *testing.T) {
+	service := tests.NewTestService(t)
+
+	_, gotErr := service.InsertRows([]types.RowData{{"dummy": "value"}}, "doesnotexist")
+	expErr := apperrors.TableDoesNotExist
+	validateError(t, expErr, gotErr)
+}
+
+func Test_ServiceInsertRow_BadColumn(t *testing.T) {
+	service := tests.NewTestService(t)
+	badCol := "specialty"
+	badRow := []types.RowData{{"surname": "Sappho", badCol: "lyric poetry"}}
+
+	_, gotErr := service.InsertRows(badRow, "authors")
+	expErr := apperrors.ColDoesNotExist
+	validateError(t, expErr, gotErr)
+}
+
+func Test_ServiceInsertRow_MismatchedColumns(t *testing.T) {
+	service := tests.NewTestService(t)
+	mismatchedCols := []types.RowData{
+		{
+			"surname": "Jemisin",
+			"born":    int64(1972),
+			"died":    nil,
+		},
+		{
+			"forename": "Martha",
+			"surname":  "Nussbaum",
+		},
+	}
+
+	_, gotErr := service.InsertRows(mismatchedCols, "authors")
+	expErr := apperrors.InsertColsDoNotMatch
+	validateError(t, expErr, gotErr)
+}
+
+func validateError(t *testing.T, expErr, gotErr error) {
+	if !errors.Is(gotErr, expErr) {
+		t.Errorf("\nExp err '%s'\nGot err '%s'", expErr, errors.Unwrap(gotErr))
 	}
 }

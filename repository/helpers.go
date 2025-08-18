@@ -5,6 +5,7 @@ import (
 	"slices"
 	"strings"
 
+	"gopgrest/apperrors"
 	"gopgrest/rsql"
 )
 
@@ -15,7 +16,7 @@ func (r *Repository) GetTable(tableName string) (*Table, error) {
 			return &t, nil
 		}
 	}
-	return nil, fmt.Errorf("table does not exist")
+	return nil, apperrors.TableDoesNotExist
 }
 
 func (r *Repository) IsValidColumn(table Table, col string) bool {

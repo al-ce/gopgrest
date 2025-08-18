@@ -105,8 +105,9 @@ func (s *Service) InsertRows(newRows []types.RowData, tableName string) ([]int64
 
 	// Each column in the insert data must exist in the table
 	cols := slices.Collect(maps.Keys(newRows[0]))
-	if err := verifyColumns(table, cols); err != nil {
-		return ids, err
+	badCol, err := verifyColumns(table, cols)
+	if err != nil {
+		return ids, fmt.Errorf("%w\n(%s:%s) ", err, table.Name, badCol)
 	}
 
 	// If there's only one row to insert, skip the remaining consistency checks
@@ -127,12 +128,18 @@ func (s *Service) InsertRows(newRows []types.RowData, tableName string) ([]int64
 		thisCols := slices.Collect(maps.Keys(row))
 		slices.Sort(thisCols)
 		if slices.Compare(cols, thisCols) != 0 {
-			return ids, fmt.Errorf("Columns do not match: %v %v", cols, thisCols)
+			return ids, fmt.Errorf("%w\n%v %v", apperrors.InsertColsDoNotMatch, cols, thisCols)
 		}
 		// Compare value types
 		for k, v := range row {
 			if valTypes[k] != fmt.Sprintf("%T", v) {
-				return ids, fmt.Errorf("Non-matching type for col %s: %v %v", k, valTypes[k], v)
+				return ids, fmt.Errorf(
+					"%w\ncol: %s %v %v",
+					apperrors.InsertValTypesDoNotMatch,
+					k,
+					valTypes[k],
+					v,
+				)
 			}
 		}
 	}
@@ -156,8 +163,9 @@ func (s *Service) UpdateRowByID(tableName, id string, updateData *types.RowData)
 
 	// Each column in the update data must exist in the table
 	cols := slices.Collect(maps.Keys(*updateData))
-	if err := verifyColumns(table, cols); err != nil {
-		return types.RowData{}, err
+	badCol, err := verifyColumns(table, cols)
+	if err != nil {
+		return types.RowData{}, fmt.Errorf("%w (%s:%s) ", err, table.Name, badCol)
 	}
 
 	// Decode request body into a dummy row value to validate column names
