@@ -59,7 +59,7 @@ func (h *APIHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case r.Method == http.MethodDelete && isRequestWithID:
 		h.DeleteRowByID(w, r)
 	case r.Method == http.MethodDelete && isRequestWithParams:
-		h.DeleteRowByRSQL(w, r)
+		h.DeleteRowsByRSQL(w, r)
 	case r.Method == http.MethodPut && isRequestWithID:
 		h.UpdateRowByID(w, r)
 	case r.Method == http.MethodPut && isRequestWithParams:
@@ -202,15 +202,15 @@ func (h *APIHandler) UpdateRowByID(w http.ResponseWriter, r *http.Request) {
 	id := matches[2]
 
 	url := fmt.Sprintf("/%s?id==%s", tableName, id)
-	h.updateRow(w, r, url)
+	h.updateRows(w, r, url)
 }
 
 // UpdateRowByRSQL updates any rows in the table matching the filters in an RSQL query
 func (h *APIHandler) UpdateRowByRSQL(w http.ResponseWriter, r *http.Request) {
-	h.updateRow(w, r, r.URL.String())
+	h.updateRows(w, r, r.URL.String())
 }
 
-func (h *APIHandler) updateRow(w http.ResponseWriter, r *http.Request, url string) {
+func (h *APIHandler) updateRows(w http.ResponseWriter, r *http.Request, url string) {
 	// Get table from URL path
 	tableName, err := h.extractTableName(r)
 	if err != nil {
@@ -254,8 +254,8 @@ func (h *APIHandler) DeleteRowByID(w http.ResponseWriter, r *http.Request) {
 	h.deleteRows(w, r, url)
 }
 
-// DeleteRowByRSQL deletes any rows in the table matching the filters in an RSQL query
-func (h *APIHandler) DeleteRowByRSQL(w http.ResponseWriter, r *http.Request) {
+// DeleteRowsByRSQL deletes any rows in the table matching the filters in an RSQL query
+func (h *APIHandler) DeleteRowsByRSQL(w http.ResponseWriter, r *http.Request) {
 	h.deleteRows(w, r, r.URL.String())
 }
 
