@@ -276,7 +276,7 @@ func (h *APIHandler) deleteRows(w http.ResponseWriter, r *http.Request, url stri
 
 	// Set response
 	w.WriteHeader(http.StatusOK)
-	fmt.Fprintf(w, "deleted %d rows from table %s\n", rowsAffected, tableName)
+	fmt.Fprintf(w, "rows deleted in table %s: %d", tableName, rowsAffected)
 }
 
 // ShowTables responds with a JSON object of the tables, their column names,
