@@ -177,21 +177,17 @@ func (s *Service) UpdateRowsByRSQL(tableName, url string, updateData *types.RowD
 	return s.Repo.UpdateRowsByRSQL(tableName, filters, updateData)
 }
 
-// DeleteRowByID removes a row from the table by id
-func (s *Service) DeleteRowByID(tableName, id string) (int64, error) {
+func (s *Service) DeleteRowsByRSQL(tableName, url string) (int64, error) {
 	// Get table info for verification
 	_, err := s.Repo.GetTable(tableName)
 	if err != nil {
 		return -1, err
 	}
-
-	// Convert id to int
-	idInt, err := strconv.ParseInt(id, 10, 64)
+	filters, err := s.parseFilters(tableName, url)
 	if err != nil {
 		return -1, err
 	}
-
-	return s.Repo.DeleteRowByID(tableName, idInt)
+	return s.Repo.DeleteRowsByRSQL(tableName, filters)
 }
 
 // parsFilters parses and validates any filters found in a url
