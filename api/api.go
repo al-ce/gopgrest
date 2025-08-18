@@ -102,6 +102,39 @@ func (h *APIHandler) GetRowByID(w http.ResponseWriter, r *http.Request) {
 	w.Write(jsonData)
 }
 
+// GetRowsByRSQL gets rows from a table in the database, optionally filtering by query
+// params
+func (h *APIHandler) GetRowsByRSQL(w http.ResponseWriter, r *http.Request) {
+	// Get table from URL path
+	table, err := h.extractTableName(r)
+	if err != nil {
+		InternalServerErrorHandler(w, r, err.Error())
+	}
+
+	// Retrieve gotRows from database
+	gotRows, err := h.Service.GetRowsByRSQL(table, r.URL.String())
+	if err != nil {
+		log.Println(err)
+		InternalServerErrorHandler(w, r, fmt.Sprintf("%v", err))
+		return
+	}
+
+	// Encode to JSON
+	jsonData, err := json.Marshal(gotRows)
+	if err != nil {
+		log.Println(err)
+		InternalServerErrorHandler(w, r, fmt.Sprintf("%v", err))
+		return
+	}
+
+	// Write response
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(jsonData)
+}
+
+
+
 // Insert adds a row to a table
 func (h *APIHandler) Insert(w http.ResponseWriter, r *http.Request) {
 	// Get table from URL path
@@ -153,37 +186,6 @@ func (h *APIHandler) Insert(w http.ResponseWriter, r *http.Request) {
 	// Set response
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprintf(w, "rows created in table %s: %v", table, newIds)
-}
-
-// GetRowsByRSQL gets rows from a table in the database, optionally filtering by query
-// params
-func (h *APIHandler) GetRowsByRSQL(w http.ResponseWriter, r *http.Request) {
-	// Get table from URL path
-	table, err := h.extractTableName(r)
-	if err != nil {
-		InternalServerErrorHandler(w, r, err.Error())
-	}
-
-	// Retrieve listQueryResults from database
-	listQueryResults, err := h.Service.GetRowsByRSQL(table, r.URL.String())
-	if err != nil {
-		log.Println(err)
-		InternalServerErrorHandler(w, r, fmt.Sprintf("%v", err))
-		return
-	}
-
-	// Encode to JSON
-	jsonData, err := json.Marshal(listQueryResults)
-	if err != nil {
-		log.Println(err)
-		InternalServerErrorHandler(w, r, fmt.Sprintf("%v", err))
-		return
-	}
-
-	// Write response
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write(jsonData)
 }
 
 // UpdateRowByID updates a row in the table by id
