@@ -20,7 +20,7 @@ type APIHandler struct {
 }
 
 var (
-	ReRequestWithId     = regexp.MustCompile(`^/\w+/([0-9]+)$`)
+	ReRequestWithId     = regexp.MustCompile(`^/(\w+)/([0-9]+)$`)
 	ReRequestWithParams = regexp.MustCompile(`^/\w+(\?.*)?$`)
 	ReTable             = regexp.MustCompile(`^/(\w+).*$`)
 )
@@ -58,6 +58,8 @@ func (h *APIHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		h.Insert(w, r)
 	case r.Method == http.MethodDelete && isRequestWithID:
 		h.DeleteRowByID(w, r)
+	case r.Method == http.MethodDelete && isRequestWithParams:
+		h.DeleteRowByRSQL(w, r)
 	case r.Method == http.MethodPut && isRequestWithID:
 		h.UpdateRowByID(w, r)
 	case r.Method == http.MethodPut && isRequestWithParams:
@@ -69,21 +71,21 @@ func (h *APIHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 // GetRowByID gets a single row from a table in the database by id
 func (h *APIHandler) GetRowByID(w http.ResponseWriter, r *http.Request) {
-	// Get table from URL path
-	table, err := h.extractTableName(r)
+	// Get tableName from URL path
+	tableName, err := h.extractTableName(r)
 	if err != nil {
 		InternalServerErrorHandler(w, r, err.Error())
 	}
 
 	matches := ReRequestWithId.FindStringSubmatch(r.URL.Path)
-	if len(matches) < 2 {
+	if len(matches) < 3 {
 		InternalServerErrorHandler(w, r, "Could not find id match")
 		return
 	}
-	rowID := matches[1]
+	rowID := matches[2]
 
 	// Retrieve pickQueryResult from database
-	pickQueryResult, err := h.Service.GetRowByID(table, rowID)
+	pickQueryResult, err := h.Service.GetRowByID(tableName, rowID)
 	if err != nil {
 		log.Println(err)
 		InternalServerErrorHandler(w, r, fmt.Sprintf("%v", err))
@@ -190,37 +192,34 @@ func (h *APIHandler) Insert(w http.ResponseWriter, r *http.Request) {
 
 // UpdateRowByID updates a row in the table by id
 func (h *APIHandler) UpdateRowByID(w http.ResponseWriter, r *http.Request) {
-	// Get table from URL path
-	tableName, err := h.extractTableName(r)
-	if err != nil {
-		InternalServerErrorHandler(w, r, err.Error())
-	}
 	// Get id
 	matches := ReRequestWithId.FindStringSubmatch(r.URL.Path)
-	if len(matches) < 2 {
+	if len(matches) < 3 {
 		InternalServerErrorHandler(w, r, "Could not find id match")
 		return
 	}
-	id := matches[1]
+	tableName := matches[1]
+	id := matches[2]
 
 	url := fmt.Sprintf("/%s?id==%s", tableName, id)
-	h.updateRow(w, r, tableName, url)
+	h.updateRow(w, r, url)
 }
 
 // UpdateRowByRSQL updates any rows in the table matching the filters in an RSQL query
 func (h *APIHandler) UpdateRowByRSQL(w http.ResponseWriter, r *http.Request) {
+	h.updateRow(w, r, r.URL.String())
+}
+
+func (h *APIHandler) updateRow(w http.ResponseWriter, r *http.Request, url string) {
 	// Get table from URL path
 	tableName, err := h.extractTableName(r)
 	if err != nil {
 		InternalServerErrorHandler(w, r, err.Error())
 	}
-	h.updateRow(w, r, tableName, r.URL.String())
-}
 
-func (h *APIHandler) updateRow(w http.ResponseWriter, r *http.Request, tableName, url string) {
 	// Decode request body into map to dynamically update row
 	var updateData *types.RowData
-	err := json.NewDecoder(r.Body).Decode(&updateData)
+	err = json.NewDecoder(r.Body).Decode(&updateData)
 	if err != nil {
 		log.Println(err)
 		InternalServerErrorHandler(w, r, fmt.Sprintf("%v", err))
@@ -242,22 +241,33 @@ func (h *APIHandler) updateRow(w http.ResponseWriter, r *http.Request, tableName
 
 // DeleteRowByID adds removes a row from a table by id
 func (h *APIHandler) DeleteRowByID(w http.ResponseWriter, r *http.Request) {
+	// Get id
+	matches := ReRequestWithId.FindStringSubmatch(r.URL.Path)
+	if len(matches) < 3 {
+		InternalServerErrorHandler(w, r, "Could not find id match")
+		return
+	}
+	tableName := matches[1]
+	id := matches[2]
+
+	url := fmt.Sprintf("/%s?id==%s", tableName, id)
+	h.deleteRows(w, r, url)
+}
+
+// DeleteRowByRSQL deletes any rows in the table matching the filters in an RSQL query
+func (h *APIHandler) DeleteRowByRSQL(w http.ResponseWriter, r *http.Request) {
+	h.deleteRows(w, r, r.URL.String())
+}
+
+func (h *APIHandler) deleteRows(w http.ResponseWriter, r *http.Request, url string) {
 	// Get table from URL path
-	table, err := h.extractTableName(r)
+	tableName, err := h.extractTableName(r)
 	if err != nil {
 		InternalServerErrorHandler(w, r, err.Error())
 	}
 
-	// Get id
-	matches := ReRequestWithId.FindStringSubmatch(r.URL.Path)
-	if len(matches) < 2 {
-		InternalServerErrorHandler(w, r, "Could not find id match")
-		return
-	}
-	id := matches[1]
-
-	// Delete row by id
-	rowsAffected, err := h.Service.DeleteRowByID(table, id)
+	// Delete rows by rsql filters
+	rowsAffected, err := h.Service.DeleteRowsByRSQL(tableName, url)
 	if err != nil {
 		log.Println(err)
 		InternalServerErrorHandler(w, r, fmt.Sprintf("%v", err))
@@ -266,7 +276,7 @@ func (h *APIHandler) DeleteRowByID(w http.ResponseWriter, r *http.Request) {
 
 	// Set response
 	w.WriteHeader(http.StatusOK)
-	fmt.Fprintf(w, "deleted %d rows from table %s\n", rowsAffected, table)
+	fmt.Fprintf(w, "deleted %d rows from table %s\n", rowsAffected, tableName)
 }
 
 // ShowTables responds with a JSON object of the tables, their column names,
