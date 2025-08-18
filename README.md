@@ -8,14 +8,15 @@ based query language.
 
 The following endpoints are valid for each table in the database with an `id`:
 
-| Endpoint                     | Method | Description                  | Request            | Response                                   |
-| ---------------------------- | ------ | ---------------------------- | ------------------ | ------------------------------------------ |
-| `/`                          | GET    | Get structure of all tables  | ---                | `application/json` (tables)                |
-| `/{tablename}`               | POST   | Insert a new row             | `application/json` | `rows created in table {tablename}: [ids]` |
-| `/{tablename}/{id}`          | GET    | Get a row by ID              | ---                | `application/json` (found row)             |
-| `/{tablename}?{querystring}` | GET    | Get rows matching RSQL query | ---                | `application/json` (matching rows)         |
-| `/{tablename}/{id}`          | PUT    | Update a row by ID           | `application/json` | `application/json` (updated row)           |
-| `/{tablename}/{id}`          | DELETE | Delete a row by ID           | ---                | `row {id} deleted from table {tablename}`  |
+| Endpoint                     | Method | Description                      | Request            | Response                                   |
+| ---------------------------- | ------ | -------------------------------- | ------------------ | ------------------------------------------ |
+| `/`                          | GET    | Get structure of all tables      | ---                | `application/json` (tables)                |
+| `/{tablename}`               | POST   | Insert new row(s)                | `application/json` | `rows created in table {tablename}: [ids]` |
+| `/{tablename}/{id}`          | GET    | Get a row by ID                  | ---                | `application/json` (found row)             |
+| `/{tablename}?{querystring}` | GET    | Get rows matching RSQL query     | ---                | `application/json` (matching rows)         |
+| `/{tablename}/{id}`          | PUT    | Update a row by ID               | `application/json` | `application/json` (updated row)           |
+| `/{tablename}?{querystring}` | PUT    | Update row matching query params | `application/json` | `application/json` (updated row)           |
+| `/{tablename}/{id}`          | DELETE | Delete a row by ID               | ---                | `row {id} deleted from table {tablename}`  |
 
 ## REST Query language (based on RSQL)
 
@@ -70,9 +71,25 @@ The following query keys are supported:
 | `fields`         | columns to return in a `SELECT` query      |
 | `join` (various) | add `JOIN` relations to a `SELECT` query   |
 
+```
+NOTE: (DELETE query param handling in progress)
+```
+
+Query parameters matching the `filter` format for an RSQL query can be added to PUT and DELETE requests to update/delete rows matching the filters.
+
+```bash
+curl -X PUT 'http://localhost:8090/authors?forename==Anne;born<1900' --data '{"forename": "Emily"}'
+```
+
+```
+rows updated in table authors: 1
+```
+
+Unlike a GET request, query parameters in a POST or DELETE request do not require the `filter` key or a `=` separator before the column/value conditionals.
+
 ### Filter
 
-A `filter` key can be added to the URL query to match a SQL `WHERE` clause.
+A `filter` key can be added to a GET URL's query parameters to match a SQL `WHERE` clause.
 
 A filter subquery is in the following format:
 
@@ -139,6 +156,18 @@ These are the currently supported filter operators:
 | `<`           | `<`            |
 | `=gt=`        | `>`            |
 | `>`           | `>`            |
+
+As noted above, a list of `;` separated filter conditionals can be added to PUT and DELETE requests _without_ the preceding `filter=` key/assignment to add a `WHERE` clause to `UPDATE` or `DELETE` queries.
+
+For example, the following SQL query and PUT request are equivalent:
+
+```bash
+curl -X PUT 'http://localhost:8090/authors?forename==Anne;born<1900' --data '{"forename": "Emily"}'
+```
+
+```sql
+UPDATE authors SET forename = 'Emily' WHERE forename = 'Anne' AND born < 1900
+```
 
 ### Fields
 
@@ -326,7 +355,7 @@ Example (single JSON object):
 ```bash
 curl -X POST -s http://localhost:8090/authors \
       --data '{ "surname": "Woolf", "forename": "Virginia" }'
-# rows created in table authors: [1]⏎
+# stdout: "rows created in table authors: [1]"
 ```
 
 Example (multiple rows from array of JSON objects):
@@ -334,7 +363,7 @@ Example (multiple rows from array of JSON objects):
 ```bash
 curl -X POST http://localhost:8090/authors \
       --data '[{ "surname": "Groton", "forename": "Anne" }, { "surname": "Plato" }]'
-# rows created in table authors: [2 3]⏎
+# stdout: "rows created in table authors: [2 3]"
 ```
 
 ### Get Row (pick)
@@ -419,7 +448,9 @@ curl -X GET -s 'http://localhost:8090/authors?filter=forename==Anne;born>=1900'
 
 ### Update
 
-Update a row by ID, returning the updated row.
+Update a row by ID or by query parameters, returning the number of rows updated.
+
+By id:
 
 ```http
 PUT http://{HOST}:{PORT}/{tablename}/{id}
@@ -427,15 +458,23 @@ Accept: application/json
 ```
 
 ```bash
-curl -X PUT -s http://localhost:8090/authors/5 --data '{"surname" : "Woolf"}'
+curl -X PUT -s http://localhost:8090/authors/3 --data '{"surname" : "Woolf"}'
 ```
 
-```json
-{
-  "forename": "Virginia",
-  "id": 5,
-  "surname": "Woolf"
-}
+```
+"rows updated in table authors: 1"
+```
+
+By query parameters:
+
+```http
+PUT http://{HOST}:{PORT}/{tablename}?{querystring}
+```
+
+```bash
+curl -X PUT 'http://localhost:8090/authors?forename==Anne;born<1900' --data '{"forename": "Emily"}'
+# stdout: "rows updated in table authors: 1"
+
 ```
 
 ### Delete
@@ -448,7 +487,7 @@ DELETE http://{HOST}:{PORT}/{tablename}/{id}
 
 ```bash
 curl -X DELETE -s http://localhost:8090/authors/5
-# example stdout: row 5 deleted from table authors
+# stdout: "row 5 deleted from table authors"
 ```
 
 ## Setup
@@ -511,12 +550,23 @@ Available recipes:
     tstop                 # Stop test database container
 ```
 
-## Limitations:
+## Why this project?
 
-- Insert, update, or delete requests _cannot_ be made on tables without an `id`
-  column
-- Read requests ("pick" or "list") _can_ be made on tables without an `id`
-  column
+This project allows me to get a backend server going as soon as I have my
+tables defined for a database. If I decide I need to make changes to the table
+structures, then I don't need to make any changes to the backend. This allows
+me to perform simple CRUD operations right away and put off writing a more
+robust backend until I know exactly what I need.
+
+This makes `gopgrest` good for simple data retrieval on a home server, like
+tracking exercise data, managing a personal library, language learning, etc.;
+or as a placeholder backend for local development on a frontend application.
+
+I would not use this for a project that publicly exposes sensitive personal
+data.
+
+## Security measures
+
 - The app will route a request with a RESTful HTTP method + path combination
   for any valid table found in the following example query:
 
@@ -535,28 +585,3 @@ WHERE schemaname='public'"
 
 - Requests with JSON content (insert/update) or query params (list) must use
   valid column names and corresponding column types
-
-## Why this project?
-
-This project allows me to get a backend server going as soon as I have my
-tables defined for a database. If I decide I need to make changes to the table
-structures, then I don't need to make any changes to the backend. This allows
-me to perform simple CRUD operations right away and put off writing a more
-robust backend until I know exactly what I need.
-
-This makes `gopgrest` good for simple data retrieval on a home server, like
-tracking exercise data, managing a personal library, language learning, etc.;
-or as a placeholder backend for local development on a frontend application.
-
-I would not use this for a project that publicly exposes sensitive personal
-data.
-
-## Security measures
-
-These are the steps I took to be mindful of SQL injection in the service layer:
-
-1. Statements use parameter placeholders for all value
-2. Queries can only be made to tables from a whitelist, i.e.
-   `Pg_catalog.pg_tables`
-3. Columns in JSON requests are checked against the associated table. Any
-   invalid column name will throw an error before the query is executed
