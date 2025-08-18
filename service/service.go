@@ -49,7 +49,7 @@ func (s *Service) GetRowByID(tableName, idAsStr string) (types.RowData, error) {
 		return nil, err
 	}
 	if len(rowData) != 1 {
-		return nil, fmt.Errorf("Expected 1 result for pick, got %d", len(rowData))
+		return types.RowData{}, fmt.Errorf("%s (id: %s)", apperrors.GetByIdNotUnique, idAsStr)
 	}
 	return rowData[0], err
 }

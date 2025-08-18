@@ -133,8 +133,6 @@ func (h *APIHandler) GetRowsByRSQL(w http.ResponseWriter, r *http.Request) {
 	w.Write(jsonData)
 }
 
-
-
 // Insert adds a row to a table
 func (h *APIHandler) Insert(w http.ResponseWriter, r *http.Request) {
 	// Get table from URL path

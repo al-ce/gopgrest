@@ -27,7 +27,6 @@ func Test_ServiceGetRowByID(t *testing.T) {
 	}
 }
 
-
 func Test_RepoGetRows_NoQuery(t *testing.T) {
 	// GET /authors
 	t.Run("No RSQL query", func(t *testing.T) {
@@ -36,6 +35,7 @@ func Test_RepoGetRows_NoQuery(t *testing.T) {
 		serviceGetRowsTester(t, rawQuery, "authors", url)
 	})
 }
+
 func Test_ServiceGetRows_Filters(t *testing.T) {
 	t.Run("Single filter: equality (rsql `==`, SQL `=`)", func(t *testing.T) {
 		rawQuery := "SELECT * FROM authors WHERE forename = 'Anne'"

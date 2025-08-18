@@ -8,6 +8,7 @@ import (
 )
 
 var (
+	GetByIdNotUnique         = errors.New("GET by id returned multiple rows")
 	InsertWithNoRows         = errors.New("Cannot insert with no rows")
 	InsertColsDoNotMatch     = errors.New("Columns in rows to insert do not match")
 	InsertValTypesDoNotMatch = errors.New("Value types in rows to insert do not match")
