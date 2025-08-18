@@ -116,9 +116,9 @@ func (h *APIHandler) Insert(w http.ResponseWriter, r *http.Request) {
 	r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
 	r.Body.Close()
 
-	var data *[]types.RowData
+	var newRows []types.RowData
 	// Try decoding an array of JSON objects
-	if err = json.NewDecoder(r.Body).Decode(&data); err != nil {
+	if err = json.NewDecoder(r.Body).Decode(&newRows); err != nil {
 
 		// The request may not have been an array of JSON objects
 		// Try decoding a single JSON object
@@ -126,7 +126,7 @@ func (h *APIHandler) Insert(w http.ResponseWriter, r *http.Request) {
 		// Set a fresh ReadCloser with the body bytes
 		r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
 		r.Body.Close()
-		var singleRow *types.RowData
+		var singleRow types.RowData
 
 		if err = json.NewDecoder(r.Body).Decode(&singleRow); err != nil {
 
@@ -138,20 +138,16 @@ func (h *APIHandler) Insert(w http.ResponseWriter, r *http.Request) {
 		} else {
 			// If it was a single object, assign it as the only item in the
 			// data array
-			data = &[]types.RowData{*singleRow}
+			newRows = []types.RowData{singleRow}
 		}
 	}
 
-	// Insert new rows into the database one at a time so we can validate data
-	newIds := []int64{}
-	for _, row := range *data {
-		newRowId, err := h.Service.InsertRow(&row, table)
-		newIds = append(newIds, newRowId)
-		if err != nil {
-			log.Println(err)
-			InternalServerErrorHandler(w, r, fmt.Sprintf("%v", err))
-			return
-		}
+	// Insert new rows into the database
+	newIds, err := h.Service.InsertRows(newRows, table)
+	if err != nil {
+		log.Println(err)
+		InternalServerErrorHandler(w, r, fmt.Sprintf("%v", err))
+		return
 	}
 
 	// Set response

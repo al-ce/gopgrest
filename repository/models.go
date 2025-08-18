@@ -51,12 +51,6 @@ type Repository struct {
 	TablesRepr TablesRepr
 }
 
-// ExecResult contains information from the result of an insert query
-type ExecResult struct {
-	ID    int64
-	Error error
-}
-
 // NewRepository returns a new Repository
 func NewRepository(db QueryExecutor, tables []Table) Repository {
 	return Repository{

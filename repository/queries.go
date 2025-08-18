@@ -50,33 +50,61 @@ func (r *Repository) GetRowsByRSQL(tableName string, query rsql.Query) (*sql.Row
 	return rows, nil
 }
 
-// InsertRow inserts a new row into a specified table
-func (r *Repository) InsertRow(tableName string, newRow *types.RowData) (result ExecResult) {
-	// Create cols/values/placeholders slices in consistent order
-	var cols []string
-	var values []any
-	var placeholders []string
-	var i int
-	for k, v := range *newRow {
+// InsertRows inserts a new row into a specified table
+func (r *Repository) InsertRows(tableName string, newRows []types.RowData) ([]int64, error) {
+	ids := make([]int64, len(newRows))
+	if len(newRows) == 0 {
+		return ids, fmt.Errorf("Nothing to insert")
+	}
+
+	var cols []string         // column names for `INSERT INTO (col1, col2...)`
+	var args []any            // values to pass to QueryRow
+	var placeholders []string // incrementing placeholders e.g. `VALUES (($1, $2), ($3, $4)...)`
+	var p int                 // tracks the value of the placeholder
+
+	for k := range newRows[0] {
 		cols = append(cols, k)
-		values = append(values, v)
-		placeholders = append(placeholders, fmt.Sprintf("$%d", i+1))
-		i++
+	}
+	// Sort cols so we insert values alphabetically
+	slices.Sort(cols)
+
+	for _, newRow := range newRows {
+		rowPlaceholders := make([]string, len(cols))
+		colIdx := 0
+		// Append values in corresponding order of cols
+		for _, col := range cols {
+			val := newRow[col]
+			args = append(args, val)
+			rowPlaceholders[colIdx] = fmt.Sprintf("$%d", p+1)
+			p++
+			colIdx++
+		}
+		placeholders = append(placeholders, fmt.Sprintf("(%s)", strings.Join(rowPlaceholders, ",")))
 	}
 
 	// Build create query
 	createStmnt := fmt.Sprintf("INSERT INTO %s (", tableName) +
 		strings.Join(cols, ", ") +
-		") values (" +
+		") VALUES " +
 		strings.Join(placeholders, ",") +
-		") RETURNING id"
+		" RETURNING id"
 
-	log.Printf("Exec query\n\t%s\nValues: %v\n", createStmnt, values)
+	log.Printf("Exec query\n\t%s\nValues: %v\n", createStmnt, args)
 
 	// Execute insert query
-	row := r.DB.QueryRow(createStmnt, values...)
-	result.Error = row.Scan(&result.ID)
-	return
+	rows, err := r.DB.Query(createStmnt, args...)
+	if err != nil {
+		return ids, err
+	}
+	defer rows.Close()
+
+	var i int
+	for rows.Next() {
+		rows.Scan(&ids[i])
+		i++
+	}
+
+	return ids, nil
 }
 
 // UpdateRowByID update columns in a table row by id

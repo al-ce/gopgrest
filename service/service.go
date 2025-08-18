@@ -90,21 +90,53 @@ func (s *Service) GetRowsByRSQL(tableName string, url string) ([]types.RowData, 
 	return listQueryResults, nil
 }
 
-// InsertRow inserts a new row in a specified table
-func (s *Service) InsertRow(newRow *types.RowData, tableName string) (int64, error) {
+// InsertRows inserts new rows in a specified table If multiple rows are
+// inserted, they must each have the same columns and value types
+func (s *Service) InsertRows(newRows []types.RowData, tableName string) ([]int64, error) {
+	var ids []int64
+	if len(newRows) == 0 {
+		return ids, fmt.Errorf("No rows to insert")
+	}
 	table, err := s.Repo.GetTable(tableName)
 	if err != nil {
-		return -1, err
+		return ids, err
 	}
 
 	// Each column in the insert data must exist in the table
-	cols := slices.Collect(maps.Keys(*newRow))
+	cols := slices.Collect(maps.Keys(newRows[0]))
 	if err := verifyColumns(table, cols); err != nil {
-		return -1, err
+		return ids, err
 	}
 
-	result := s.Repo.InsertRow(tableName, newRow)
-	return result.ID, result.Error
+	// If there's only one row to insert, skip the remaining consistency checks
+	if len(newRows) == 1 {
+		return s.Repo.InsertRows(tableName, newRows)
+	}
+
+	// Compare cols and value types of other rows against first row
+	slices.Sort(cols)
+	valTypes := make(map[string]any, len(cols))
+	for _, col := range cols {
+		valTypes[col] = fmt.Sprintf("%T", newRows[0][col])
+	}
+
+	// Each row must have matching columns and value types
+	for _, row := range newRows {
+		// Compare cols
+		thisCols := slices.Collect(maps.Keys(row))
+		slices.Sort(thisCols)
+		if slices.Compare(cols, thisCols) != 0 {
+			return ids, fmt.Errorf("Columns do not match: %v %v", cols, thisCols)
+		}
+		// Compare value types
+		for k, v := range row {
+			if valTypes[k] != fmt.Sprintf("%T", v) {
+				return ids, fmt.Errorf("Non-matching type for col %s: %v %v", k, valTypes[k], v)
+			}
+		}
+	}
+
+	return s.Repo.InsertRows(tableName, newRows)
 }
 
 // UpdateRowByID updates any number of valid columns with separate calls to
