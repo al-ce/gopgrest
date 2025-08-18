@@ -19,9 +19,9 @@ The following endpoints are valid for each table in the database with an `id`:
 | `/{tablename}/{id}`          | DELETE | Delete a row by ID          | ---                | `row {id} deleted from table {tablename}`  |
 | `/{tablename}?{querystring}` | DELETE | Delete rows by query params | ---                | `rows deleted in table {tablename}: {n}`   |
 
-## REST Query language (based on RSQL)
+## REST Query language (based on restSQL)
 
-The project has a goal to be compatible with the [rsql-jpa-specification](https://github.com/perplexhub/rsql-jpa-specification) with additional features.
+This project is aiming to implement a URL query parameter parser similar to [restSQL](http://restsql.org/doc/Overview.html).
 
 Query parameters can be added to a GET request after a `?` query separator. Keys and their values are separated by `=`. Multiple subqueries can be joined with `&`.
 
@@ -87,6 +87,8 @@ rows updated in table authors: 1
 ```
 
 Unlike a GET request, query parameters in a POST or DELETE request do not require the `filter` key or a `=` separator before the column/value conditionals.
+
+## Query parameter specifications
 
 ### Filter
 
