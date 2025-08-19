@@ -25,13 +25,13 @@ func (r *Repository) GetRowByID(tableName string, id int64) (*sql.Rows, error) {
 	)
 }
 
-// GetRowsByRSQL gets rows from a table with optional filter params
-func (r *Repository) GetRowsByRSQL(tableName string, query rsql.Query) (*sql.Rows, error) {
+// GetRowsByRSQL gets rows from a table with optional query params
+func (r *Repository) GetRowsByRSQL(tableName string, query rsql.QueryParams) (*sql.Rows, error) {
 	// Build list of columns to select
 	cols := buildColumnsToReturn(query)
 
-	// Build list query with optional WHERE conditional filters
-	conditional, values, err := buildWhereConditions(query.Filters, 0)
+	// Build list query with optional WHERE conditional statements
+	conditional, values, err := buildWhereConditions(query.Conditions, 0)
 	if err != nil {
 		return nil, err
 	}
@@ -107,7 +107,7 @@ func (r *Repository) InsertRows(tableName string, newRows []types.RowData) ([]in
 	return ids, nil
 }
 
-func (r *Repository) UpdateRowsByRSQL(tableName string, filters []rsql.Filter, updatedRow *types.RowData) (int64, error) {
+func (r *Repository) UpdateRowsByRSQL(tableName string, conditions []rsql.Condition, updatedRow *types.RowData) (int64, error) {
 	var assignments []string
 	var values []any
 	var assignmentVals []any
@@ -117,7 +117,7 @@ func (r *Repository) UpdateRowsByRSQL(tableName string, filters []rsql.Filter, u
 		assignmentVals = append(assignmentVals, v)
 		placeholder++
 	}
-	conditional, conditionalVals, err := buildWhereConditions(filters, placeholder)
+	conditional, conditionalVals, err := buildWhereConditions(conditions, placeholder)
 	if err != nil {
 		return -1, err
 	}
@@ -145,7 +145,7 @@ func (r *Repository) UpdateRowsByRSQL(tableName string, filters []rsql.Filter, u
 		return -1, err
 	}
 	if rowsAffected == 0 {
-		return -1, apperrors.NewUpdateNoMatchingFiltersErr(tableName, filters)
+		return -1, apperrors.NewUpdateNoMatchingConditionsErr(tableName, conditions)
 	}
 	return rowsAffected, nil
 }
@@ -156,13 +156,13 @@ func (r *Repository) DeleteRowByID(tableName string, id int64) (int64, error) {
 	return r.execDeleteQuery(deleteStmt, []any{id})
 }
 
-// DeleteRowsByRSQL removes any rows matching the Filter in the Query
-func (r *Repository) DeleteRowsByRSQL(tableName string, filters []rsql.Filter) (int64, error) {
+// DeleteRowsByRSQL removes any rows matching the Condition in the Query
+func (r *Repository) DeleteRowsByRSQL(tableName string, conditions []rsql.Condition) (int64, error) {
 	// Do not exec delete with empty query
-	if len(filters) == 0 {
-		return -1, apperrors.DeleteWithNoFilters
+	if len(conditions) == 0 {
+		return -1, apperrors.DeleteWithNoConditions
 	}
-	conditional, values, err := buildWhereConditions(filters, 0)
+	conditional, values, err := buildWhereConditions(conditions, 0)
 	if err != nil {
 		return -1, err
 	}

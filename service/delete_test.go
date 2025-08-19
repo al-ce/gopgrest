@@ -14,7 +14,7 @@ func Test_ServiceDeleteRowsByRSQL(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Delete rows with matching filter
+	// Delete rows with matching conditions
 	url := "/authors?forename==Anne"
 	rowsAffected, err := service.DeleteRowsByRSQL("authors", url)
 	if err != nil {

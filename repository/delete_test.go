@@ -37,28 +37,28 @@ func Test_DeleteRowsByRSQL(t *testing.T) {
 	// DELETE /authors?...
 	t.Run("No query", func(t *testing.T) {
 		repo := tests.NewTestRepo(t)
-		rowsAffected, err := repo.DeleteRowsByRSQL("authors", []rsql.Filter{})
-		if !errors.Is(err, apperrors.DeleteWithNoFilters) {
-			t.Errorf("Expected error '%s', got '%s'", apperrors.DeleteWithNoFilters, err)
+		rowsAffected, err := repo.DeleteRowsByRSQL("authors", []rsql.Condition{})
+		if !errors.Is(err, apperrors.DeleteWithNoConditions) {
+			t.Errorf("Expected error '%s', got '%s'", apperrors.DeleteWithNoConditions, err)
 		}
 		if rowsAffected != -1 {
 			t.Errorf("Expected -1 rows affected (error), got %d", rowsAffected)
 		}
 	})
 
-	// DELETE /authors?filter=forname==Anne
-	t.Run("Delete with single filter condition", func(t *testing.T) {
+	// DELETE /authors?where=forname==Anne
+	t.Run("Delete with single where condition", func(t *testing.T) {
 		repo := tests.NewTestRepo(t)
 		expCount, err := tests.CountRows(repo, "authors", "WHERE forename='Anne'")
 		if err != nil {
 			t.Fatal(err)
 		}
-		filters := []rsql.Filter{
+		conditions := []rsql.Condition{
 			{Column: "forename", Values: []string{"Anne"}, SQLOperator: "="},
 		}
-		rowsAffected, err := repo.DeleteRowsByRSQL("authors", filters)
+		rowsAffected, err := repo.DeleteRowsByRSQL("authors", conditions)
 		if err != nil {
-			t.Fatalf("Could not delete with filters %v: %s", filters, err)
+			t.Fatalf("Could not delete with conditions %v: %s", conditions, err)
 		}
 		if rowsAffected != expCount {
 			t.Errorf("Expected %d rows deleted, got %d", expCount, rowsAffected)
@@ -70,20 +70,20 @@ func Test_DeleteRowsByRSQL(t *testing.T) {
 		}
 	})
 
-	// DELETE /authors?filter=forname==Anne;born<1900
-	t.Run("Delete with multiple filter conditions", func(t *testing.T) {
+	// DELETE /authors?where=forname==Anne;born<1900
+	t.Run("Delete with multiple conditions", func(t *testing.T) {
 		repo := tests.NewTestRepo(t)
 		expCount, err := tests.CountRows(repo, "authors", "WHERE forename='Anne' and born<1900")
 		if err != nil {
 			t.Fatal(err)
 		}
-		filters := []rsql.Filter{
+		conditions := []rsql.Condition{
 			{Column: "forename", Values: []string{"Anne"}, SQLOperator: "="},
 			{Column: "born", Values: []string{"1900"}, SQLOperator: "<"},
 		}
-		rowsAffected, err := repo.DeleteRowsByRSQL("authors", filters)
+		rowsAffected, err := repo.DeleteRowsByRSQL("authors", conditions)
 		if err != nil {
-			t.Fatalf("Could not delete with filters %v: %s", filters, err)
+			t.Fatalf("Could not delete with conditions %v: %s", conditions, err)
 		}
 		if rowsAffected != expCount {
 			t.Errorf("Expected %d rows deleted, got %d", expCount, rowsAffected)

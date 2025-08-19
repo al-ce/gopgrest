@@ -106,7 +106,7 @@ func (h *APIHandler) GetRowByID(w http.ResponseWriter, r *http.Request) {
 	w.Write(jsonData)
 }
 
-// GetRowsByRSQL gets rows from a table in the database, optionally filtering by query
+// GetRowsByRSQL gets rows from a table in the database with optional query
 // params
 func (h *APIHandler) GetRowsByRSQL(w http.ResponseWriter, r *http.Request) {
 	// Get table from URL path
@@ -205,7 +205,8 @@ func (h *APIHandler) UpdateRowByID(w http.ResponseWriter, r *http.Request) {
 	h.updateRows(w, r, url)
 }
 
-// UpdateRowByRSQL updates any rows in the table matching the filters in an RSQL query
+// UpdateRowByRSQL updates any rows in the table matching the conditions in an
+// RSQL query
 func (h *APIHandler) UpdateRowByRSQL(w http.ResponseWriter, r *http.Request) {
 	h.updateRows(w, r, r.URL.String())
 }
@@ -254,7 +255,8 @@ func (h *APIHandler) DeleteRowByID(w http.ResponseWriter, r *http.Request) {
 	h.deleteRows(w, r, url)
 }
 
-// DeleteRowsByRSQL deletes any rows in the table matching the filters in an RSQL query
+// DeleteRowsByRSQL deletes any rows in the table matching the conditions in
+// an RSQL query
 func (h *APIHandler) DeleteRowsByRSQL(w http.ResponseWriter, r *http.Request) {
 	h.deleteRows(w, r, r.URL.String())
 }
@@ -266,7 +268,7 @@ func (h *APIHandler) deleteRows(w http.ResponseWriter, r *http.Request, url stri
 		InternalServerErrorHandler(w, r, err.Error())
 	}
 
-	// Delete rows by rsql filters
+	// Delete rows by rsql conditions
 	rowsAffected, err := h.Service.DeleteRowsByRSQL(tableName, url)
 	if err != nil {
 		log.Println(err)

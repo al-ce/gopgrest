@@ -9,38 +9,38 @@ import (
 )
 
 // newRSQLQuery builds a ParsedURL from the URL
-func NewRSQLQuery(url string) (Query, error) {
+func NewRSQLQuery(url string) (QueryParams, error) {
 	// Separate table (t) from URL query params (p)
 	pq, err := newPathQuery(url)
 	if err != nil || pq == nil {
-		return Query{}, err
+		return QueryParams{}, err
 	}
-	query := Query{}
+	query := QueryParams{}
 	query.Tables = append(query.Tables, pq.Resource)
 
 	// Example URL query:
-	// /authors?=filter=forename=in=Ann,Anne;surname=Carson&fields=forename,surname
+	// /authors?where=forename=in=Ann,Anne;surname=Carson&select=forename,surname
 
 	// Parse clauses from URL query params, split at "&"
-	// e.g. "filter=..." + "fields=..."
+	// e.g. "where=..." + "select=..."
 	for clause := range strings.SplitSeq(pq.Query, "&") {
 		keyword, namedArgs, err := parseClause(clause)
 		if err != nil {
-			return Query{}, err
+			return QueryParams{}, err
 		}
 
 		var clauseErr error
 		switch keyword {
-		case FILTER: // e.g ?filter=
-			// Query filters are split at ";" and checked with "==" or "=in="
-			filters, err := NewFilters(namedArgs)
+		case WHERE: // e.g ?where=
+			// WHERE conditions are split at ";" and checked with "==" or "=in="
+			conditions, err := NewWhereConditions(namedArgs)
 			clauseErr = err
-			query.Filters = filters
-		case FIELDS: // e.g. ?fields=
-			// Query fields are split at ","
-			fields, err := newFields(namedArgs)
+			query.Conditions = conditions
+		case SELECT: // e.g. ?select=
+			// Select columns are split at ","
+			columns, err := newSelect(namedArgs)
 			clauseErr = err
-			query.Fields = fields
+			query.Columns = columns
 		case JOIN:
 			fallthrough
 		case INNERJOIN:
@@ -57,7 +57,7 @@ func NewRSQLQuery(url string) (Query, error) {
 			}
 		}
 		if clauseErr != nil {
-			return Query{}, clauseErr
+			return QueryParams{}, clauseErr
 		}
 
 	}
@@ -82,7 +82,7 @@ func newPathQuery(url string) (*PathQuery, error) {
 }
 
 // parseClause validates the lhs and rhs of a clause string, e.g.
-// `fields=forename,surname` should split into two substrings at the `=` char
+// `select=forename,surname` should split into two substrings at the `=` char
 // and the keyword (lhs) should be an implemented clause keyword
 func parseClause(clauseStr string) (string, string, error) {
 	// Split clause at assignment '=' char, not equality '==' chars
@@ -100,54 +100,54 @@ func parseClause(clauseStr string) (string, string, error) {
 	return keyword, values, nil
 }
 
-// NewFilters makes a rsql.Filters value from the rhs of a URL filter query param
-// e.g. the rhs of `filter=forename=in=Anne,Ann;surname=Carson`
-func NewFilters(filterConditionals string) ([]Filter, error) {
-	filters := []Filter{}
-	// Multiple filters allowed with ; separator
-	for cond := range strings.SplitSeq(filterConditionals, ";") {
-		f, err := newFilter(cond)
+// NewWhereConditions makes a rsql.Conditions value from the rhs of a URL 'WHERE' query param
+// e.g. the rhs of `where=forename=in=Anne,Ann;surname=Carson`
+func NewWhereConditions(whereConditions string) ([]Condition, error) {
+	conditions := []Condition{}
+	// Multiple conditions allowed with ; separator
+	for cond := range strings.SplitSeq(whereConditions, ";") {
+		f, err := newCondition(cond)
 		if err != nil {
-			return []Filter{}, err
+			return []Condition{}, err
 		}
-		filters = append(filters, *f)
+		conditions = append(conditions, *f)
 	}
-	return filters, nil
+	return conditions, nil
 }
 
-// newFilter creates a new Filter from an item in a ';' separated string of
-// `{col}=[values]` filter conditionals
-func newFilter(cond string) (*Filter, error) {
-	// Split filter at "==" or "=in=" or "=out=" etc.
-	ReFilterOperator := getOperatorSplitRegex()
-	splitFilter := ReFilterOperator.Split(cond, -1)
-	if len(splitFilter) != 2 {
-		return nil, fmt.Errorf("Malformed FILTERS clause in url: %s\n", cond)
+// newCondition creates a new Condition from an item in a ';' separated string of
+// `{col}=[values]` WHERE conditions
+func newCondition(cond string) (*Condition, error) {
+	// Split condition at "==" or "=in=" or "=out=" etc.
+	ReConditionOperator := getOperatorSplitRegex()
+	splitCondition := ReConditionOperator.Split(cond, -1)
+	if len(splitCondition) != 2 {
+		return nil, fmt.Errorf("Malformed WHERE clause in url: %s\n", cond)
 	}
-	operator := ReFilterOperator.FindString(cond)
-	filterCol := splitFilter[0]
-	filterVals := strings.Split(splitFilter[1], ",")
+	operator := ReConditionOperator.FindString(cond)
+	conditionCol := splitCondition[0]
+	conditionVals := strings.Split(splitCondition[1], ",")
 
 	nullCheck := hasNullCheck(operator)
 	// operator may be empty string and Split always returns array len 1
 	// so handle case of no values, except for isnull/isnotnull
-	if !nullCheck && len(filterVals) == 1 && filterVals[0] == "" {
-		return nil, fmt.Errorf("attempt to filter on col %s with no values", filterCol)
+	if !nullCheck && len(conditionVals) == 1 && conditionVals[0] == "" {
+		return nil, fmt.Errorf("Condition on col %s with no values", conditionCol)
 	}
 	// null check conditions should not have any rhs values, e.g.
-	// `filter=born=isnull=` is valid
-	// `filter=born=isnull=1800` is not valid
-	if nullCheck && len(filterVals) >= 1 && filterVals[0] != "" {
+	// `where=born=isnull=` is valid
+	// `where=born=isnull=1800` is not valid
+	if nullCheck && len(conditionVals) >= 1 && conditionVals[0] != "" {
 		return nil, fmt.Errorf("cannot add values to null check conditions")
 	}
 
 	validOps := slices.Collect(maps.Keys(OperatorToSQLMap))
 	if !slices.Contains(validOps, operator) {
-		return nil, fmt.Errorf("invalid operator %s on filter %s", operator, cond)
+		return nil, fmt.Errorf("invalid operator %s on condition %s", operator, cond)
 	}
-	return &Filter{
-		Column:      filterCol,
-		Values:      filterVals,
+	return &Condition{
+		Column:      conditionCol,
+		Values:      conditionVals,
 		SQLOperator: OperatorToSQLMap[operator],
 	}, nil
 }
@@ -175,23 +175,23 @@ func hasNullCheck(operator string) bool {
 		operator)
 }
 
-// newFields makes a rsql.Fields value from the RHS of a URL fields query param
-// e.g. the rhs of `fields=forename,surename`
-func newFields(selectedFields string) ([]Field, error) {
-	fields := []Field{}
-	for sf := range strings.SplitSeq(selectedFields, ",") {
+// newSelect makes a rsql.Columns value from the RHS of a URL select query param
+// e.g. the rhs of `select=forename,surename`
+func newSelect(selectedColumns string) ([]Column, error) {
+	columns := []Column{}
+	for sf := range strings.SplitSeq(selectedColumns, ",") {
 		if sf == "" {
-			return nil, fmt.Errorf("Empty field in %s", selectedFields)
+			return nil, fmt.Errorf("Empty column in %s", selectedColumns)
 		}
 
-		field := Field{}
+		column := Column{}
 
 		// Check for alias indicated by `:` e.g. `genres.name:genre`
 		alias := strings.Split(sf, ":")
 		if len(alias) > 2 {
 			return nil, fmt.Errorf("Too many alias separators in %s", sf)
 		} else if len(alias) == 2 {
-			field.Alias = alias[1]
+			column.Alias = alias[1]
 		}
 		if slices.Contains(alias, "") {
 			return nil, fmt.Errorf("Empty column operand in %s", sf)
@@ -202,19 +202,19 @@ func newFields(selectedFields string) ([]Field, error) {
 		if len(col) > 2 {
 			return nil, fmt.Errorf("Too many qualifier separators in %s", sf)
 		} else if len(col) == 2 {
-			field.Qualifier = col[0]
-			field.Column = col[1]
+			column.Qualifier = col[0]
+			column.Name = col[1]
 		} else {
-			field.Column = col[0]
+			column.Name = col[0]
 		}
 		if slices.Contains(col, "") {
 			return nil, fmt.Errorf("Empty column operand in %s", sf)
 		}
 
-		fields = append(fields, field)
+		columns = append(columns, column)
 
 	}
-	return fields, nil
+	return columns, nil
 }
 
 // newJoins makes a rsql.Joins value from the RHS of a URL join query param

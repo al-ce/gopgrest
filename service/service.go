@@ -55,7 +55,7 @@ func (s *Service) GetRowByID(tableName, idAsStr string) (types.RowData, error) {
 	return rowData[0], err
 }
 
-// GetRowsByRSQL gets rows from a table with optional filter params
+// GetRowsByRSQL gets rows from a table with optional 'where' params
 func (s *Service) GetRowsByRSQL(tableName string, url string) ([]types.RowData, error) {
 	// Get table info for verification
 	_, err := s.Repo.GetTable(tableName)
@@ -153,7 +153,7 @@ func (s *Service) UpdateRowsByRSQL(tableName, url string, updateData *types.RowD
 		return -1, err
 	}
 
-	filters, err := s.parseFilters(tableName, url)
+	conditions, err := s.parseWhereClause(tableName, url)
 	if err != nil {
 		return -1, err
 	}
@@ -174,7 +174,7 @@ func (s *Service) UpdateRowsByRSQL(tableName, url string, updateData *types.RowD
 	}
 
 	// Update row
-	return s.Repo.UpdateRowsByRSQL(tableName, filters, updateData)
+	return s.Repo.UpdateRowsByRSQL(tableName, conditions, updateData)
 }
 
 func (s *Service) DeleteRowsByRSQL(tableName, url string) (int64, error) {
@@ -183,32 +183,32 @@ func (s *Service) DeleteRowsByRSQL(tableName, url string) (int64, error) {
 	if err != nil {
 		return -1, err
 	}
-	filters, err := s.parseFilters(tableName, url)
+	conditions, err := s.parseWhereClause(tableName, url)
 	if err != nil {
 		return -1, err
 	}
-	return s.Repo.DeleteRowsByRSQL(tableName, filters)
+	return s.Repo.DeleteRowsByRSQL(tableName, conditions)
 }
 
-// parsFilters parses and validates any filters found in a url
-func (s *Service) parseFilters(tableName, url string) ([]rsql.Filter, error) {
-	filters := []rsql.Filter{}
+// parsWhereClause parses and validates any 'WHERE' conditions found in a url
+func (s *Service) parseWhereClause(tableName, url string) ([]rsql.Condition, error) {
+	conditions := []rsql.Condition{}
 	ReURLWithParams := regexp.MustCompile(`^/\w+\?(.*)?$`)
 	if !ReURLWithParams.MatchString(url) {
-		return filters, nil
+		return conditions, nil
 	}
 
-	// Make new Filter struct array from the query params
+	// Make new  struct array from the query params
 	queryParams := ReURLWithParams.FindStringSubmatch(url)[1]
-	filters, err := rsql.NewFilters(queryParams)
+	conditions, err := rsql.NewWhereConditions(queryParams)
 	if err != nil {
-		return []rsql.Filter{}, err
+		return []rsql.Condition{}, err
 	}
 
 	// Each col in query params must exist in given table
-	if err := s.ValidateRSQLFilters([]string{tableName}, filters); err != nil {
-		return []rsql.Filter{}, err
+	if err := s.ValidateRSQLConditions([]string{tableName}, conditions); err != nil {
+		return []rsql.Condition{}, err
 	}
 
-	return filters, nil
+	return conditions, nil
 }

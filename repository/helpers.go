@@ -24,40 +24,40 @@ func (r *Repository) IsValidColumn(table Table, col string) bool {
 	return ok
 }
 
-// buildWhereConditions builds a SQL WHERE clause from `filters`. Placeholders
-// values begin at `start`+1, e.g. if `start` == 5, a WHERE clause would begin
-// with `WHERE x = $6 AND ...`
-func buildWhereConditions(filters []rsql.Filter, start int) (string, []any, error) {
+// buildWhereConditions builds a SQL WHERE clause from `conditions`.
+// Placeholders values begin at `start`+1, e.g. if `start` == 5, a
+// WHERE clause would begin with `WHERE x = $6 AND ...`
+func buildWhereConditions(conditions []rsql.Condition, start int) (string, []any, error) {
 	// If no params were passed, there should not be a WHERE clause
-	if len(filters) == 0 {
+	if len(conditions) == 0 {
 		return "", []any{}, nil
 	}
 
 	// values holds the order of column values that matches the placeholders
 	values := []any{}
-	// conditions is an array of `col IN ([values])` statements joined by AND
-	conditions := []string{}
+	// sqlConditions is an array of `col IN ([values])` statements joined by AND
+	sqlConditions := []string{}
 	// n is the number of the placeholder in the statement e.g. $1
 	n := start + 1
 
-	for _, f := range filters {
+	for _, cond := range conditions {
 		var condition string
 
 		// Null checks do not require placeholders or appending values array
-		if slices.Contains([]string{"IS NULL", "IS NOT NULL"}, f.SQLOperator) {
-			condition = fmt.Sprintf("%s %s", f.Column, f.SQLOperator)
-			conditions = append(conditions, condition)
+		if slices.Contains([]string{"IS NULL", "IS NOT NULL"}, cond.SQLOperator) {
+			condition = fmt.Sprintf("%s %s", cond.Column, cond.SQLOperator)
+			sqlConditions = append(sqlConditions, condition)
 			continue
 		}
 
-		// Check for empty filter values
-		if len(f.Values) == 0 {
-			return "", []any{}, fmt.Errorf("attempt to filter on col %s with no values", f.Column)
+		// Check for empty condition values
+		if len(cond.Values) == 0 {
+			return "", []any{}, fmt.Errorf("Condition for col %s with no values", cond.Column)
 		}
 
 		// Append to values array in the same order we add conditions
 		placeholders := []string{}
-		for _, v := range f.Values {
+		for _, v := range cond.Values {
 			// Placeholder value +1 should match values index
 			placeholders = append(placeholders, fmt.Sprintf("$%d", n))
 			values = append(values, v)
@@ -68,37 +68,37 @@ func buildWhereConditions(filters []rsql.Filter, start int) (string, []any, erro
 		// `forename IN ($1,$2)`
 		condition = fmt.Sprintf(
 			"%s %s (%s)",
-			f.Column,
-			f.SQLOperator,
+			cond.Column,
+			cond.SQLOperator,
 			strings.Join(placeholders, ","),
 		)
 
-		conditions = append(conditions, condition)
+		sqlConditions = append(sqlConditions, condition)
 	}
 
-	conditional := fmt.Sprintf("WHERE %s", strings.Join(conditions, " AND "))
+	conditional := fmt.Sprintf("WHERE %s", strings.Join(sqlConditions, " AND "))
 	return conditional, values, nil
 }
 
-func buildColumnsToReturn(query rsql.Query) string {
+func buildColumnsToReturn(query rsql.QueryParams) string {
 	// If no columns were specified, the SELECT statement should be `SELECT *`
-	if len(query.Fields) == 0 {
+	if len(query.Columns) == 0 {
 		return "*"
 	}
 
 	cols := []string{}
-	for _, f := range query.Fields {
+	for _, f := range query.Columns {
 		if f.Alias != "" {
-			cols = append(cols, fmt.Sprintf("%s AS %s", f.Column, f.Alias))
+			cols = append(cols, fmt.Sprintf("%s AS %s", f.Name, f.Alias))
 		} else {
-			cols = append(cols, f.Column)
+			cols = append(cols, f.Name)
 		}
 	}
 	return strings.Join(cols, ", ")
 }
 
 // buildJoinRelations builds SQL JOIN clauses
-func buildJoinRelations(query rsql.Query) string {
+func buildJoinRelations(query rsql.QueryParams) string {
 	if len(query.Joins) == 0 {
 		return ""
 	}

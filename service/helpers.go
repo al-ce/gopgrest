@@ -76,14 +76,14 @@ func makeScannedRowMap(cols []string, rowValues []any) types.RowData {
 	return scannedRow
 }
 
-func (s *Service) validateRSQLQuery(query rsql.Query) error {
+func (s *Service) validateRSQLQuery(query rsql.QueryParams) error {
 	if err := s.validateRSQLTables(query.Tables); err != nil {
 		return err
 	}
-	if err := s.ValidateRSQLFilters(query.Tables, query.Filters); err != nil {
+	if err := s.ValidateRSQLConditions(query.Tables, query.Conditions); err != nil {
 		return err
 	}
-	if err := s.validateRSQLFields(query.Fields); err != nil {
+	if err := s.validateRSQLColumns(query.Columns); err != nil {
 		return err
 	}
 	if err := s.validateRSQLJoins(query.Joins); err != nil {
@@ -92,9 +92,9 @@ func (s *Service) validateRSQLQuery(query rsql.Query) error {
 	return nil
 }
 
-func (s *Service) ValidateRSQLFilters(tableNames []string, filters []rsql.Filter) error {
-	// Validate: each column in the query filter should be valid for its table
-	for _, f := range filters {
+func (s *Service) ValidateRSQLConditions(tableNames []string, conditions []rsql.Condition) error {
+	// Validate: each column in the WHERE clause should be valid for its table
+	for _, f := range conditions {
 		// Check if column is prefixed with a table, e.g. authors.forename
 		prefixedCol := strings.Split(f.Column, ".")
 		if len(prefixedCol) == 2 {
@@ -145,17 +145,17 @@ func (s *Service) validateRSQLTables(tables []string) error {
 	return nil
 }
 
-func (s *Service) validateRSQLFields(fields []rsql.Field) error {
-	for _, f := range fields {
+func (s *Service) validateRSQLColumns(columns []rsql.Column) error {
+	for _, f := range columns {
 
-		// If the field has a qualifier, check the column against that table
+		// If the column has a qualifier, check the column against that table
 		if f.Qualifier != "" {
 			t, err := s.Repo.GetTable(f.Qualifier)
 			if err != nil {
 				return err
 			}
-			if !s.Repo.IsValidColumn(*t, f.Column) {
-				return fmt.Errorf("field %s not found in table %s", f, f.Qualifier)
+			if !s.Repo.IsValidColumn(*t, f.Name) {
+				return fmt.Errorf("column %s not found in table %s", f, f.Qualifier)
 			}
 			continue
 		}
@@ -163,13 +163,13 @@ func (s *Service) validateRSQLFields(fields []rsql.Field) error {
 		// Otherwise, check all tables
 		foundCol := false
 		for _, t := range s.Repo.Tables {
-			if s.Repo.IsValidColumn(t, f.Column) {
+			if s.Repo.IsValidColumn(t, f.Name) {
 				foundCol = true
 				break
 			}
 		}
 		if !foundCol {
-			return fmt.Errorf("field %s not found in any tables", f)
+			return fmt.Errorf("column %s not found in any tables", f)
 		}
 	}
 	return nil
@@ -205,15 +205,15 @@ func (s *Service) validateRSQLJoins(joins []rsql.JoinRelation) error {
 	return nil
 }
 
-func (s *Service) newRSQLQuery(url string) (rsql.Query, error) {
+func (s *Service) newRSQLQuery(url string) (rsql.QueryParams, error) {
 	// Parse RSQL
 	query, err := rsql.NewRSQLQuery(url)
 	if err != nil {
-		return rsql.Query{}, err
+		return rsql.QueryParams{}, err
 	}
 	// Validate RSQL
 	if err := s.validateRSQLQuery(query); err != nil {
-		return rsql.Query{}, err
+		return rsql.QueryParams{}, err
 	}
 	return query, nil
 }

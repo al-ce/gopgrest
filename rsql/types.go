@@ -3,7 +3,7 @@ package rsql
 // PathQuery holds the parts of a RESTful GET request's URL that are translated
 // to a SQL SELECT query. In the example:
 //
-// `GET /authors?filter=forename=in=Ann,Anne;surname=Carson&fields=forename,surname`
+// `GET /authors?where=forename=in=Ann,Anne;surname=Carson&select=forename,surname`
 //
 // the Resource and Query are split at the `?` character
 type PathQuery struct {
@@ -11,31 +11,31 @@ type PathQuery struct {
 	Query    string
 }
 
-// Query is a parsed PathQuery that is used to build a SQL query.
-type Query struct {
-	Tables  []string       // Tables to SELECT in either FROM or JOIN
-	Fields  []Field        // Fields to return in SELECT query
-	Filters []Filter       // Conditionals for WHERE clause
-	Joins   []JoinRelation // Relations for JOIN clauses
+// QueryParams is a parsed PathQuery that is used to build a SQL query.
+type QueryParams struct {
+	Tables     []string       // Tables to SELECT in either FROM or JOIN
+	Columns    []Column       // Columns to return in SELECT query
+	Conditions []Condition    // Conditionals for WHERE clause
+	Joins      []JoinRelation // Relations for JOIN clauses
 }
 
-// Filter is the parsed result of one of any `;` separated filter conditions in
+// Condition is the parsed result of one of any `;` separated 'where' conditions in
 // a URL query. The example:
 //
-// `GET /authors?filter=forename=in=Ann,Anne;surname=!=Carson`
+// `GET /authors?where=forename=in=Ann,Anne;surname=!=Carson`
 //
-// would be parsed as two seaparte Filter values:
+// would be parsed as two separate Condition values:
 // {Column: "forename", Values: []string{"Ann", "Anne"}, SQLOperator: "IN" }
 // {Column: "surname", Values: []string{"Carson"}, SQLOperator: "IN" }
-type Filter struct {
+type Condition struct {
 	Column      string
 	Values      []string
 	SQLOperator string
 }
 
-type Field struct {
+type Column struct {
 	Qualifier string
-	Column    string
+	Name      string
 	Alias     string
 }
 
@@ -50,8 +50,8 @@ type JoinRelation struct {
 
 // VALIDKEYWORDS are valid clause keywords for a URL query
 var VALIDKEYWORDS = []string{
-	FILTER,
-	FIELDS,
+	WHERE,
+	SELECT,
 	JOIN,
 	INNERJOIN,
 	LEFTJOIN,
@@ -59,8 +59,8 @@ var VALIDKEYWORDS = []string{
 }
 
 const (
-	FILTER    = "filter"
-	FIELDS    = "fields"
+	WHERE     = "where"
+	SELECT    = "select"
 	JOIN      = "join"
 	INNERJOIN = "inner_join"
 	LEFTJOIN  = "left_join"

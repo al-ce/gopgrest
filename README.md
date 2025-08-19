@@ -27,12 +27,12 @@ Query parameters can be added to a GET request after a `?` query separator. Keys
 
 The following example contains:
 
-- a `fields` subquery to select columns to return, with qualifiers and aliases on some fields
+- a `select` subquery to select columns to return, with qualifiers and aliases on some columns
 - a `left_join` subquery to add two join relations
-- a `filter` subquery to add conditional filters to the query
+- a `where` subquery to add conditions to the query
 
 ```bash
-curl -X GET -s 'http://localhost:8090/books?fields=title,genres.name:genre,authors.surname:author&left_join=authors:books.author_id==authors.id;genres:books.genre_id==genres.id&filter=born<1900' | jq
+curl -X GET -s 'http://localhost:8090/books?select=title,genres.name:genre,authors.surname:author&left_join=authors:books.author_id==authors.id;genres:books.genre_id==genres.id&where=born<1900' | jq
 ```
 
 ```json
@@ -68,15 +68,15 @@ The following query keys are supported:
 
 | Key              | Description                                |
 | ---------------- | ------------------------------------------ |
-| `filter`         | add `WHERE` conditions to a `SELECT` query |
-| `fields`         | columns to return in a `SELECT` query      |
+| `where`         | add `WHERE` conditions to a `SELECT` query |
+| `select`         | columns to return in a `SELECT` query      |
 | `join` (various) | add `JOIN` relations to a `SELECT` query   |
 
 ```
 
 ```
 
-Query parameters matching the `filter` format for an RSQL query can be added to PUT and DELETE requests to update/delete rows matching the filters.
+Query parameters matching the `where` format for an RSQL query can be added to PUT and DELETE requests to update/delete rows matching the conditions.
 
 ```bash
 curl -X PUT 'http://localhost:8090/authors?forename==Anne;born<1900' --data '{"forename": "Emily"}'
@@ -86,18 +86,18 @@ curl -X PUT 'http://localhost:8090/authors?forename==Anne;born<1900' --data '{"f
 rows updated in table authors: 1
 ```
 
-Unlike a GET request, query parameters in a POST or DELETE request do not require the `filter` key or a `=` separator before the column/value conditionals.
+Unlike a GET request, query parameters in a POST or DELETE request do not require the `where` key or a `=` separator before the column/value conditionals.
 
 ## Query parameter specifications
 
-### Filter
+### Where
 
-A `filter` key can be added to a GET URL's query parameters to match a SQL `WHERE` clause.
+A `where` key can be added to a GET URL's query parameters to match a SQL `WHERE` clause.
 
-A filter subquery is in the following format:
+A `where` subquery is in the following format:
 
 ```
-filter=[{column_name}{operator}{value};...]
+where=[{column_name}{operator}{value};...]
 ```
 
 where the right hand side is a `;` separated list of conditional expressions equivalent to a `WHERE` clause.
@@ -105,7 +105,7 @@ where the right hand side is a `;` separated list of conditional expressions equ
 For example, the following SQL query and GET request are equivalent:
 
 ```bash
-curl -X GET -s 'http://localhost:8090/authors?filter=forename==Anne;born>=1900' | jq
+curl -X GET -s 'http://localhost:8090/authors?where=forename==Anne;born>=1900' | jq
 ```
 
 ```json
@@ -133,7 +133,7 @@ WHERE forename = 'Anne' AND born >= 1900
 
 ```
 
-These are the currently supported filter operators:
+These are the currently supported conditional operators:
 
 | Operator      | SQL equivalent |
 | ------------- | -------------- |
@@ -160,7 +160,7 @@ These are the currently supported filter operators:
 | `=gt=`        | `>`            |
 | `>`           | `>`            |
 
-As noted above, a list of `;` separated filter conditionals can be added to PUT and DELETE requests _without_ the preceding `filter=` key/assignment to add a `WHERE` clause to `UPDATE` or `DELETE` queries.
+As noted above, a list of `;` separated conditionals can be added to PUT and DELETE requests _without_ the preceding `where=` key/assignment to add a `WHERE` clause to `UPDATE` or `DELETE` queries.
 
 For example, the following SQL query and PUT request are equivalent:
 
@@ -182,14 +182,14 @@ curl -X DELETE 'http://localhost:8090/books?title=like=Autobiography%'
 DELETE FROM books WHERE title LIKE
 ```
 
-### Fields
+### Select
 
-A `fields` key can be added to the URL query to specify columns for the SQL `SELECT` clause. If no fields are specified, the query will be `SELECT *`.
+A `select` key can be added to the URL query to specify columns for the SQL `SELECT` clause. If no columns are specified, the query will be `SELECT *`.
 
-A fields subquery is in the following format:
+A `select` subquery is in the following format:
 
 ```
-fields=[{column_name}:{alias},... ]
+select=[{column_name}:{alias},... ]
 ```
 
 where the right hand side of the subquery is a comma separated list of valid column names and an optional alias, with the column name and alias separated by a `:`.
@@ -197,7 +197,7 @@ where the right hand side of the subquery is a comma separated list of valid col
 For example, the following queries and GET request are equivalent:
 
 ```bash
-curl -X GET -s 'http://localhost:8090/authors?fields=surname:last_name,forename' | jq
+curl -X GET -s 'http://localhost:8090/authors?select=surname:last_name,forename' | jq
 ```
 
 ```json
@@ -253,7 +253,7 @@ The following join keywords are supported:
 For example, the following queries and GET request are equivalent:
 
 ```bash
-curl -X GET -s 'http://localhost:8090/books?fields=title,name,surname&left_join=authors:books.author_id==authors.id;genres:books.genre_id==genres.id' | jq
+curl -X GET -s 'http://localhost:8090/books?select=title,name,surname&left_join=authors:books.author_id==authors.id;genres:books.genre_id==genres.id' | jq
 ```
 
 ```json
@@ -441,10 +441,10 @@ curl -X GET -s http://localhost:8090/authors
 ]
 ```
 
-Example (multiple filter parameters connected by `;`):
+Example (multiple `where` parameters connected by `;`):
 
 ```bash
-curl -X GET -s 'http://localhost:8090/authors?filter=forename==Anne;born>=1900'
+curl -X GET -s 'http://localhost:8090/authors?where=forename==Anne;born>=1900'
 ```
 
 ```json
