@@ -6,7 +6,6 @@ import (
 	"log"
 	"reflect"
 	"slices"
-	"strings"
 
 	"gopgrest/apperrors"
 	"gopgrest/repository"
@@ -96,19 +95,16 @@ func (s *Service) ValidateRSQLConditions(tableNames []string, conditions []rsql.
 	// Validate: each column in the WHERE clause should be valid for its table
 	for _, f := range conditions {
 		// Check if column is prefixed with a table, e.g. authors.forename
-		prefixedCol := strings.Split(f.Column, ".")
-		if len(prefixedCol) == 2 {
-			tableName := prefixedCol[0]
-			colName := prefixedCol[1]
-			table, err := s.Repo.GetTable(tableName)
+		if f.Column.Qualifier != "" {
+			table, err := s.Repo.GetTable(f.Column.Qualifier)
 			if err != nil {
 				return err
 			}
-			if !s.Repo.IsValidColumn(*table, colName) {
+			if !s.Repo.IsValidColumn(*table, f.Column.Name) {
 				return fmt.Errorf(
 					"Invalid col name %s for table %s",
-					colName,
-					tableName,
+					f.Column.Name,
+					f.Column.Qualifier,
 				)
 			}
 		} else {
@@ -119,7 +115,7 @@ func (s *Service) ValidateRSQLConditions(tableNames []string, conditions []rsql.
 				if err != nil {
 					return err
 				}
-				if s.Repo.IsValidColumn(*table, f.Column) {
+				if s.Repo.IsValidColumn(*table, f.Column.Name) {
 					found = true
 					break
 				}

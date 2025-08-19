@@ -128,6 +128,18 @@ func newCondition(cond string) (*Condition, error) {
 	conditionCol := splitCondition[0]
 	conditionVals := strings.Split(splitCondition[1], ",")
 
+	// Build column
+	column := Column{}
+	prefixedCol := strings.Split(splitCondition[0], ".")
+	// Add qualifier if the column was qualified with a table, e.g.
+	// `authors.forename`
+	if len(prefixedCol) == 2 {
+		column.Qualifier = prefixedCol[0]
+		column.Name = prefixedCol[1]
+	} else {
+		column.Name = splitCondition[0]
+	}
+
 	nullCheck := hasNullCheck(operator)
 	// operator may be empty string and Split always returns array len 1
 	// so handle case of no values, except for isnull/isnotnull
@@ -141,12 +153,14 @@ func newCondition(cond string) (*Condition, error) {
 		return nil, fmt.Errorf("cannot add values to null check conditions")
 	}
 
+	// Operator must be implemented
 	validOps := slices.Collect(maps.Keys(OperatorToSQLMap))
 	if !slices.Contains(validOps, operator) {
 		return nil, fmt.Errorf("invalid operator %s on condition %s", operator, cond)
 	}
+
 	return &Condition{
-		Column:      conditionCol,
+		Column:      column,
 		Values:      conditionVals,
 		SQLOperator: OperatorToSQLMap[operator],
 	}, nil

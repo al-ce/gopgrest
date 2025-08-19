@@ -54,7 +54,7 @@ func Test_DeleteRowsByRSQL(t *testing.T) {
 			t.Fatal(err)
 		}
 		conditions := []rsql.Condition{
-			{Column: "forename", Values: []string{"Anne"}, SQLOperator: "="},
+			{Column: rsql.Column{Name: "forename"}, Values: []string{"Anne"}, SQLOperator: "="},
 		}
 		rowsAffected, err := repo.DeleteRowsByRSQL("authors", conditions)
 		if err != nil {
@@ -78,8 +78,8 @@ func Test_DeleteRowsByRSQL(t *testing.T) {
 			t.Fatal(err)
 		}
 		conditions := []rsql.Condition{
-			{Column: "forename", Values: []string{"Anne"}, SQLOperator: "="},
-			{Column: "born", Values: []string{"1900"}, SQLOperator: "<"},
+			{Column: rsql.Column{Name: "forename"}, Values: []string{"Anne"}, SQLOperator: "="},
+			{Column: rsql.Column{Name: "born"}, Values: []string{"1900"}, SQLOperator: "<"},
 		}
 		rowsAffected, err := repo.DeleteRowsByRSQL("authors", conditions)
 		if err != nil {

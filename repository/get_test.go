@@ -45,7 +45,11 @@ func Test_RepoGetRows_Where(t *testing.T) {
 	// GET /authors?where=forname==Anne
 	t.Run("Single condition: equality (rsql `==`, SQL `=`)", func(t *testing.T) {
 		conditions := []rsql.Condition{
-			{Column: "forename", Values: []string{"Anne"}, SQLOperator: "="},
+			{
+				Column:      rsql.Column{Name: "forename"},
+				Values:      []string{"Anne"},
+				SQLOperator: "=",
+			},
 		}
 		rawQuery := "SELECT * FROM authors WHERE forename = 'Anne'"
 		rsqlQuery := rsql.QueryParams{Conditions: conditions}
@@ -55,7 +59,11 @@ func Test_RepoGetRows_Where(t *testing.T) {
 	// GET /authors?where=surname!=Carson
 	t.Run("Single condition: inequality (rsql `!=`, SQL `!=`)", func(t *testing.T) {
 		conditions := []rsql.Condition{
-			{Column: "surname", Values: []string{"Carson"}, SQLOperator: "!="},
+			{
+				Column:      rsql.Column{Name: "surname"},
+				Values:      []string{"Carson"},
+				SQLOperator: "!=",
+			},
 		}
 		rawQuery := "SELECT * FROM authors WHERE surname != 'Carson'"
 		rsqlQuery := rsql.QueryParams{Conditions: conditions}
@@ -65,7 +73,11 @@ func Test_RepoGetRows_Where(t *testing.T) {
 	// GET /authors?where=surname=in=Carson,Woolf
 	t.Run("Single condition: in (rsql `=in=`, SQL `IN`)", func(t *testing.T) {
 		conditions := []rsql.Condition{
-			{Column: "surname", Values: []string{"Carson", "Woolf"}, SQLOperator: "IN"},
+			{
+				Column:      rsql.Column{Name: "surname"},
+				Values:      []string{"Carson", "Woolf"},
+				SQLOperator: "IN",
+			},
 		}
 		rawQuery := "SELECT * FROM authors WHERE surname IN ('Carson', 'Woolf')"
 		rsqlQuery := rsql.QueryParams{Conditions: conditions}
@@ -75,7 +87,11 @@ func Test_RepoGetRows_Where(t *testing.T) {
 	// GET /authors?where=surname=out=Carson,Woolf
 	t.Run("Single condition: not in (rsql `=out=`, SQL `NOT IN`)", func(t *testing.T) {
 		conditions := []rsql.Condition{
-			{Column: "surname", Values: []string{"Carson", "Woolf"}, SQLOperator: "NOT IN"},
+			{
+				Column:      rsql.Column{Name: "surname"},
+				Values:      []string{"Carson", "Woolf"},
+				SQLOperator: "NOT IN",
+			},
 		}
 		rawQuery := "SELECT * FROM authors WHERE surname NOT IN ('Carson', 'Woolf')"
 		rsqlQuery := rsql.QueryParams{Conditions: conditions}
@@ -85,7 +101,11 @@ func Test_RepoGetRows_Where(t *testing.T) {
 	// GET /authors?where=forename=like=Ann%
 	t.Run("Single condition: like (rsql `=like=`, SQL `LIKE`)", func(t *testing.T) {
 		conditions := []rsql.Condition{
-			{Column: "forename", Values: []string{"Ann%"}, SQLOperator: "LIKE"},
+			{
+				Column:      rsql.Column{Name: "forename"},
+				Values:      []string{"Ann%"},
+				SQLOperator: "LIKE",
+			},
 		}
 		rawQuery := "SELECT * FROM authors WHERE forename LIKE 'Ann%'"
 		rsqlQuery := rsql.QueryParams{Conditions: conditions}
@@ -95,7 +115,11 @@ func Test_RepoGetRows_Where(t *testing.T) {
 	// GET /authors?where=forename=notlike=Ann%
 	t.Run("Single condition: not like (rsql `=notlike=`, SQL `NOT LIKE`)", func(t *testing.T) {
 		conditions := []rsql.Condition{
-			{Column: "forename", Values: []string{"Ann%"}, SQLOperator: "NOT LIKE"},
+			{
+				Column:      rsql.Column{Name: "forename"},
+				Values:      []string{"Ann%"},
+				SQLOperator: "NOT LIKE",
+			},
 		}
 		rawQuery := "SELECT * FROM authors WHERE forename NOT LIKE 'Ann%'"
 		rsqlQuery := rsql.QueryParams{Conditions: conditions}
@@ -105,7 +129,11 @@ func Test_RepoGetRows_Where(t *testing.T) {
 	// GET /authors?where=died=isnull=
 	t.Run("Single condition: is null (rsql `=isnull=`, SQL `IS NULL`)", func(t *testing.T) {
 		conditions := []rsql.Condition{
-			{Column: "died", Values: []string{}, SQLOperator: "IS NULL"},
+			{
+				Column:      rsql.Column{Name: "died"},
+				Values:      []string{},
+				SQLOperator: "IS NULL",
+			},
 		}
 		rawQuery := "SELECT * FROM authors WHERE died IS NULL"
 		rsqlQuery := rsql.QueryParams{Conditions: conditions}
@@ -115,7 +143,11 @@ func Test_RepoGetRows_Where(t *testing.T) {
 	// GET /authors?where=died=isnotnull=
 	t.Run("Single condition: is not null (rsql `=isnotnull=`, SQL `IS NOT NULL`)", func(t *testing.T) {
 		conditions := []rsql.Condition{
-			{Column: "died", Values: []string{}, SQLOperator: "IS NOT NULL"},
+			{
+				Column:      rsql.Column{Name: "died"},
+				Values:      []string{},
+				SQLOperator: "IS NOT NULL",
+			},
 		}
 		rawQuery := "SELECT * FROM authors WHERE died IS NOT NULL"
 		rsqlQuery := rsql.QueryParams{Conditions: conditions}
@@ -125,7 +157,11 @@ func Test_RepoGetRows_Where(t *testing.T) {
 	// GET /authors?where=born=le=1882
 	t.Run("Single condition: less than or equal to (rsql `=le=`, SQL `<=`)", func(t *testing.T) {
 		conditions := []rsql.Condition{
-			{Column: "born", Values: []string{"1882"}, SQLOperator: "<="},
+			{
+				Column:      rsql.Column{Name: "born"},
+				Values:      []string{"1882"},
+				SQLOperator: "<=",
+			},
 		}
 		rawQuery := "SELECT * FROM authors WHERE born <= 1882"
 		rsqlQuery := rsql.QueryParams{Conditions: conditions}
@@ -135,7 +171,11 @@ func Test_RepoGetRows_Where(t *testing.T) {
 	// GET /authors?where=born=le=1882
 	t.Run("Single condition: less than (rsql `=lt=`, SQL `<`)", func(t *testing.T) {
 		conditions := []rsql.Condition{
-			{Column: "born", Values: []string{"1882"}, SQLOperator: "<"},
+			{
+				Column:      rsql.Column{Name: "born"},
+				Values:      []string{"1882"},
+				SQLOperator: "<",
+			},
 		}
 		rawQuery := "SELECT * FROM authors WHERE born < 1882"
 		rsqlQuery := rsql.QueryParams{Conditions: conditions}
@@ -145,7 +185,11 @@ func Test_RepoGetRows_Where(t *testing.T) {
 	// GET /authors?where=born=ge=1882
 	t.Run("Single condition: greater than or equal to (rsql `=ge=`, SQL `>=`)", func(t *testing.T) {
 		conditions := []rsql.Condition{
-			{Column: "born", Values: []string{"1882"}, SQLOperator: ">="},
+			{
+				Column:      rsql.Column{Name: "born"},
+				Values:      []string{"1882"},
+				SQLOperator: ">=",
+			},
 		}
 		rawQuery := "SELECT * FROM authors WHERE born >= 1882"
 		rsqlQuery := rsql.QueryParams{Conditions: conditions}
@@ -155,7 +199,11 @@ func Test_RepoGetRows_Where(t *testing.T) {
 	// GET /authors?where=born=gt=1882
 	t.Run("Single condition: greater than (rsql `=gt=`, SQL `>`)", func(t *testing.T) {
 		conditions := []rsql.Condition{
-			{Column: "born", Values: []string{"1882"}, SQLOperator: ">"},
+			{
+				Column:      rsql.Column{Name: "born"},
+				Values:      []string{"1882"},
+				SQLOperator: ">",
+			},
 		}
 		rawQuery := "SELECT * FROM authors WHERE born > 1882"
 		rsqlQuery := rsql.QueryParams{Conditions: conditions}
@@ -165,8 +213,12 @@ func Test_RepoGetRows_Where(t *testing.T) {
 	// GET /authors?where=forename==Anne;surname==Carson
 	t.Run("Multiple condition values (`;` separated)", func(t *testing.T) {
 		conditions := []rsql.Condition{
-			{Column: "forename", Values: []string{"Anne"}, SQLOperator: "="},
-			{Column: "surname", Values: []string{"Carson"}, SQLOperator: "="},
+			{
+				Column:      rsql.Column{Name: "forename"},
+				Values:      []string{"Anne"},
+				SQLOperator: "=",
+			},
+			{Column: rsql.Column{Name: "surname"}, Values: []string{"Carson"}, SQLOperator: "="},
 		}
 		rawQuery := "SELECT * FROM authors WHERE forename = 'Anne' AND surname = 'Carson'"
 		rsqlQuery := rsql.QueryParams{Conditions: conditions}
@@ -176,7 +228,11 @@ func Test_RepoGetRows_Where(t *testing.T) {
 	// GET /authors?where=authors.forname==Anne
 	t.Run("condition with qualifier", func(t *testing.T) {
 		conditions := []rsql.Condition{
-			{Column: "forename", Values: []string{"Anne"}, SQLOperator: "="},
+			{
+				Column:      rsql.Column{Name: "forename"},
+				Values:      []string{"Anne"},
+				SQLOperator: "=",
+			},
 		}
 		rawQuery := "SELECT * FROM authors WHERE authors.forename = 'Anne'"
 		rsqlQuery := rsql.QueryParams{Conditions: conditions}

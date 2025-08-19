@@ -28,7 +28,7 @@ func (r *Repository) GetRowByID(tableName string, id int64) (*sql.Rows, error) {
 // GetRowsByRSQL gets rows from a table with optional query params
 func (r *Repository) GetRowsByRSQL(tableName string, query rsql.QueryParams) (*sql.Rows, error) {
 	// Build list of columns to select
-	cols := buildColumnsToReturn(query)
+	cols := buildSelectColumns(query)
 
 	// Build list query with optional WHERE conditional statements
 	conditional, values, err := buildWhereConditions(query.Conditions, 0)

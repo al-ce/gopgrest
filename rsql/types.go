@@ -28,7 +28,7 @@ type QueryParams struct {
 // {Column: "forename", Values: []string{"Ann", "Anne"}, SQLOperator: "IN" }
 // {Column: "surname", Values: []string{"Carson"}, SQLOperator: "IN" }
 type Condition struct {
-	Column      string
+	Column      Column
 	Values      []string
 	SQLOperator string
 }

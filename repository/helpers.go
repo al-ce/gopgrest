@@ -42,17 +42,18 @@ func buildWhereConditions(conditions []rsql.Condition, start int) (string, []any
 
 	for _, cond := range conditions {
 		var condition string
+		columnName := makeQualifiedColumn(cond)
 
 		// Null checks do not require placeholders or appending values array
 		if slices.Contains([]string{"IS NULL", "IS NOT NULL"}, cond.SQLOperator) {
-			condition = fmt.Sprintf("%s %s", cond.Column, cond.SQLOperator)
+			condition = fmt.Sprintf("%s %s", columnName, cond.SQLOperator)
 			sqlConditions = append(sqlConditions, condition)
 			continue
 		}
 
 		// Check for empty condition values
 		if len(cond.Values) == 0 {
-			return "", []any{}, fmt.Errorf("Condition for col %s with no values", cond.Column)
+			return "", []any{}, fmt.Errorf("Condition for col %s with no values", columnName)
 		}
 
 		// Append to values array in the same order we add conditions
@@ -68,7 +69,7 @@ func buildWhereConditions(conditions []rsql.Condition, start int) (string, []any
 		// `forename IN ($1,$2)`
 		condition = fmt.Sprintf(
 			"%s %s (%s)",
-			cond.Column,
+			columnName,
 			cond.SQLOperator,
 			strings.Join(placeholders, ","),
 		)
@@ -80,7 +81,7 @@ func buildWhereConditions(conditions []rsql.Condition, start int) (string, []any
 	return conditional, values, nil
 }
 
-func buildColumnsToReturn(query rsql.QueryParams) string {
+func buildSelectColumns(query rsql.QueryParams) string {
 	// If no columns were specified, the SELECT statement should be `SELECT *`
 	if len(query.Columns) == 0 {
 		return "*"
@@ -118,4 +119,16 @@ func buildJoinRelations(query rsql.QueryParams) string {
 		)
 	}
 	return strings.Join(joins, " ")
+}
+
+// makeQualifiedColumn returns a column name as a string with its qualifier if
+// one was given, otherwise returns just the column name
+func makeQualifiedColumn(cond rsql.Condition) string {
+	var column string
+	if cond.Column.Qualifier != "" {
+		column = fmt.Sprintf("%s.%s", cond.Column.Qualifier, cond.Column.Name)
+	} else {
+		column = cond.Column.Name
+	}
+	return column
 }

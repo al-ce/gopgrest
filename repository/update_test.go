@@ -23,7 +23,7 @@ func Test_RepoUpdateRowByRSQL(t *testing.T) {
 	// Update forename for each author named 'Anne'
 	update := types.RowData{"forename": "Beatrice"}
 	conditions := []rsql.Condition{
-		{Column: "forename", Values: []string{"Anne"}, SQLOperator: "="},
+		{Column: rsql.Column{Name: "forename"}, Values: []string{"Anne"}, SQLOperator: "="},
 	}
 	rowsAffected, err := repo.UpdateRowsByRSQL("authors", conditions, &update)
 	if err != nil {
