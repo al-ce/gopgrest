@@ -5,24 +5,8 @@ import (
 	"slices"
 	"strings"
 
-	"gopgrest/apperrors"
 	"gopgrest/rsql"
 )
-
-// GetTable gets a table from the tables slice by name
-func (r *Repository) GetTable(tableName string) (*Table, error) {
-	for _, t := range r.Tables {
-		if t.Name == tableName {
-			return &t, nil
-		}
-	}
-	return nil, apperrors.TableDoesNotExist
-}
-
-func (r *Repository) IsValidColumn(table Table, col string) bool {
-	_, ok := table.ColumnMap[col]
-	return ok
-}
 
 // buildWhereConditions builds a SQL WHERE clause from `conditions`.
 // Placeholders values begin at `start`+1, e.g. if `start` == 5, a
