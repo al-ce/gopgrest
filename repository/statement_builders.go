@@ -26,7 +26,7 @@ func buildWhereConditions(conditions []rsql.Condition, start int) (string, []any
 
 	for _, cond := range conditions {
 		var condition string
-		columnName := makeQualifiedColumn(cond)
+		columnName := cond.Column.ToSQLString()
 
 		// Null checks do not require placeholders or appending values array
 		if slices.Contains([]string{"IS NULL", "IS NOT NULL"}, cond.SQLOperator) {
@@ -72,12 +72,8 @@ func buildSelectColumns(query rsql.QueryParams) string {
 	}
 
 	cols := []string{}
-	for _, f := range query.Columns {
-		if f.Alias != "" {
-			cols = append(cols, fmt.Sprintf("%s AS %s", f.Name, f.Alias))
-		} else {
-			cols = append(cols, f.Name)
-		}
+	for _, c := range query.Columns {
+		cols = append(cols, c.ToSQLString())
 	}
 	return strings.Join(cols, ", ")
 }
@@ -91,28 +87,8 @@ func buildJoinRelations(query rsql.QueryParams) string {
 	for _, j := range query.Joins {
 		joins = append(
 			joins,
-			fmt.Sprintf(
-				"%s %s ON %s.%s = %s.%s",
-				j.Type,
-				j.Table,
-				j.LeftQualifier,
-				j.LeftCol,
-				j.RightQualifier,
-				j.RightCol,
-			),
+			j.ToSQLString(),
 		)
 	}
 	return strings.Join(joins, " ")
-}
-
-// makeQualifiedColumn returns a column name as a string with its qualifier if
-// one was given, otherwise returns just the column name
-func makeQualifiedColumn(cond rsql.Condition) string {
-	var column string
-	if cond.Column.Qualifier != "" {
-		column = fmt.Sprintf("%s.%s", cond.Column.Qualifier, cond.Column.Name)
-	} else {
-		column = cond.Column.Name
-	}
-	return column
 }

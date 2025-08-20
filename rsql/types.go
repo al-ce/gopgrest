@@ -1,5 +1,7 @@
 package rsql
 
+import "fmt"
+
 // VALIDKEYWORDS are valid clause keywords for a URL query
 var VALIDKEYWORDS = []string{
 	WHERE,
@@ -84,6 +86,22 @@ type Column struct {
 	Alias     string
 }
 
+// ToSQLString returns a string representation of the Column as it would be
+// used in a SELECT statement, e.g. "SELECT books.title AS t"
+func (c *Column) ToSQLString() string {
+	var name string
+	if c.Qualifier != "" {
+		name = fmt.Sprintf("%s.%s", c.Qualifier, c.Name)
+	} else {
+		name = c.Name
+	}
+	if c.Alias != "" {
+		return fmt.Sprintf("%s AS %s", name, c.Alias)
+	} else {
+		return name
+	}
+}
+
 type JoinRelation struct {
 	Type           string
 	Table          string
@@ -91,4 +109,18 @@ type JoinRelation struct {
 	LeftCol        string
 	RightQualifier string
 	RightCol       string
+}
+
+// ToSQLString returns a string representation of the JoinRelation as it would be
+// used in a SELECT statement, e.g. `JOIN authors ON books.author_id = books.id“
+func (jr *JoinRelation) ToSQLString() string {
+	return fmt.Sprintf(
+		"%s %s ON %s.%s = %s.%s",
+		jr.Type,
+		jr.Table,
+		jr.LeftQualifier,
+		jr.LeftCol,
+		jr.RightQualifier,
+		jr.RightCol,
+	)
 }
