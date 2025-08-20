@@ -1,5 +1,50 @@
 package rsql
 
+// VALIDKEYWORDS are valid clause keywords for a URL query
+var VALIDKEYWORDS = []string{
+	WHERE,
+	SELECT,
+	JOIN,
+	INNERJOIN,
+	LEFTJOIN,
+	RIGHTJOIN,
+}
+
+const (
+	WHERE     = "where"
+	SELECT    = "select"
+	JOIN      = "join"
+	INNERJOIN = "inner_join"
+	LEFTJOIN  = "left_join"
+	RIGHTJOIN = "right_join"
+)
+
+// OperatorToSQLMap is a map of RSQL operators to their SQL counterpart
+var OperatorToSQLMap = map[string]string{
+	"==":          "=",
+	"!=":          "!=",
+	"=in=":        "IN",
+	"=out=":       "NOT IN",
+	"=like=":      "LIKE",
+	"=!like=":     "NOT LIKE",
+	"=notlike=":   "NOT LIKE",
+	"=nk=":        "NOT LIKE",
+	"=isnull=":    "IS NULL",
+	"=na=":        "IS NULL",
+	"=isnotnull=": "IS NOT NULL",
+	"=notnull=":   "IS NOT NULL",
+	"=nn=":        "IS NOT NULL",
+	"=!null=":     "IS NOT NULL",
+	"=le=":        "<=",
+	"=ge=":        ">=",
+	"<=":          "<=",
+	">=":          ">=",
+	"=lt=":        "<",
+	"=gt=":        ">",
+	"<":           "<",
+	">":           ">",
+}
+
 // PathQuery holds the parts of a RESTful GET request's URL that are translated
 // to a SQL SELECT query. In the example:
 //
@@ -46,49 +91,4 @@ type JoinRelation struct {
 	LeftCol        string
 	RightQualifier string
 	RightCol       string
-}
-
-// VALIDKEYWORDS are valid clause keywords for a URL query
-var VALIDKEYWORDS = []string{
-	WHERE,
-	SELECT,
-	JOIN,
-	INNERJOIN,
-	LEFTJOIN,
-	RIGHTJOIN,
-}
-
-const (
-	WHERE     = "where"
-	SELECT    = "select"
-	JOIN      = "join"
-	INNERJOIN = "inner_join"
-	LEFTJOIN  = "left_join"
-	RIGHTJOIN = "right_join"
-)
-
-// OperatorToSQLMap is a map of RSQL operators to their SQL counterpart
-var OperatorToSQLMap = map[string]string{
-	"==":          "=",
-	"!=":          "!=",
-	"=in=":        "IN",
-	"=out=":       "NOT IN",
-	"=like=":      "LIKE",
-	"=!like=":     "NOT LIKE",
-	"=notlike=":   "NOT LIKE",
-	"=nk=":        "NOT LIKE",
-	"=isnull=":    "IS NULL",
-	"=na=":        "IS NULL",
-	"=isnotnull=": "IS NOT NULL",
-	"=notnull=":   "IS NOT NULL",
-	"=nn=":        "IS NOT NULL",
-	"=!null=":     "IS NOT NULL",
-	"=le=":        "<=",
-	"=ge=":        ">=",
-	"<=":          "<=",
-	">=":          ">=",
-	"=lt=":        "<",
-	"=gt=":        ">",
-	"<":           "<",
-	">":           ">",
 }
