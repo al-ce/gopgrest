@@ -22,7 +22,6 @@ type APIHandler struct {
 var (
 	ReRequestWithId     = regexp.MustCompile(`^/(\w+)/([0-9]+)$`)
 	ReRequestWithParams = regexp.MustCompile(`^/\w+(\?.*)?$`)
-	ReTable             = regexp.MustCompile(`^/(\w+).*$`)
 )
 
 func NewAPIHandler(db repository.QueryExecutor, tables []repository.Table) APIHandler {
@@ -71,18 +70,11 @@ func (h *APIHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 // GetRowByID gets a single row from a table in the database by id
 func (h *APIHandler) GetRowByID(w http.ResponseWriter, r *http.Request) {
-	// Get tableName from URL path
-	tableName, err := h.extractTableName(r)
+	tableName, rowID, err := parseByIDRequest(r.URL.Path)
 	if err != nil {
-		InternalServerErrorHandler(w, r, err.Error())
-	}
-
-	matches := ReRequestWithId.FindStringSubmatch(r.URL.Path)
-	if len(matches) < 3 {
 		InternalServerErrorHandler(w, r, "Could not find id match")
 		return
 	}
-	rowID := matches[2]
 
 	// Retrieve pickQueryResult from database
 	pickQueryResult, err := h.Service.GetRowByID(tableName, rowID)
@@ -109,8 +101,7 @@ func (h *APIHandler) GetRowByID(w http.ResponseWriter, r *http.Request) {
 // GetRowsByRSQL gets rows from a table in the database with optional query
 // params
 func (h *APIHandler) GetRowsByRSQL(w http.ResponseWriter, r *http.Request) {
-	// Get table from URL path
-	table, err := h.extractTableName(r)
+	table, err := h.parseOptionalParamsRequest(r)
 	if err != nil {
 		InternalServerErrorHandler(w, r, err.Error())
 	}
@@ -140,7 +131,7 @@ func (h *APIHandler) GetRowsByRSQL(w http.ResponseWriter, r *http.Request) {
 // Insert adds a row to a table
 func (h *APIHandler) Insert(w http.ResponseWriter, r *http.Request) {
 	// Get table from URL path
-	table, err := h.extractTableName(r)
+	table, err := h.parseOptionalParamsRequest(r)
 	if err != nil {
 		InternalServerErrorHandler(w, r, err.Error())
 	}
@@ -192,16 +183,13 @@ func (h *APIHandler) Insert(w http.ResponseWriter, r *http.Request) {
 
 // UpdateRowByID updates a row in the table by id
 func (h *APIHandler) UpdateRowByID(w http.ResponseWriter, r *http.Request) {
-	// Get id
-	matches := ReRequestWithId.FindStringSubmatch(r.URL.Path)
-	if len(matches) < 3 {
+	tableName, rowID, err := parseByIDRequest(r.URL.Path)
+	if err != nil {
 		InternalServerErrorHandler(w, r, "Could not find id match")
 		return
 	}
-	tableName := matches[1]
-	id := matches[2]
 
-	url := fmt.Sprintf("/%s?id==%s", tableName, id)
+	url := fmt.Sprintf("/%s?id==%s", tableName, rowID)
 	h.updateRows(w, r, url)
 }
 
@@ -213,7 +201,7 @@ func (h *APIHandler) UpdateRowByRSQL(w http.ResponseWriter, r *http.Request) {
 
 func (h *APIHandler) updateRows(w http.ResponseWriter, r *http.Request, url string) {
 	// Get table from URL path
-	tableName, err := h.extractTableName(r)
+	tableName, err := h.parseOptionalParamsRequest(r)
 	if err != nil {
 		InternalServerErrorHandler(w, r, err.Error())
 	}
@@ -242,16 +230,14 @@ func (h *APIHandler) updateRows(w http.ResponseWriter, r *http.Request, url stri
 
 // DeleteRowByID adds removes a row from a table by id
 func (h *APIHandler) DeleteRowByID(w http.ResponseWriter, r *http.Request) {
-	// Get id
-	matches := ReRequestWithId.FindStringSubmatch(r.URL.Path)
-	if len(matches) < 3 {
+	// Get tableName and ID from URL path
+	tableName, rowID, err := parseByIDRequest(r.URL.Path)
+	if err != nil {
 		InternalServerErrorHandler(w, r, "Could not find id match")
 		return
 	}
-	tableName := matches[1]
-	id := matches[2]
 
-	url := fmt.Sprintf("/%s?id==%s", tableName, id)
+	url := fmt.Sprintf("/%s?id==%s", tableName, rowID)
 	h.deleteRows(w, r, url)
 }
 
@@ -263,7 +249,7 @@ func (h *APIHandler) DeleteRowsByRSQL(w http.ResponseWriter, r *http.Request) {
 
 func (h *APIHandler) deleteRows(w http.ResponseWriter, r *http.Request, url string) {
 	// Get table from URL path
-	tableName, err := h.extractTableName(r)
+	tableName, err := h.parseOptionalParamsRequest(r)
 	if err != nil {
 		InternalServerErrorHandler(w, r, err.Error())
 	}
@@ -300,7 +286,7 @@ func (h *APIHandler) ShowTables(w http.ResponseWriter, r *http.Request) {
 // tableExists checks if a resource references an existing table
 func (h *APIHandler) tableExists(r *http.Request) (bool, error) {
 	// Get tableName from URL path
-	tableName, err := h.extractTableName(r)
+	tableName, err := h.parseOptionalParamsRequest(r)
 	if err != nil {
 		return false, err
 	}
@@ -308,9 +294,23 @@ func (h *APIHandler) tableExists(r *http.Request) (bool, error) {
 	return table != nil, err
 }
 
-// extractTableName gets the table name from the URL
-func (h *APIHandler) extractTableName(r *http.Request) (string, error) {
-	matches := ReTable.FindStringSubmatch(r.URL.Path)
+// parseByIDRequest gets a table name and an ID from a request with a url that
+// contains an id resource after the table name, e.g. `/authors/1`
+func parseByIDRequest(url string) (string, string, error) {
+	matches := ReRequestWithId.FindStringSubmatch(url)
+	if len(matches) < 3 {
+		return "", "", fmt.Errorf("Could not parse for id and table: %s", url)
+	}
+	tableName := matches[1]
+	rowID := matches[2]
+	return tableName, rowID, nil
+}
+
+// parseOptionalParamsRequest gets the table name from a request with a url
+// that does not contain an id resource and has optional query params, e.g.
+// `/authors` or `/authors?select=surname`
+func (h *APIHandler) parseOptionalParamsRequest(r *http.Request) (string, error) {
+	matches := ReRequestWithParams.FindStringSubmatch(r.URL.Path)
 	if len(matches) < 2 {
 		return "", fmt.Errorf("could not extract table name from %s", r.URL.Path)
 	}
