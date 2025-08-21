@@ -19,6 +19,8 @@ type APIHandler struct {
 	Repo    repository.Repository
 }
 
+type Headers map[string]string
+
 var (
 	ReRequestWithId     = regexp.MustCompile(`^/(\w+)/([0-9]+)$`)
 	ReRequestWithParams = regexp.MustCompile(`^/\w+(\?.*)?$`)
@@ -47,7 +49,6 @@ func (h *APIHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case r.Method == http.MethodGet && urlString == "/":
 		h.ShowTables(w, r)
 	case !exists || err != nil:
-		log.Println(urlString, "not found")
 		NotFoundHandler(w, r)
 	case r.Method == http.MethodGet && isRequestWithID:
 		h.GetRowByID(w, r)
@@ -72,30 +73,25 @@ func (h *APIHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func (h *APIHandler) GetRowByID(w http.ResponseWriter, r *http.Request) {
 	tableName, rowID, err := parseByIDRequest(r.URL.Path)
 	if err != nil {
-		InternalServerErrorHandler(w, r, "Could not find id match")
+		writeResponse(w, http.StatusBadRequest, nil, []byte("Could not find id match"))
 		return
 	}
 
 	// Retrieve pickQueryResult from database
 	pickQueryResult, err := h.Service.GetRowByID(tableName, rowID)
 	if err != nil {
-		log.Println(err)
-		InternalServerErrorHandler(w, r, fmt.Sprintf("%v", err))
+		writeResponse(w, http.StatusInternalServerError, nil, []byte(err.Error()))
 		return
 	}
 
 	// Encode to JSON
 	jsonData, err := json.Marshal(pickQueryResult)
 	if err != nil {
-		log.Println(err)
-		InternalServerErrorHandler(w, r, fmt.Sprintf("%v", err))
+		writeResponse(w, http.StatusInternalServerError, nil, []byte(err.Error()))
 		return
 	}
-
-	// Write response
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write(jsonData)
+	headers := Headers{"Content-Type": "application/json"}
+	writeResponse(w, http.StatusOK, &headers, jsonData)
 }
 
 // GetRowsByRSQL gets rows from a table in the database with optional query
@@ -103,37 +99,32 @@ func (h *APIHandler) GetRowByID(w http.ResponseWriter, r *http.Request) {
 func (h *APIHandler) GetRowsByRSQL(w http.ResponseWriter, r *http.Request) {
 	table, err := h.parseOptionalParamsRequest(r)
 	if err != nil {
-		InternalServerErrorHandler(w, r, err.Error())
+		writeResponse(w, http.StatusBadRequest, nil, []byte(err.Error()))
 	}
 
 	// Retrieve gotRows from database
 	gotRows, err := h.Service.GetRowsByRSQL(table, r.URL.String())
 	if err != nil {
-		log.Println(err)
-		InternalServerErrorHandler(w, r, fmt.Sprintf("%v", err))
+		writeResponse(w, http.StatusInternalServerError, nil, []byte(err.Error()))
 		return
 	}
 
 	// Encode to JSON
 	jsonData, err := json.Marshal(gotRows)
 	if err != nil {
-		log.Println(err)
-		InternalServerErrorHandler(w, r, fmt.Sprintf("%v", err))
+		writeResponse(w, http.StatusInternalServerError, nil, []byte(err.Error()))
 		return
 	}
 
-	// Write response
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write(jsonData)
+	headers := Headers{"Content-Type": "application/json"}
+	writeResponse(w, http.StatusOK, &headers, jsonData)
 }
 
 // Insert adds a row to a table
 func (h *APIHandler) Insert(w http.ResponseWriter, r *http.Request) {
-	// Get table from URL path
 	table, err := h.parseOptionalParamsRequest(r)
 	if err != nil {
-		InternalServerErrorHandler(w, r, err.Error())
+		writeResponse(w, http.StatusBadRequest, nil, []byte(err.Error()))
 	}
 
 	// Store body for potential multiple reads
@@ -156,9 +147,8 @@ func (h *APIHandler) Insert(w http.ResponseWriter, r *http.Request) {
 
 		if err = json.NewDecoder(r.Body).Decode(&singleRow); err != nil {
 
-			// If we fail again, give up
-			log.Println("Decode second attempt err", err)
-			InternalServerErrorHandler(w, r, fmt.Sprintf("%v", err))
+			// If we fail again, it was malformed JSON/JSON array
+			writeResponse(w, http.StatusBadRequest, nil, []byte(err.Error()))
 			return
 
 		} else {
@@ -172,20 +162,20 @@ func (h *APIHandler) Insert(w http.ResponseWriter, r *http.Request) {
 	newIds, err := h.Service.InsertRows(newRows, table)
 	if err != nil {
 		log.Println(err)
-		InternalServerErrorHandler(w, r, fmt.Sprintf("%v", err))
+		writeResponse(w, http.StatusInternalServerError, nil, []byte(err.Error()))
 		return
 	}
 
 	// Set response
-	w.WriteHeader(http.StatusOK)
-	fmt.Fprintf(w, "rows created in table %s: %v", table, newIds)
+	data := fmt.Appendf(nil, "rows created in table %s: %v", table, newIds)
+	writeResponse(w, http.StatusOK, nil, data)
 }
 
 // UpdateRowByID updates a row in the table by id
 func (h *APIHandler) UpdateRowByID(w http.ResponseWriter, r *http.Request) {
 	tableName, rowID, err := parseByIDRequest(r.URL.Path)
 	if err != nil {
-		InternalServerErrorHandler(w, r, "Could not find id match")
+		writeResponse(w, http.StatusBadRequest, nil, []byte(err.Error()))
 		return
 	}
 
@@ -200,40 +190,36 @@ func (h *APIHandler) UpdateRowByRSQL(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *APIHandler) updateRows(w http.ResponseWriter, r *http.Request, url string) {
-	// Get table from URL path
 	tableName, err := h.parseOptionalParamsRequest(r)
 	if err != nil {
-		InternalServerErrorHandler(w, r, err.Error())
+		writeResponse(w, http.StatusBadRequest, nil, []byte(err.Error()))
 	}
 
 	// Decode request body into map to dynamically update row
 	var updateData *types.RowData
 	err = json.NewDecoder(r.Body).Decode(&updateData)
 	if err != nil {
-		log.Println(err)
-		InternalServerErrorHandler(w, r, fmt.Sprintf("%v", err))
+		writeResponse(w, http.StatusBadRequest, nil, []byte(err.Error()))
 		return
 	}
 
 	// Update row with request data
 	rowsAffected, err := h.Service.UpdateRowsByRSQL(tableName, url, updateData)
 	if err != nil {
-		log.Println(err)
-		InternalServerErrorHandler(w, r, fmt.Sprintf("%v", err))
+		writeResponse(w, http.StatusInternalServerError, nil, []byte(err.Error()))
 		return
 	}
 
 	// Write response
-	w.WriteHeader(http.StatusOK)
-	fmt.Fprintf(w, "rows updated in table %s: %d", tableName, rowsAffected)
+	data := fmt.Appendf(nil, "rows updated in table %s: %d", tableName, rowsAffected)
+	writeResponse(w, http.StatusOK, nil, data)
 }
 
 // DeleteRowByID adds removes a row from a table by id
 func (h *APIHandler) DeleteRowByID(w http.ResponseWriter, r *http.Request) {
-	// Get tableName and ID from URL path
 	tableName, rowID, err := parseByIDRequest(r.URL.Path)
 	if err != nil {
-		InternalServerErrorHandler(w, r, "Could not find id match")
+		writeResponse(w, http.StatusBadRequest, nil, []byte(err.Error()))
 		return
 	}
 
@@ -251,20 +237,19 @@ func (h *APIHandler) deleteRows(w http.ResponseWriter, r *http.Request, url stri
 	// Get table from URL path
 	tableName, err := h.parseOptionalParamsRequest(r)
 	if err != nil {
-		InternalServerErrorHandler(w, r, err.Error())
+		writeResponse(w, http.StatusBadRequest, nil, []byte(err.Error()))
 	}
 
 	// Delete rows by rsql conditions
 	rowsAffected, err := h.Service.DeleteRowsByRSQL(tableName, url)
 	if err != nil {
-		log.Println(err)
-		InternalServerErrorHandler(w, r, fmt.Sprintf("%v", err))
+		writeResponse(w, http.StatusInternalServerError, nil, []byte(err.Error()))
 		return
 	}
 
 	// Set response
-	w.WriteHeader(http.StatusOK)
-	fmt.Fprintf(w, "rows deleted in table %s: %d", tableName, rowsAffected)
+	data := fmt.Appendf(nil, "rows deleted in table %s: %d", tableName, rowsAffected)
+	writeResponse(w, http.StatusOK, nil, data)
 }
 
 // ShowTables responds with a JSON object of the tables, their column names,
@@ -272,15 +257,17 @@ func (h *APIHandler) deleteRows(w http.ResponseWriter, r *http.Request, url stri
 func (h *APIHandler) ShowTables(w http.ResponseWriter, r *http.Request) {
 	jsonData, err := json.Marshal(h.Repo.TablesRepr)
 	if err != nil {
-		log.Println(err)
-		InternalServerErrorHandler(w, r, fmt.Sprintf("%v", err))
+		writeResponse(w, http.StatusInternalServerError, nil, []byte(err.Error()))
 		return
 	}
+	headers := Headers{"Content-Type": "application/json"}
+	writeResponse(w, http.StatusOK, &headers, jsonData)
+}
 
-	// Write response
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write(jsonData)
+// NotFoundHandler responds with a 404 status and an error message
+func NotFoundHandler(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotFound)
+	w.Write([]byte("404 Not Found"))
 }
 
 // tableExists checks if a resource references an existing table
@@ -317,14 +304,11 @@ func (h *APIHandler) parseOptionalParamsRequest(r *http.Request) (string, error)
 	return matches[1], nil
 }
 
-// InternalServerErrorHandler responds with a 500 status and an error message
-func InternalServerErrorHandler(w http.ResponseWriter, r *http.Request, message string) {
-	w.WriteHeader(http.StatusInternalServerError)
-	w.Write([]byte(message))
-}
-
-// NotFoundHandler responds with a 404 status and an error message
-func NotFoundHandler(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusNotFound)
-	w.Write([]byte("404 Not Found"))
+// writeResponse writes headers and data
+func writeResponse(w http.ResponseWriter, statusCode int, headers *Headers, data []byte) {
+	for k, v := range *headers {
+		w.Header().Set(k, v)
+	}
+	w.WriteHeader(statusCode)
+	w.Write(data)
 }
