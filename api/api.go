@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"regexp"
 
 	"gopgrest/repository"
@@ -19,12 +20,11 @@ type APIHandler struct {
 	Repo    repository.Repository
 }
 
-type Headers map[string]string
+type headers map[string]string
 
 var (
-	ReRequestWithId     = regexp.MustCompile(`^/(\w+)/([0-9]+)$`)
-	ReRequestWithParams = regexp.MustCompile(`^/(\w+)(\?.*)?$`)
-	ReTable             = regexp.MustCompile(`^/(\w+).*$`)
+	reRequestWithId     = regexp.MustCompile(`^/(\w+)/([0-9]+)$`)
+	reRequestWithParams = regexp.MustCompile(`^/(\w+)(\?.*)?$`)
 )
 
 func NewAPIHandler(db repository.QueryExecutor, tables []repository.Table) APIHandler {
@@ -41,60 +41,39 @@ func NewAPIHandler(db repository.QueryExecutor, tables []repository.Table) APIHa
 func (h *APIHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	log.Println(r.Method, r.URL, r.RemoteAddr)
 
-	urlString := r.URL.String()
-	isRequestWithID := ReRequestWithId.MatchString(urlString)
-	isRequestWithParams := ReRequestWithParams.MatchString(urlString)
-
-	exists, err := h.tableExists(r)
-	switch {
-	case r.Method == http.MethodGet && urlString == "/":
-		h.ShowTables(w, r)
-	case !exists || err != nil:
-		NotFoundHandler(w, r)
-	case r.Method == http.MethodGet && isRequestWithID:
-		h.GetRowByID(w, r)
-	case r.Method == http.MethodGet && isRequestWithParams:
-		h.GetRowsByRSQL(w, r)
-	case r.Method == http.MethodPost:
-		h.Insert(w, r)
-	case r.Method == http.MethodDelete && isRequestWithID:
-		h.DeleteRowByID(w, r)
-	case r.Method == http.MethodDelete && isRequestWithParams:
-		h.DeleteRowsByRSQL(w, r)
-	case r.Method == http.MethodPut && isRequestWithID:
-		h.UpdateRowByID(w, r)
-	case r.Method == http.MethodPut && isRequestWithParams:
-		h.UpdateRowByRSQL(w, r)
-	default:
-		NotFoundHandler(w, r)
-	}
-}
-
-// GetRowByID gets a single row from a table in the database by id
-func (h *APIHandler) GetRowByID(w http.ResponseWriter, r *http.Request) {
-	tableName, rowID, err := parseByIDRequest(r.URL.Path)
-	if err != nil {
-		writeResponse(w, http.StatusBadRequest, nil, []byte("Could not find id match"))
+	if r.Method == http.MethodGet && r.URL.Path == "/" {
+		h.showTables(w)
 		return
 	}
-	url := fmt.Sprintf("/%s?where=id==%s", tableName, rowID)
-	h.getRows(w, url)
+
+	err := coerceURLToQueryParams(r)
+	if err != nil {
+		writeResponse(w, http.StatusInternalServerError, nil, []byte(err.Error()))
+		return
+	}
+
+	switch r.Method {
+	case http.MethodGet:
+		h.getRows(w, r)
+	case http.MethodPost:
+		h.insertRows(w, r)
+	case http.MethodDelete:
+		h.deleteRows(w, r)
+	case http.MethodPut:
+		h.updateRows(w, r)
+	default:
+		notFoundHandler(w)
+	}
 }
 
-// GetRowsByRSQL gets rows from a table in the database with optional query
-// params
-func (h *APIHandler) GetRowsByRSQL(w http.ResponseWriter, r *http.Request) {
-	h.getRows(w, r.URL.String())
-}
-
-func (h *APIHandler) getRows(w http.ResponseWriter, url string) {
-	table, err := parseOptionalParamsRequest(url)
+func (h *APIHandler) getRows(w http.ResponseWriter, r *http.Request) {
+	table, err := parseOptionalParamsRequest(r.URL.String())
 	if err != nil {
 		writeResponse(w, http.StatusBadRequest, nil, []byte(err.Error()))
 	}
 
 	// Retrieve gotRows from database
-	gotRows, err := h.Service.GetRowsByRSQL(table, url)
+	gotRows, err := h.Service.GetRowsByRSQL(table, r.URL.String())
 	if err != nil {
 		writeResponse(w, http.StatusInternalServerError, nil, []byte(err.Error()))
 		return
@@ -107,13 +86,13 @@ func (h *APIHandler) getRows(w http.ResponseWriter, url string) {
 		return
 	}
 
-	headers := Headers{"Content-Type": "application/json"}
-	writeResponse(w, http.StatusOK, &headers, jsonData)
+	headers := headers{"Content-Type": "application/json"}
+	writeResponse(w, http.StatusOK, headers, jsonData)
 }
 
-// Insert adds a row to a table
-func (h *APIHandler) Insert(w http.ResponseWriter, r *http.Request) {
-	table, err := parseOptionalParamsRequest(r.URL.Path)
+// insertRows adds a row to a table
+func (h *APIHandler) insertRows(w http.ResponseWriter, r *http.Request) {
+	table, err := parseOptionalParamsRequest(r.URL.String())
 	if err != nil {
 		writeResponse(w, http.StatusBadRequest, nil, []byte(err.Error()))
 	}
@@ -162,26 +141,8 @@ func (h *APIHandler) Insert(w http.ResponseWriter, r *http.Request) {
 	writeResponse(w, http.StatusOK, nil, data)
 }
 
-// UpdateRowByID updates a row in the table by id
-func (h *APIHandler) UpdateRowByID(w http.ResponseWriter, r *http.Request) {
-	tableName, rowID, err := parseByIDRequest(r.URL.Path)
-	if err != nil {
-		writeResponse(w, http.StatusBadRequest, nil, []byte(err.Error()))
-		return
-	}
-
-	url := fmt.Sprintf("/%s?id==%s", tableName, rowID)
-	h.updateRows(w, r, url)
-}
-
-// UpdateRowByRSQL updates any rows in the table matching the conditions in an
-// RSQL query
-func (h *APIHandler) UpdateRowByRSQL(w http.ResponseWriter, r *http.Request) {
-	h.updateRows(w, r, r.URL.String())
-}
-
-func (h *APIHandler) updateRows(w http.ResponseWriter, r *http.Request, url string) {
-	tableName, err := parseOptionalParamsRequest(url)
+func (h *APIHandler) updateRows(w http.ResponseWriter, r *http.Request) {
+	tableName, err := parseOptionalParamsRequest(r.URL.String())
 	if err != nil {
 		writeResponse(w, http.StatusBadRequest, nil, []byte(err.Error()))
 	}
@@ -195,100 +156,87 @@ func (h *APIHandler) updateRows(w http.ResponseWriter, r *http.Request, url stri
 	}
 
 	// Update row with request data
-	rowsAffected, err := h.Service.UpdateRowsByRSQL(tableName, url, updateData)
+	rowsAffected, err := h.Service.UpdateRowsByRSQL(tableName, r.URL.String(), updateData)
 	if err != nil {
 		writeResponse(w, http.StatusInternalServerError, nil, []byte(err.Error()))
 		return
 	}
 
-	// Write response
 	data := fmt.Appendf(nil, "rows updated in table %s: %d", tableName, rowsAffected)
 	writeResponse(w, http.StatusOK, nil, data)
 }
 
-// DeleteRowByID adds removes a row from a table by id
-func (h *APIHandler) DeleteRowByID(w http.ResponseWriter, r *http.Request) {
-	tableName, rowID, err := parseByIDRequest(r.URL.Path)
-	if err != nil {
-		writeResponse(w, http.StatusBadRequest, nil, []byte(err.Error()))
-		return
-	}
-
-	url := fmt.Sprintf("/%s?id==%s", tableName, rowID)
-	h.deleteRows(w, url)
-}
-
-// DeleteRowsByRSQL deletes any rows in the table matching the conditions in
-// an RSQL query
-func (h *APIHandler) DeleteRowsByRSQL(w http.ResponseWriter, r *http.Request) {
-	h.deleteRows(w, r.URL.String())
-}
-
-func (h *APIHandler) deleteRows(w http.ResponseWriter, url string) {
+func (h *APIHandler) deleteRows(w http.ResponseWriter, r *http.Request) {
 	// Get table from URL path
-	tableName, err := parseOptionalParamsRequest(url)
+	tableName, err := parseOptionalParamsRequest(r.URL.String())
 	if err != nil {
 		writeResponse(w, http.StatusBadRequest, nil, []byte(err.Error()))
 	}
 
 	// Delete rows by rsql conditions
-	rowsAffected, err := h.Service.DeleteRowsByRSQL(tableName, url)
+	rowsAffected, err := h.Service.DeleteRowsByRSQL(tableName, r.URL.String())
 	if err != nil {
 		writeResponse(w, http.StatusInternalServerError, nil, []byte(err.Error()))
 		return
 	}
 
-	// Set response
 	data := fmt.Appendf(nil, "rows deleted in table %s: %d", tableName, rowsAffected)
 	writeResponse(w, http.StatusOK, nil, data)
 }
 
-// ShowTables responds with a JSON object of the tables, their column names,
+// showTables responds with a JSON object of the tables, their column names,
 // and column types
-func (h *APIHandler) ShowTables(w http.ResponseWriter, r *http.Request) {
+func (h *APIHandler) showTables(w http.ResponseWriter) {
 	jsonData, err := json.Marshal(h.Repo.TablesRepr)
 	if err != nil {
 		writeResponse(w, http.StatusInternalServerError, nil, []byte(err.Error()))
 		return
 	}
-	headers := Headers{"Content-Type": "application/json"}
-	writeResponse(w, http.StatusOK, &headers, jsonData)
+	headers := headers{"Content-Type": "application/json"}
+	writeResponse(w, http.StatusOK, headers, jsonData)
 }
 
-// NotFoundHandler responds with a 404 status and an error message
-func NotFoundHandler(w http.ResponseWriter, r *http.Request) {
+// notFoundHandler responds with a 404 status and an error message
+func notFoundHandler(w http.ResponseWriter) {
 	w.WriteHeader(http.StatusNotFound)
 	w.Write([]byte("404 Not Found"))
 }
 
-// tableExists checks if a resource references an existing table
-func (h *APIHandler) tableExists(r *http.Request) (bool, error) {
-	// Get tableName from URL path
-	matches := ReTable.FindStringSubmatch(r.URL.Path)
-	if len(matches) < 2 {
-		return false, fmt.Errorf("could not extract table name from %s", r.URL.Path)
+// coerceURLToQueryParams takes a url with an ID resource, e.g. `/authors/1`,
+// and converts it to a url with optional query params, e.g. `/authors?id==1`.
+// If the URL didn't have an ID resource, returns the URL as is.
+func coerceURLToQueryParams(r *http.Request) error {
+	// If it's already in an optional-params format, return as is
+	if reRequestWithParams.MatchString(r.URL.String()) {
+		return nil
 	}
-	table, err := h.Repo.GetTable(matches[1])
-	return table != nil, err
-}
-
-// parseByIDRequest gets a table name and an ID from a request with a url that
-// contains an id resource after the table name, e.g. `/authors/1`
-func parseByIDRequest(url string) (string, string, error) {
-	matches := ReRequestWithId.FindStringSubmatch(url)
+	matches := reRequestWithId.FindStringSubmatch(r.URL.Path)
 	if len(matches) < 3 {
-		return "", "", fmt.Errorf("Could not parse for id and table: %s", url)
+		return fmt.Errorf("Could not parse for id and table: %s", r.URL.Path)
 	}
 	tableName := matches[1]
 	rowID := matches[2]
-	return tableName, rowID, nil
+
+	key := ""
+	// Add rsql key for GET method
+	if r.Method == http.MethodGet {
+		key = "where="
+	}
+
+	// Convert URL to rsql format
+	var err error
+	r.URL, err = url.Parse(fmt.Sprintf("/%s?%sid==%s", tableName, key, rowID))
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // parseOptionalParamsRequest gets the table name from a request with a url
 // that does not contain an id resource and has optional query params, e.g.
 // `/authors` or `/authors?select=surname`
 func parseOptionalParamsRequest(url string) (string, error) {
-	matches := ReRequestWithParams.FindStringSubmatch(url)
+	matches := reRequestWithParams.FindStringSubmatch(url)
 	if len(matches) < 2 {
 		return "", fmt.Errorf("could not extract table name from %s", url)
 	}
@@ -296,8 +244,8 @@ func parseOptionalParamsRequest(url string) (string, error) {
 }
 
 // writeResponse writes headers and data
-func writeResponse(w http.ResponseWriter, statusCode int, headers *Headers, data []byte) {
-	for k, v := range *headers {
+func writeResponse(w http.ResponseWriter, statusCode int, headers headers, data []byte) {
+	for k, v := range headers {
 		w.Header().Set(k, v)
 	}
 	w.WriteHeader(statusCode)
