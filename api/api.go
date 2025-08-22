@@ -46,12 +46,19 @@ func (h *APIHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Standardize URL
 	err := coerceURLToQueryParams(r)
 	if err != nil {
 		writeResponse(w, http.StatusInternalServerError, nil, []byte(err.Error()))
 		return
 	}
+	r.URL, err = url.Parse(decodeURL(r.URL.String()))
+	if err != nil {
+		writeResponse(w, http.StatusInternalServerError, nil, []byte(err.Error()))
+		return
+	}
 
+	// Route request
 	switch r.Method {
 	case http.MethodGet:
 		h.getRows(w, r)
