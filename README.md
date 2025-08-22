@@ -85,6 +85,24 @@ rows updated in table authors: 1
 
 Unlike a GET request, query parameters in a POST or DELETE request do not require the `where` key or a `=` separator before the column/value conditionals.
 
+### Encoding in the URL query parameters
+
+Percent-encoded characters will be decoded as defined at <a href="https://developer.mozilla.org/en-US/docs/Glossary/Percent-encoding">MDN Web Docs: Percent-encoding</a>
+
+For example, here is a query where space '` `' characters are encoded with `+` and `+` characters are encoded with `%2B`:
+
+```bash
+curl -X GET -s 'http://localhost:8090/books?select=title&where=title==Programming:+Principles+and+Practice+Using+C%2B%2B' | jq
+```
+
+```json
+[
+  {
+    "title": "Programming: Principles and Practice Using C++"
+  }
+]
+```
+
 ## Query parameter specifications
 
 ### Where
