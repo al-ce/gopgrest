@@ -6,8 +6,6 @@ based query language.
 
 ## API
 
-The following endpoints are valid for each table in the database with an `id`:
-
 | Endpoint                     | Method | Description                 | Request            | Response                                   |
 | ---------------------------- | ------ | --------------------------- | ------------------ | ------------------------------------------ |
 | `/`                          | GET    | Get structure of all tables | ---                | `application/json` (tables)                |
@@ -66,15 +64,14 @@ WHERE authors.born < 1900
 
 The following query keys are supported:
 
-| Key              | Description                                |
-| ---------------- | ------------------------------------------ |
-| `where`         | add `WHERE` conditions to a `SELECT` query |
-| `select`         | columns to return in a `SELECT` query      |
-| `join` (various) | add `JOIN` relations to a `SELECT` query   |
-
-```
-
-```
+| Key          | Description                                    |
+| ------------ | ---------------------------------------------- |
+| `where`      | add `WHERE` conditions to a `SELECT` query     |
+| `select`     | columns to return in a `SELECT` query          |
+| `inner join` | add `INNER JOIN` relations to a `SELECT` query |
+| `join`       | add `INNER JOIN` relations to a `SELECT` query |
+| `left_join`  | add `LEFT JOIN` relations to a `SELECT` query  |
+| `right_join` | add `RIGHT JOIN` relations to a `SELECT` query |
 
 Query parameters matching the `where` format for an RSQL query can be added to PUT and DELETE requests to update/delete rows matching the conditions.
 
@@ -97,16 +94,18 @@ A `where` key can be added to a GET URL's query parameters to match a SQL `WHERE
 A `where` subquery is in the following format:
 
 ```
-where=[{column_name}{operator}{value};...]
+where={column_name}{operator}{value};...
 ```
 
-where the right hand side is a `;` separated list of conditional expressions equivalent to a `WHERE` clause.
+where the right of the `=` is a `;` separated list of conditional expressions equivalent to a `WHERE` clause.
 
 For example, the following SQL query and GET request are equivalent:
 
 ```bash
 curl -X GET -s 'http://localhost:8090/authors?where=forename==Anne;born>=1900' | jq
 ```
+
+responds with:
 
 ```json
 [
@@ -192,7 +191,7 @@ A `select` subquery is in the following format:
 select=[{column_name}:{alias},... ]
 ```
 
-where the right hand side of the subquery is a comma separated list of valid column names and an optional alias, with the column name and alias separated by a `:`.
+where the right of the `=` is a `,` separated list of valid column names and an optional alias, with the column name and alias separated by a `:`.
 
 For example, the following queries and GET request are equivalent:
 
@@ -238,7 +237,7 @@ Joins can be added to the URL query to add a Join statement to the `SELECT` quer
 A join subquery is in the following format:
 
 ```
-[{join_keyword}=[{table}:{left_qualifier}.{left_column}=={right_qualifier}.{right_coulmn};...]
+{join_keyword}=[{table}:{left_qualifier}.{left_column}=={right_qualifier}.{right_coulmn};...
 ```
 
 where right hand side of the subquery `;` separated list of join relations.
@@ -381,7 +380,7 @@ curl -X POST http://localhost:8090/authors \
 
 ### Get Row (pick)
 
-Get a single row from a table by id in a JSON response
+Get a single row from a table by id as a JSON object.
 
 ```http
 GET http://{HOST}:{PORT}/{tablename}/{id}
@@ -403,7 +402,7 @@ curl -X GET -s http://localhost:8090/authors/1 | jq
 
 ### Get Rows (list)
 
-Get all rows from a table matching a list of optional query parameters.
+Get all rows from a table matching a list of optional query parameters as an array of JSON objects.
 
 ```http
 GET http://{HOST}:{PORT}/{tablename}?{querystring}
@@ -461,7 +460,7 @@ curl -X GET -s 'http://localhost:8090/authors?where=forename==Anne;born>=1900'
 
 ### Update
 
-Update a row by ID or by query parameters, returning the number of rows updated.
+Update a row by ID or by query parameters, responding with the number of rows updated.
 
 By id:
 
@@ -492,7 +491,7 @@ curl -X PUT 'http://localhost:8090/authors?forename==Anne;born<1900' --data '{"f
 
 ### Delete
 
-Delete a row by ID, returning a message confirming the deletion.
+Delete a row by ID, responding with a message confirming the deleted row.
 
 ```http
 DELETE http://{HOST}:{PORT}/{tablename}/{id}
