@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
+	"strings"
 
 	"gopgrest/repository"
 	"gopgrest/service"
@@ -257,4 +258,34 @@ func writeResponse(w http.ResponseWriter, statusCode int, headers headers, data 
 	}
 	w.WriteHeader(statusCode)
 	w.Write(data)
+}
+
+// decodeURL decodes any percent-encoded characters as defined here:
+// https://developer.mozilla.org/en-US/docs/Glossary/Percent-encoding
+func decodeURL(url string) string {
+	replacer := strings.NewReplacer(
+		"%3A", ":",
+		"%2F", "/",
+		"%3F", "?",
+		"%23", "#",
+		"%5B", "[",
+		"%5D", "]",
+		"%40", "@",
+		"%21", "!",
+		"%24", "$",
+		"%26", "&",
+		"%27", "'",
+		"%28", "(",
+		"%29", ")",
+		"%2A", "*",
+		"%2B", "+",
+		"%2C", ",",
+		"%3B", ";",
+		"%3D", "=",
+		"%25", "%",
+		// Recognizing both %20 and + for ' '. Use "%2B" if '+' in the url
+		"%20", " ",
+		"+", " ",
+	)
+	return replacer.Replace(url)
 }
