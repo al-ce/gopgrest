@@ -13,6 +13,7 @@ var (
 	InsertColsDoNotMatch     = errors.New("Columns in rows to insert do not match")
 	InsertValTypesDoNotMatch = errors.New("Value types in rows to insert do not match")
 	DeleteWithNoConditions   = errors.New("Will not DELETE with no WHERE conditions")
+	UpdateWithNoConditions   = errors.New("Will not UPDATE with no WHERE conditions")
 
 	TableDoesNotExist = errors.New("Table does not exist")
 	ColDoesNotExist   = errors.New("Column not found in given table")

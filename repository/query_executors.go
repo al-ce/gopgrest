@@ -108,6 +108,10 @@ func (r *Repository) InsertRows(tableName string, newRows []types.RowData) ([]in
 }
 
 func (r *Repository) UpdateRowsByRSQL(tableName string, conditions []rsql.Condition, updatedRow *types.RowData) (int64, error) {
+	// Do not exec update with empty query
+	if len(conditions) == 0 {
+		return -1, apperrors.UpdateWithNoConditions
+	}
 	var assignments []string
 	var values []any
 	var assignmentVals []any
