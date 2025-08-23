@@ -6,6 +6,8 @@ import (
 	"regexp"
 	"slices"
 	"strings"
+
+	"gopgrest/repatterns"
 )
 
 // newRSQLQuery builds a ParsedURL from the URL
@@ -67,14 +69,12 @@ func NewRSQLQuery(url string) (QueryParams, error) {
 // newPathQuery parses a URL, checking for a table name and an optional query
 func newPathQuery(url string) (*PathQuery, error) {
 	// Has table in URL but no query
-	RePathNoQuery := regexp.MustCompile(`^/(\w+)$`)
-	if RePathNoQuery.MatchString(url) {
+	if repatterns.ReqNoParams.MatchString(url) {
 		return nil, nil
 	}
 	// Has table in URL and query
-	RePathQuery := regexp.MustCompile(`^/(\w+)\?(.*)$`)
-	queryMatches := RePathQuery.FindStringSubmatch(url)
-	if RePathQuery.MatchString(url) {
+	queryMatches := repatterns.ReqHasParams.FindStringSubmatch(url)
+	if repatterns.ReqHasParams.MatchString(url) {
 		return &PathQuery{Resource: queryMatches[1], Query: queryMatches[2]}, nil
 	}
 	// Bad URL

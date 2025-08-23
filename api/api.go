@@ -8,9 +8,9 @@ import (
 	"log"
 	"net/http"
 	"net/url"
-	"regexp"
 	"strings"
 
+	"gopgrest/repatterns"
 	"gopgrest/repository"
 	"gopgrest/service"
 	"gopgrest/types"
@@ -22,11 +22,6 @@ type APIHandler struct {
 }
 
 type headers map[string]string
-
-var (
-	reRequestWithId     = regexp.MustCompile(`^/(\w+)/([0-9]+)$`)
-	reRequestWithParams = regexp.MustCompile(`^/(\w+)(\?.*)?$`)
-)
 
 func NewAPIHandler(db repository.QueryExecutor, tables []repository.Table) APIHandler {
 	repo := repository.NewRepository(db, tables)
@@ -220,10 +215,10 @@ func notFoundHandler(w http.ResponseWriter) {
 // If the URL didn't have an ID resource, returns the URL as is.
 func coerceURLToQueryParams(r *http.Request) error {
 	// If it's already in an optional-params format, return as is
-	if reRequestWithParams.MatchString(r.URL.String()) || r.URL.Path == "/" {
+	if repatterns.ReqOptionalParams.MatchString(r.URL.String()) || r.URL.Path == "/" {
 		return nil
 	}
-	matches := reRequestWithId.FindStringSubmatch(r.URL.Path)
+	matches := repatterns.ReqWithId.FindStringSubmatch(r.URL.Path)
 	if len(matches) < 3 {
 		return fmt.Errorf("Could not parse for id and table: %s", r.URL.Path)
 	}
@@ -249,7 +244,7 @@ func coerceURLToQueryParams(r *http.Request) error {
 // that does not contain an id resource and has optional query params, e.g.
 // `/authors` or `/authors?select=surname`
 func parseOptionalParamsRequest(url string) (string, error) {
-	matches := reRequestWithParams.FindStringSubmatch(url)
+	matches := repatterns.ReqOptionalParams.FindStringSubmatch(url)
 	if len(matches) < 2 {
 		return "", fmt.Errorf("could not extract table name from %s", url)
 	}

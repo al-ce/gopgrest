@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"log"
 	"maps"
-	"regexp"
 	"slices"
 	"strconv"
 
 	"gopgrest/apperrors"
+	"gopgrest/repatterns"
 	"gopgrest/repository"
 	"gopgrest/rsql"
 	"gopgrest/types"
@@ -193,13 +193,13 @@ func (s *Service) DeleteRowsByRSQL(tableName, url string) (int64, error) {
 // parsWhereClause parses and validates any 'WHERE' conditions found in a url
 func (s *Service) parseWhereClause(tableName, url string) ([]rsql.Condition, error) {
 	conditions := []rsql.Condition{}
-	ReURLWithParams := regexp.MustCompile(`^/\w+\?(.*)?$`)
-	if !ReURLWithParams.MatchString(url) {
+	if !repatterns.ReqHasParams.MatchString(url) {
 		return conditions, nil
 	}
 
-	// Make new  struct array from the query params
-	queryParams := ReURLWithParams.FindStringSubmatch(url)[1]
+	// Make new struct array from the query params
+	// Needs third element, i.e. second capture group
+	queryParams := repatterns.ReqHasParams.FindStringSubmatch(url)[2]
 	conditions, err := rsql.NewWhereConditions(queryParams)
 	if err != nil {
 		return []rsql.Condition{}, err
