@@ -36,9 +36,20 @@ func NewAPIHandler(db repository.QueryExecutor, tables []repository.Table) APIHa
 // an existing table name
 func (h *APIHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	log.Println(r.Method, r.URL, r.RemoteAddr)
+	// Simpler to early return here if we're stripping trailing `/`
+	if r.Method == http.MethodGet && r.URL.Path == "/" {
+		h.showTables(w)
+		return
+	}
 
 	// Standardize URL
-	err := coerceURLToQueryParams(r)
+	var err error
+	r.URL, err = url.Parse(stripTrailingChars(r.URL.String()))
+	if err != nil {
+		writeResponse(w, http.StatusInternalServerError, nil, []byte(err.Error()))
+		return
+	}
+	err = coerceURLToQueryParams(r)
 	if err != nil {
 		writeResponse(w, http.StatusInternalServerError, nil, []byte(err.Error()))
 		return
@@ -52,10 +63,6 @@ func (h *APIHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Route request
 	switch r.Method {
 	case http.MethodGet:
-		if r.URL.Path == "/" {
-			h.showTables(w)
-			return
-		}
 		h.getRows(w, r)
 	case http.MethodPost:
 		h.insertRows(w, r)
@@ -288,4 +295,8 @@ func decodeURL(url string) string {
 		"+", " ",
 	)
 	return replacer.Replace(url)
+}
+
+func stripTrailingChars(url string) string {
+	return repatterns.TrailingChars.ReplaceAllString(url, "")
 }
