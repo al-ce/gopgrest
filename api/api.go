@@ -42,11 +42,6 @@ func NewAPIHandler(db repository.QueryExecutor, tables []repository.Table) APIHa
 func (h *APIHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	log.Println(r.Method, r.URL, r.RemoteAddr)
 
-	if r.Method == http.MethodGet && r.URL.Path == "/" {
-		h.showTables(w)
-		return
-	}
-
 	// Standardize URL
 	err := coerceURLToQueryParams(r)
 	if err != nil {
@@ -62,6 +57,10 @@ func (h *APIHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Route request
 	switch r.Method {
 	case http.MethodGet:
+		if r.URL.Path == "/" {
+			h.showTables(w)
+			return
+		}
 		h.getRows(w, r)
 	case http.MethodPost:
 		h.insertRows(w, r)
@@ -221,7 +220,7 @@ func notFoundHandler(w http.ResponseWriter) {
 // If the URL didn't have an ID resource, returns the URL as is.
 func coerceURLToQueryParams(r *http.Request) error {
 	// If it's already in an optional-params format, return as is
-	if reRequestWithParams.MatchString(r.URL.String()) {
+	if reRequestWithParams.MatchString(r.URL.String()) || r.URL.Path == "/" {
 		return nil
 	}
 	matches := reRequestWithId.FindStringSubmatch(r.URL.Path)
