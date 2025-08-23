@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"testing"
 
 	"gopgrest/api"
 	"gopgrest/repository"
@@ -88,4 +89,11 @@ func SelectRows(repo repository.Repository, query string) ([]types.RowData, erro
 		return []types.RowData{}, err
 	}
 	return gotRows, nil
+}
+
+// Try fails the test if err is not nil
+func Try(t *testing.T, err error) {
+	if err != nil {
+		t.Fatal(err.Error())
+	}
 }
