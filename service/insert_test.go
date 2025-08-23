@@ -11,7 +11,7 @@ import (
 	"gopgrest/types"
 )
 
-func Test_ServiceInsertRow_Single(t *testing.T) {
+func Test_ServiceInsertRows(t *testing.T) {
 	service := tests.NewTestService(t)
 
 	newRows := []types.RowData{
