@@ -6,16 +6,16 @@ based query language.
 
 ## API
 
-| Endpoint                     | Method | Description                 | Request            | Response                                   |
-| ---------------------------- | ------ | --------------------------- | ------------------ | ------------------------------------------ |
-| `/`                          | GET    | Get structure of all tables | ---                | `application/json` (tables)                |
-| `/{tablename}`               | POST   | Insert new row(s)           | `application/json` | `rows created in table {tablename}: [ids]` |
-| `/{tablename}/{id}`          | GET    | Get a row by ID             | ---                | `application/json` (found row)             |
-| `/{tablename}?{querystring}` | GET    | Get rows by query params    | ---                | `application/json` (matching rows)         |
-| `/{tablename}/{id}`          | PUT    | Update a row by ID          | `application/json` | `row {id} deleted from table {tablename}`  |
-| `/{tablename}?{querystring}` | PUT    | Update rows by query params | `application/json` | `rows updated in table {tablename}: {n}`   |
-| `/{tablename}/{id}`          | DELETE | Delete a row by ID          | ---                | `row {id} deleted from table {tablename}`  |
-| `/{tablename}?{querystring}` | DELETE | Delete rows by query params | ---                | `rows deleted in table {tablename}: {n}`   |
+| Endpoint                     | Method | Description                 | Request            | Response                                  |
+| ---------------------------- | ------ | --------------------------- | ------------------ | ----------------------------------------- |
+| `/`                          | GET    | Get structure of all tables | ---                | `application/json` (tables)               |
+| `/{tablename}`               | POST   | Insert new row(s)           | `application/json` | `application/json` (new row ids)          |
+| `/{tablename}/{id}`          | GET    | Get a row by ID             | ---                | `application/json` (found row)            |
+| `/{tablename}?{querystring}` | GET    | Get rows by query params    | ---                | `application/json` (matching rows)        |
+| `/{tablename}/{id}`          | PUT    | Update a row by ID          | `application/json` | `row {id} deleted from table {tablename}` |
+| `/{tablename}?{querystring}` | PUT    | Update rows by query params | `application/json` | `rows updated in table {tablename}: {n}`  |
+| `/{tablename}/{id}`          | DELETE | Delete a row by ID          | ---                | `row {id} deleted from table {tablename}` |
+| `/{tablename}?{querystring}` | DELETE | Delete rows by query params | ---                | `rows deleted in table {tablename}: {n}`  |
 
 ## REST Query language (based on restSQL)
 
@@ -373,7 +373,7 @@ curl -X GET 'http://localhost:8090/' | jq
 
 ### Insert
 
-Insert a new row or rows into an existing table.
+Insert a new row or rows into an existing table. Responds with array of new ids.
 
 ```http
 POST http://{HOST}:{PORT}/{tablename}
@@ -385,7 +385,9 @@ Example (single JSON object):
 ```bash
 curl -X POST -s http://localhost:8090/authors \
       --data '{ "surname": "Woolf", "forename": "Virginia" }'
-# stdout: "rows created in table authors: [1]"
+```
+```json
+[3]
 ```
 
 Example (multiple rows from array of JSON objects):
@@ -393,7 +395,10 @@ Example (multiple rows from array of JSON objects):
 ```bash
 curl -X POST http://localhost:8090/authors \
       --data '[{ "surname": "Groton", "forename": "Anne" }, { "surname": "Plato" }]'
-# stdout: "rows created in table authors: [2 3]"
+```
+
+```json
+[4, 5]
 ```
 
 ### Get Row (pick)

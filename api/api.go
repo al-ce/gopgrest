@@ -144,9 +144,15 @@ func (h *APIHandler) insertRows(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Set response
-	data := fmt.Appendf(nil, "rows created in table %s: %v", table, newIds)
-	writeResponse(w, http.StatusOK, nil, data)
+	// Respond with appended ids
+	// Encode to JSON
+	jsonData, err := json.Marshal(newIds)
+	if err != nil {
+		writeResponse(w, http.StatusInternalServerError, nil, []byte(err.Error()))
+		return
+	}
+	headers := headers{"Content-Type": "application/json"}
+	writeResponse(w, http.StatusOK, headers, jsonData)
 }
 
 func (h *APIHandler) updateRows(w http.ResponseWriter, r *http.Request) {
