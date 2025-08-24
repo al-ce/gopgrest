@@ -97,3 +97,17 @@ func Try(t *testing.T, err error) {
 		t.Fatal(err.Error())
 	}
 }
+
+// AssertEq fails the test if got != exp
+func AssertEq(t *testing.T, got any, exp any)  {
+	if got != exp {
+		t.Fatalf("%v != %v", got, exp)
+	}
+}
+
+// AssertNotEq fails the test if got == exp
+func AssertNotEq(t *testing.T, got any, exp any)  {
+	if got == exp {
+		t.Fatalf("%v == %v", got, exp)
+	}
+}
