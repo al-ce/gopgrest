@@ -25,15 +25,15 @@ func Test_RepoUpdateRowByRSQL(t *testing.T) {
 	conditions := []rsql.Condition{
 		{Column: rsql.Column{Name: "forename"}, Values: []string{"Anne"}, SQLOperator: "="},
 	}
-	rowsAffected, err := repo.UpdateRowsByRSQL("authors", conditions, &update)
+	ids, err := repo.UpdateRowsByRSQL("authors", conditions, &update)
 	if err != nil {
 		t.Errorf("Update by RSQL err: %s", err)
 	}
-	if rowsAffected != int64(len(expAuthors)) {
+	if len(ids) != len(expAuthors) {
 		t.Fatalf(
 			"Expected to update %d columns, instead updated %d",
 			len(expAuthors),
-			rowsAffected,
+			len(ids),
 		)
 	}
 

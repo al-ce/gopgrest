@@ -22,15 +22,15 @@ func Test_ServiceUpdateRowsByRSQL(t *testing.T) {
 	// Update forename for each author named 'Anne'
 	update := types.RowData{"forename": "Beatrice"}
 	url := "/authors?forename==Anne"
-	rowsAffected, err := service.UpdateRowsByRSQL("authors", url, &update)
+	ids, err := service.UpdateRowsByRSQL("authors", url, &update)
 	if err != nil {
 		t.Errorf("Update by RSQL err: %s", err)
 	}
-	if rowsAffected != int64(len(expAuthors)) {
+	if len(ids) != len(expAuthors) {
 		t.Fatalf(
 			"Expected to update %d columns, instead updated %d",
 			len(expAuthors),
-			rowsAffected,
+			len(ids),
 		)
 	}
 

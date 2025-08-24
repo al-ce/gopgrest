@@ -146,23 +146,23 @@ func (s *Service) InsertRows(newRows []types.RowData, tableName string) ([]int64
 
 // UpdateRowsByRSQL updates any number of rows that match the optional query
 // params in the url
-func (s *Service) UpdateRowsByRSQL(tableName, url string, updateData *types.RowData) (int64, error) {
+func (s *Service) UpdateRowsByRSQL(tableName, url string, updateData *types.RowData) ([]int64, error) {
 	// Verify table
 	table, err := s.Repo.GetTable(tableName)
 	if err != nil {
-		return -1, err
+		return []int64{}, err
 	}
 
 	conditions, err := s.parseWhereClause(tableName, url)
 	if err != nil {
-		return -1, err
+		return []int64{}, err
 	}
 
 	// Each column in the update data must exist in the table
 	cols := slices.Collect(maps.Keys(*updateData))
 	badCol, err := verifyColumns(table, cols)
 	if err != nil {
-		return -1, fmt.Errorf("%w (%s:%s) ", err, table.Name, badCol)
+		return []int64{}, fmt.Errorf("%w (%s:%s) ", err, table.Name, badCol)
 	}
 
 	// Decode request body into a dummy row value to validate column names
@@ -170,22 +170,22 @@ func (s *Service) UpdateRowsByRSQL(tableName, url string, updateData *types.RowD
 	b, _ := json.Marshal(updateData)
 	err = json.Unmarshal(b, &dummyRow)
 	if err != nil {
-		return -1, err
+		return []int64{}, err
 	}
 
 	// Update row
 	return s.Repo.UpdateRowsByRSQL(tableName, conditions, updateData)
 }
 
-func (s *Service) DeleteRowsByRSQL(tableName, url string) (int64, error) {
+func (s *Service) DeleteRowsByRSQL(tableName, url string) ([]int64, error) {
 	// Get table info for verification
 	_, err := s.Repo.GetTable(tableName)
 	if err != nil {
-		return -1, err
+		return []int64{}, err
 	}
 	conditions, err := s.parseWhereClause(tableName, url)
 	if err != nil {
-		return -1, err
+		return []int64{}, err
 	}
 	return s.Repo.DeleteRowsByRSQL(tableName, conditions)
 }

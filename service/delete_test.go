@@ -16,15 +16,15 @@ func Test_ServiceDeleteRowsByRSQL(t *testing.T) {
 
 	// Delete rows with matching conditions
 	url := "/authors?forename==Anne"
-	rowsAffected, err := service.DeleteRowsByRSQL("authors", url)
+	deletedIDs, err := service.DeleteRowsByRSQL("authors", url)
 	if err != nil {
 		t.Errorf("Update by RSQL err: %s", err)
 	}
-	if rowsAffected != int64(len(expAuthors)) {
+	if len(deletedIDs) != len(expAuthors) {
 		t.Fatalf(
 			"Expected to update %d columns, instead updated %d",
 			len(expAuthors),
-			rowsAffected,
+			deletedIDs,
 		)
 	}
 

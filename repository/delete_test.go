@@ -2,7 +2,6 @@ package repository_test
 
 import (
 	"errors"
-	"fmt"
 	"testing"
 
 	"gopgrest/apperrors"
@@ -10,39 +9,16 @@ import (
 	"gopgrest/tests"
 )
 
-func Test_DeleteRowByID(t *testing.T) {
-	repo := tests.NewTestRepo(t)
-	sampleAuthors, err := tests.SelectRows(repo, "SELECT * FROM authors")
-	if err != nil {
-		t.Fatal(err)
-	}
-	for index := range sampleAuthors {
-		id := index + 1
-		rowsAffected, err := repo.DeleteRowByID("authors", int64(id))
-		if err != nil {
-			t.Fatalf("Could not delete row %d: %s", id, err)
-		}
-		if rowsAffected != 1 {
-			t.Fatalf("Expected to delete 1 row, deleted %d", rowsAffected)
-		}
-		// Confirm author no longer in DB
-		gotRows, err := tests.SelectRows(repo, fmt.Sprintf("SELECT * FROM AUTHORS WHERE id=%d", id))
-		if len(gotRows) != 0 {
-			t.Errorf("Expected to not find author w/ id %d, but found it", id)
-		}
-	}
-}
-
 func Test_DeleteRowsByRSQL(t *testing.T) {
 	// DELETE /authors?...
 	t.Run("No query", func(t *testing.T) {
 		repo := tests.NewTestRepo(t)
-		rowsAffected, err := repo.DeleteRowsByRSQL("authors", []rsql.Condition{})
+		deletedIDs, err := repo.DeleteRowsByRSQL("authors", []rsql.Condition{})
 		if !errors.Is(err, apperrors.DeleteWithNoConditions) {
 			t.Errorf("Expected error '%s', got '%s'", apperrors.DeleteWithNoConditions, err)
 		}
-		if rowsAffected != -1 {
-			t.Errorf("Expected -1 rows affected (error), got %d", rowsAffected)
+		if len(deletedIDs) > 0 {
+			t.Errorf("Expected 0 rows deleted, got %d", deletedIDs)
 		}
 	})
 
@@ -56,12 +32,12 @@ func Test_DeleteRowsByRSQL(t *testing.T) {
 		conditions := []rsql.Condition{
 			{Column: rsql.Column{Name: "forename"}, Values: []string{"Anne"}, SQLOperator: "="},
 		}
-		rowsAffected, err := repo.DeleteRowsByRSQL("authors", conditions)
+		deletedIDs, err := repo.DeleteRowsByRSQL("authors", conditions)
 		if err != nil {
 			t.Fatalf("Could not delete with conditions %v: %s", conditions, err)
 		}
-		if rowsAffected != expCount {
-			t.Errorf("Expected %d rows deleted, got %d", expCount, rowsAffected)
+		if len(deletedIDs) != expCount {
+			t.Errorf("Expected %d rows deleted, got %d", expCount, deletedIDs)
 		}
 		// Confirm authors no longer in DB
 		gotRows, err := tests.SelectRows(repo, "SELECT * FROM authors WHERE forename = 'Anne'")
@@ -81,12 +57,12 @@ func Test_DeleteRowsByRSQL(t *testing.T) {
 			{Column: rsql.Column{Name: "forename"}, Values: []string{"Anne"}, SQLOperator: "="},
 			{Column: rsql.Column{Name: "born"}, Values: []string{"1900"}, SQLOperator: "<"},
 		}
-		rowsAffected, err := repo.DeleteRowsByRSQL("authors", conditions)
+		deletedIDs, err := repo.DeleteRowsByRSQL("authors", conditions)
 		if err != nil {
 			t.Fatalf("Could not delete with conditions %v: %s", conditions, err)
 		}
-		if rowsAffected != expCount {
-			t.Errorf("Expected %d rows deleted, got %d", expCount, rowsAffected)
+		if len(deletedIDs) != expCount {
+			t.Errorf("Expected %d rows deleted, got %d", expCount, deletedIDs)
 		}
 		// Confirm authors no longer in DB
 		gotRows, err := tests.SelectRows(

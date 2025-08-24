@@ -52,9 +52,9 @@ func (r *Repository) GetRowsByRSQL(tableName string, query rsql.QueryParams) (*s
 
 // InsertRows inserts a new row into a specified table
 func (r *Repository) InsertRows(tableName string, newRows []types.RowData) ([]int64, error) {
-	ids := make([]int64, len(newRows))
+	insertedIDs := make([]int64, len(newRows))
 	if len(newRows) == 0 {
-		return ids, apperrors.InsertWithNoRows
+		return insertedIDs, apperrors.InsertWithNoRows
 	}
 
 	var cols []string         // column names for `INSERT INTO (col1, col2...)`
@@ -94,23 +94,25 @@ func (r *Repository) InsertRows(tableName string, newRows []types.RowData) ([]in
 	// Execute insert query
 	rows, err := r.DB.Query(createStmnt, args...)
 	if err != nil {
-		return ids, err
+		return insertedIDs, err
 	}
 	defer rows.Close()
 
 	var i int
 	for rows.Next() {
-		rows.Scan(&ids[i])
+		rows.Scan(&insertedIDs[i])
 		i++
 	}
 
-	return ids, nil
+	return insertedIDs, nil
 }
 
-func (r *Repository) UpdateRowsByRSQL(tableName string, conditions []rsql.Condition, updatedRow *types.RowData) (int64, error) {
+// UpdateRowsByRSQL updates rows matching conditions and returns the ids of
+// updated rows
+func (r *Repository) UpdateRowsByRSQL(tableName string, conditions []rsql.Condition, updatedRow *types.RowData) ([]int64, error) {
 	// Do not exec update with empty query
 	if len(conditions) == 0 {
-		return -1, apperrors.UpdateWithNoConditions
+		return []int64{}, apperrors.UpdateWithNoConditions
 	}
 	var assignments []string
 	var values []any
@@ -123,14 +125,14 @@ func (r *Repository) UpdateRowsByRSQL(tableName string, conditions []rsql.Condit
 	}
 	conditional, conditionalVals, err := buildWhereConditions(conditions, placeholder)
 	if err != nil {
-		return -1, err
+		return []int64{}, err
 	}
 
 	values = slices.Concat(assignmentVals, conditionalVals)
 
 	// Build update query
 	updateStmnt := fmt.Sprintf(
-		"UPDATE %s SET %s %s",
+		"UPDATE %s SET %s %s RETURNING id",
 		tableName,
 		strings.Join(assignments, ", "),
 		conditional,
@@ -139,51 +141,49 @@ func (r *Repository) UpdateRowsByRSQL(tableName string, conditions []rsql.Condit
 	log.Printf("Exec query\n\t%s\nValues: %v", updateStmnt, values)
 
 	// Execute update query
-	result, err := r.DB.Exec(updateStmnt, values...)
+	rows, err := r.DB.Query(updateStmnt, values...)
 	if err != nil {
-		return -1, err
+		return []int64{}, err
 	}
 
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return -1, err
-	}
-	if rowsAffected == 0 {
-		return -1, apperrors.NewUpdateNoMatchingConditionsErr(tableName, conditions)
-	}
-	return rowsAffected, nil
-}
+	defer rows.Close()
 
-// DeleteRowByID removes a row from a table by id
-func (r *Repository) DeleteRowByID(tableName string, id int64) (int64, error) {
-	deleteStmt := fmt.Sprintf("DELETE FROM %s WHERE id = $1", tableName)
-	return r.execDeleteQuery(deleteStmt, []any{id})
+	updatedIDs := []int64{}
+	var id int64
+	for rows.Next() {
+		rows.Scan(&id)
+		updatedIDs = append(updatedIDs, id)
+	}
+
+	return updatedIDs, nil
 }
 
 // DeleteRowsByRSQL removes any rows matching the Condition in the Query
-func (r *Repository) DeleteRowsByRSQL(tableName string, conditions []rsql.Condition) (int64, error) {
+func (r *Repository) DeleteRowsByRSQL(tableName string, conditions []rsql.Condition) ([]int64, error) {
 	// Do not exec delete with empty query
 	if len(conditions) == 0 {
-		return -1, apperrors.DeleteWithNoConditions
+		return []int64{}, apperrors.DeleteWithNoConditions
 	}
 	conditional, values, err := buildWhereConditions(conditions, 0)
 	if err != nil {
-		return -1, err
+		return []int64{}, err
 	}
-	deleteStmt := fmt.Sprintf("DELETE FROM %s %s", tableName, conditional)
-	return r.execDeleteQuery(deleteStmt, values)
-}
-
-func (r *Repository) execDeleteQuery(deleteStmt string, values []any) (int64, error) {
+	deleteStmt := fmt.Sprintf("DELETE FROM %s %s RETURNING id", tableName, conditional)
 	log.Printf("Exec query\n\t%s\nValues: %v\n", deleteStmt, values)
 	// Execute delete query
-	result, err := r.DB.Exec(deleteStmt, values...)
+	rows, err := r.DB.Query(deleteStmt, values...)
 	if err != nil {
-		return -1, err
+		return []int64{}, err
 	}
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return -1, err
+
+	defer rows.Close()
+
+	deletedIDs := []int64{}
+	var id int64
+	for rows.Next() {
+		rows.Scan(&id)
+		deletedIDs = append(deletedIDs, id)
 	}
-	return rowsAffected, nil
+
+	return deletedIDs, nil
 }

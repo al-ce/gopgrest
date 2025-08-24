@@ -138,16 +138,15 @@ func (h *APIHandler) insertRows(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Insert new rows into the database
-	newIds, err := h.Service.InsertRows(newRows, table)
+	newIDs, err := h.Service.InsertRows(newRows, table)
 	if err != nil {
 		log.Println(err)
 		writeResponse(w, http.StatusInternalServerError, nil, []byte(err.Error()))
 		return
 	}
 
-	// Respond with appended ids
-	// Encode to JSON
-	jsonData, err := json.Marshal(newIds)
+	// Respond with array of inserted ids
+	jsonData, err := json.Marshal(newIDs)
 	if err != nil {
 		writeResponse(w, http.StatusInternalServerError, nil, []byte(err.Error()))
 		return
@@ -171,14 +170,20 @@ func (h *APIHandler) updateRows(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Update row with request data
-	rowsAffected, err := h.Service.UpdateRowsByRSQL(tableName, r.URL.String(), updateData)
+	updatedIDs, err := h.Service.UpdateRowsByRSQL(tableName, r.URL.String(), updateData)
 	if err != nil {
 		writeResponse(w, http.StatusInternalServerError, nil, []byte(err.Error()))
 		return
 	}
 
-	data := fmt.Appendf(nil, "rows updated in table %s: %d", tableName, rowsAffected)
-	writeResponse(w, http.StatusOK, nil, data)
+	// Respond with array of updated ids
+	jsonData, err := json.Marshal(updatedIDs)
+	if err != nil {
+		writeResponse(w, http.StatusInternalServerError, nil, []byte(err.Error()))
+		return
+	}
+	headers := headers{"Content-Type": "application/json"}
+	writeResponse(w, http.StatusOK, headers, jsonData)
 }
 
 func (h *APIHandler) deleteRows(w http.ResponseWriter, r *http.Request) {
@@ -189,14 +194,20 @@ func (h *APIHandler) deleteRows(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Delete rows by rsql conditions
-	rowsAffected, err := h.Service.DeleteRowsByRSQL(tableName, r.URL.String())
+	deletedIDs, err := h.Service.DeleteRowsByRSQL(tableName, r.URL.String())
 	if err != nil {
 		writeResponse(w, http.StatusInternalServerError, nil, []byte(err.Error()))
 		return
 	}
 
-	data := fmt.Appendf(nil, "rows deleted in table %s: %d", tableName, rowsAffected)
-	writeResponse(w, http.StatusOK, nil, data)
+	// Respond with array of deleted ids
+	jsonData, err := json.Marshal(deletedIDs)
+	if err != nil {
+		writeResponse(w, http.StatusInternalServerError, nil, []byte(err.Error()))
+		return
+	}
+	headers := headers{"Content-Type": "application/json"}
+	writeResponse(w, http.StatusOK, headers, jsonData)
 }
 
 // showTables responds with a JSON object of the tables, their column names,

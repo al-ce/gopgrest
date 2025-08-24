@@ -67,7 +67,7 @@ func CheckMapEquality(expRows, gotRows []types.RowData) error {
 	return nil
 }
 
-func CountRows(repo repository.Repository, tableName, condition string) (int64, error) {
+func CountRows(repo repository.Repository, tableName, condition string) (int, error) {
 	var count int64
 	row := repo.DB.QueryRow(fmt.Sprintf(
 		"SELECT COUNT(*) FROM %s %s",
@@ -78,7 +78,7 @@ func CountRows(repo repository.Repository, tableName, condition string) (int64, 
 	if err != nil {
 		return -1, err
 	}
-	return count, nil
+	return int(count), nil
 }
 
 func SelectRows(repo repository.Repository, query string) ([]types.RowData, error) {
