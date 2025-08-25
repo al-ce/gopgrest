@@ -1,12 +1,12 @@
 package repository_test
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 	"testing"
 
 	"gopgrest/apperrors"
+	"gopgrest/assert"
 	"gopgrest/tests"
 	"gopgrest/types"
 )
@@ -30,9 +30,7 @@ func Test_RepoInsertRow_Single(t *testing.T) {
 	}
 
 	ids, err := repo.InsertRows("authors", newRows)
-	if err != nil {
-		t.Fatalf("Could not insert authors\n%v:\n%s", newRows, err)
-	}
+	assert.Try(t, err)
 
 	// Turn got ids into str to retrieve from db in one query
 	idStrs := make([]string, len(ids))
@@ -46,16 +44,12 @@ func Test_RepoInsertRow_Single(t *testing.T) {
 			strings.Join(idStrs, ","),
 		),
 	)
-	if err != nil {
-		t.Fatal(err)
-	}
+	assert.Try(t, err)
 
 	for idx, expAuthor := range newRows {
 		gotAuthor := gotRows[idx]
 		for k, v := range expAuthor {
-			if v != gotAuthor[k] {
-				t.Errorf("Exp %s %v %T:\nGot %v %T", k, v, v, gotAuthor[k], gotAuthor[k])
-			}
+			assert.IsEq(t, v, gotAuthor[k])
 		}
 	}
 }
@@ -63,7 +57,5 @@ func Test_RepoInsertRow_Single(t *testing.T) {
 func Test_RepoInsertRow_NoRows(t *testing.T) {
 	repo := tests.NewTestRepo(t)
 	_, err := repo.InsertRows("authors", []types.RowData{})
-	if !errors.Is(err, apperrors.InsertWithNoRows) {
-		t.Errorf("Expected err '%s' got '%s'", apperrors.InsertWithNoRows, err)
-	}
+	assert.ErrorsIs(t, err, apperrors.InsertWithNoRows)
 }

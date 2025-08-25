@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"gopgrest/api"
+	"gopgrest/assert"
 	"gopgrest/tests"
 	"gopgrest/types"
 )
@@ -19,7 +20,7 @@ import (
 func Test_GET_RowByID(t *testing.T) {
 	repo := tests.NewTestRepo(t)
 	expCount, err := tests.CountRows(repo, "authors", "")
-	tests.Try(t, err)
+	assert.Try(t, err)
 
 	t.Run(fmt.Sprintf("ids 1-%d", expCount), func(t *testing.T) {
 		for i := 1; i <= int(expCount); i++ {
@@ -130,15 +131,13 @@ func Test_GET_Tables(t *testing.T) {
 	_, rr := getRespBoilerplate(t, "/")
 	tables := map[string]any{}
 	err := json.Unmarshal(rr.Body.Bytes(), &tables)
-	tests.Try(t, err)
+	assert.Try(t, err)
 
 	gotTables := slices.Collect(maps.Keys(tables))
 
 	expectTables := []string{"authors", "books", "genres"}
 	for _, table := range expectTables {
-		if !slices.Contains(gotTables, table) {
-			t.Errorf("Expected %s in got tables", table)
-		}
+		assert.IsTrue(t, slices.Contains(gotTables, table))
 	}
 }
 
@@ -153,23 +152,20 @@ func apiGetRowsTester(
 	unmarshal(t, rr.Body.Bytes(), &gotRows)
 
 	expRows, err := tests.SelectRows(ah.Repo, rawQuery)
-	tests.Try(t, err)
+	assert.Try(t, err)
 
 	err = tests.CheckMapEquality(expRows, gotRows)
-	if err != nil {
-		t.Error(err)
-	}
+	assert.Try(t, err)
 }
 
 func getRespBoilerplate(t *testing.T, path string) (api.APIHandler, *httptest.ResponseRecorder) {
 	ah := tests.NewTestAPIHandler(t)
 	fullPath := fmt.Sprintf("%s", path)
 	rr, err := tests.MakeHttpRequest(ah, http.MethodGet, fullPath, nil)
-	tests.Try(t, err)
 
-	if http.StatusOK != rr.Code {
-		t.Fatalf("\nExp StatusCode: %d\nGot: %d", http.StatusOK, rr.Code)
-	}
+	assert.Try(t, err)
+	assert.IsEq(t, rr.Code, http.StatusOK)
+
 	return ah, rr
 }
 
@@ -179,7 +175,7 @@ func getRespBoilerplate(t *testing.T, path string) (api.APIHandler, *httptest.Re
 // for rows via the Repo, the column types for e.g. id are int64
 func unmarshal(t *testing.T, body []byte, dest *[]types.RowData) {
 	err := json.Unmarshal(body, &dest)
-	tests.Try(t, err)
+	assert.Try(t, err)
 
 	for _, row := range *dest {
 		for k, v := range row {

@@ -3,6 +3,7 @@ package repository_test
 import (
 	"testing"
 
+	"gopgrest/assert"
 	"gopgrest/rsql"
 	"gopgrest/service"
 	"gopgrest/tests"
@@ -12,24 +13,17 @@ import (
 func Test_RepoGetRowById(t *testing.T) {
 	repo := tests.NewTestRepo(t)
 	expAuthors, err := tests.SelectRows(repo, "SELECT * FROM authors ORDER BY id")
-	if err != nil {
-		t.Fatal(err)
-	}
+	assert.Try(t, err)
 
 	for index, auth := range expAuthors {
 		id := index + 1
 		rows, err := repo.GetRowByID("authors", int64(id))
-		if err != nil {
-			t.Fatalf("Could not pick author id %d: %s", id, err)
-		}
+		assert.Try(t, err)
 		defer rows.Close()
 		gotRows, err := service.ScanRows(rows)
-		if err != nil {
-			t.Fatalf("Could not scan author id %d: %s", id, err)
-		}
-		if err := tests.CheckMapEquality([]types.RowData{auth}, gotRows); err != nil {
-			t.Error(err)
-		}
+		assert.Try(t, err)
+		err = tests.CheckMapEquality([]types.RowData{auth}, gotRows)
+		assert.Try(t, err)
 	}
 }
 
@@ -412,22 +406,16 @@ func repoGetRowsTester(
 	repo := tests.NewTestRepo(t)
 
 	expRows, err := tests.SelectRows(repo, rawQuery)
-	if err != nil {
-		t.Fatal(err)
-	}
+	assert.Try(t, err)
 
 	// Testing GetRowsByRSQL result
 	rows, err := repo.GetRowsByRSQL(tableName, rsqlQuery)
-	if err != nil {
-		t.Fatal(err)
-	}
+	assert.Try(t, err)
 	defer rows.Close()
-	gotRows, err := service.ScanRows(rows)
-	if err != nil {
-		t.Fatal(err)
-	}
 
-	if err := tests.CheckMapEquality(expRows, gotRows); err != nil {
-		t.Error(err)
-	}
+	gotRows, err := service.ScanRows(rows)
+	assert.Try(t, err)
+
+	err = tests.CheckMapEquality(expRows, gotRows)
+	assert.Try(t, err)
 }

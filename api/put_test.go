@@ -2,8 +2,10 @@ package api_test
 
 import (
 	"net/http"
+	"slices"
 	"testing"
 
+	"gopgrest/assert"
 	"gopgrest/tests"
 	"gopgrest/types"
 )
@@ -12,40 +14,37 @@ func Test_PUT_NoConditions(t *testing.T) {
 	ah := tests.NewTestAPIHandler(t)
 	updateData := types.RowData{"forename": "Emily"}
 	rr, err := tests.MakeHttpRequest(ah, http.MethodPut, "/authors", updateData)
-	tests.Try(t, err)
+	assert.Try(t, err)
 	// Do NOT want 200 (should be 400 but currently getting 500, need error
 	// unwrapping?)
-	if rr.Code == http.StatusOK {
-		t.Fatalf("\nExp StatusCode: %d\nGot: %d\nResp: %s", http.StatusOK, rr.Code, rr.Body.String())
-	}
+	assert.IsNotEq(t, rr.Code, http.StatusOK)
 }
 
 func Test_PUT_SingleCondition(t *testing.T) {
 	ah := tests.NewTestAPIHandler(t)
 	updateData := types.RowData{"forename": "Emily"}
 	rr, err := tests.MakeHttpRequest(ah, http.MethodPut, "/authors?surname==Brontë", updateData)
-	tests.Try(t, err)
-	if rr.Code != http.StatusOK {
-		t.Fatalf("\nExp StatusCode: %d\nGot: %d\nResp: %s", http.StatusOK, rr.Code, rr.Body.String())
-	}
+	assert.Try(t, err)
+	assert.IsEq(t, rr.Code, http.StatusOK)
+
+	ids := tests.ParseIDArrayResponse(t, rr.Body.String())
 
 	// Confirm only row we wanted to update was updated
 	selectedRows, err := tests.SelectRows(ah.Repo, "SELECT * FROM authors")
-	tests.Try(t, err)
+	assert.Try(t, err)
 
 	for _, updatedRow := range selectedRows {
-		forename, ok := updatedRow["forename"]
-		if !ok {
-			t.Errorf("Could not get forename from %v", updatedRow)
-		}
-		surname, ok := updatedRow["surname"]
-		if !ok {
-			t.Errorf("Could not get surname from %v", updatedRow)
-		}
-		if surname == "Brontë" && forename != "Emily" {
-			t.Errorf("Row did not update: %v", updatedRow)
-		} else if surname != "Brontë" && forename == "Emily" {
-			t.Errorf("Row should not have updated: %v", updatedRow)
+
+		forename := updatedRow["forename"]
+		surname := updatedRow["surname"]
+		thisID := updatedRow["id"].(int64)
+
+		if slices.Contains(ids, thisID) {
+			assert.IsEq(t, forename, "Emily")
+			assert.IsEq(t, surname, "Brontë")
+		} else {
+			assert.IsNotEq(t, forename, "Emily")
+			assert.IsNotEq(t, surname, "Brontë")
 		}
 	}
 }
@@ -54,27 +53,26 @@ func Test_PUT_MultipleConditions(t *testing.T) {
 	ah := tests.NewTestAPIHandler(t)
 	updateData := types.RowData{"forename": "Rachel"}
 	rr, err := tests.MakeHttpRequest(ah, http.MethodPut, "/authors?forename==Anne;surname==Carson", updateData)
-	tests.Try(t, err)
-	if http.StatusOK != rr.Code {
-		t.Fatalf("\nExp StatusCode: %d\nGot: %d\nResp: %s", http.StatusOK, rr.Code, rr.Body.String())
-	}
+	assert.Try(t, err)
+	assert.IsEq(t, rr.Code, http.StatusOK)
+
+	ids := tests.ParseIDArrayResponse(t, rr.Body.String())
 
 	// Confirm only row we wanted to update was updated
 	selectedRows, err := tests.SelectRows(ah.Repo, "SELECT * FROM authors")
-	tests.Try(t, err)
+	assert.Try(t, err)
+
 	for _, updatedRow := range selectedRows {
-		forename, ok := updatedRow["forename"]
-		if !ok {
-			t.Errorf("Could not get forename from %v", updatedRow)
-		}
-		surname, ok := updatedRow["surname"]
-		if !ok {
-			t.Errorf("Could not get surname from %v", updatedRow)
-		}
-		if surname == "Carson" && forename != "Rachel" {
-			t.Errorf("Row did not update: %v", updatedRow)
-		} else if surname != "Carson" && forename == "Rachel" {
-			t.Errorf("Row should not have updated: %v", updatedRow)
+
+		forename := updatedRow["forename"]
+		surname := updatedRow["surname"]
+		thisID := updatedRow["id"].(int64)
+
+		if slices.Contains(ids, thisID) {
+			assert.IsEq(t, forename, "Rachel")
+			assert.IsEq(t, surname, "Carson")
+		} else {
+			assert.IsNotEq(t, surname, "Carson")
 		}
 	}
 }

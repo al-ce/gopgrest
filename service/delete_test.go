@@ -3,6 +3,7 @@ package service_test
 import (
 	"testing"
 
+	"gopgrest/assert"
 	"gopgrest/tests"
 )
 
@@ -10,31 +11,17 @@ func Test_ServiceDeleteRowsByRSQL(t *testing.T) {
 	service := tests.NewTestService(t)
 
 	expAuthors, err := tests.SelectRows(service.Repo, "SELECT * FROM authors WHERE forename = 'Anne'")
-	if err != nil {
-		t.Fatal(err)
-	}
+	assert.Try(t, err)
 
 	// Delete rows with matching conditions
 	url := "/authors?forename==Anne"
 	deletedIDs, err := service.DeleteRowsByRSQL("authors", url)
-	if err != nil {
-		t.Errorf("Update by RSQL err: %s", err)
-	}
-	if len(deletedIDs) != len(expAuthors) {
-		t.Fatalf(
-			"Expected to update %d columns, instead updated %d",
-			len(expAuthors),
-			deletedIDs,
-		)
-	}
+	assert.Try(t, err)
+	assert.IsTrue(t, len(deletedIDs) == len(expAuthors))
 
 	// Confirm rows were deleted
 	query := "SELECT * FROM authors WHERE forename = 'Anne' ORDER BY id"
 	gotRows, err := tests.SelectRows(service.Repo, query)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(gotRows) > 0 {
-		t.Errorf("Expected 0 rows, got %d", len(gotRows))
-	}
+	assert.Try(t, err)
+	assert.IsTrue(t, len(gotRows) == 0)
 }

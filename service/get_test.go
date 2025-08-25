@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"gopgrest/assert"
 	"gopgrest/tests"
 	"gopgrest/types"
 )
@@ -11,19 +12,14 @@ import (
 func Test_ServiceGetRowByID(t *testing.T) {
 	service := tests.NewTestService(t)
 	expAuthors, err := tests.SelectRows(service.Repo, "SELECT * FROM authors ORDER BY id")
-	if err != nil {
-		t.Fatal(err)
-	}
+	assert.Try(t, err)
 
 	for index, auth := range expAuthors {
 		idAsStr := fmt.Sprintf("%d", index+1)
 		gotRowData, err := service.GetRowByID("authors", idAsStr)
-		if err != nil {
-			t.Fatalf("Could not pick author id %s: %s", idAsStr, err)
-		}
-		if err := tests.CheckMapEquality([]types.RowData{auth}, []types.RowData{gotRowData}); err != nil {
-			t.Error(err)
-		}
+		assert.Try(t, err)
+		err = tests.CheckMapEquality([]types.RowData{auth}, []types.RowData{gotRowData})
+		assert.Try(t, err)
 	}
 }
 
@@ -189,16 +185,14 @@ func serviceGetRowsTester(
 	service := tests.NewTestService(t)
 
 	expRows, err := tests.SelectRows(service.Repo, rawQuery)
-	if err != nil {
-		t.Fatal(err)
-	}
+	assert.Try(t, err)
 
 	// Testing GetRowsByRSQL result
 	gotRows, err := service.GetRowsByRSQL(tableName, url)
+	assert.Try(t, err)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := tests.CheckMapEquality(expRows, gotRows); err != nil {
-		t.Error(err)
-	}
+	err = tests.CheckMapEquality(expRows, gotRows)
+	assert.Try(t, err)
 }

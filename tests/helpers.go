@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	"gopgrest/api"
+	"gopgrest/assert"
 	"gopgrest/repository"
 	"gopgrest/service"
 	"gopgrest/types"
@@ -96,38 +97,18 @@ func SelectRows(repo repository.Repository, query string) ([]types.RowData, erro
 
 func ParseIDArrayResponse(t *testing.T, resp string) []int64 {
 	// Expect that we got back an array of ids, like `[4, 5]`
-	reInsertedIds := regexp.MustCompile(`^\[(\d+,? ?)+\]$`)
+	reInsertedIds := regexp.MustCompile(`^\[((\d+,?)+)\]$`)
 	match := reInsertedIds.FindStringSubmatch(resp)
-	if len(match) != 2 {
-		t.Fatalf("Expected resp body match on pattern: %v\nGot: %v", reInsertedIds, match)
+	if len(match) == 0 {
+		t.Fatalf("Expected to match `%s` on pattern: %v\nGot: %v", resp, reInsertedIds, match)
 	}
-	idStrs := strings.Split(match[1], ", ")
+	idStrs := strings.Split(match[1], ",")
 	ids := make([]int64, len(idStrs))
+
 	for i, _id := range idStrs {
 		gotID, err := strconv.ParseInt(_id, 10, 64)
-		Try(t, err)
+		assert.Try(t, err)
 		ids[i] = gotID
 	}
 	return ids
-}
-
-// Try fails the test if err is not nil
-func Try(t *testing.T, err error) {
-	if err != nil {
-		t.Fatal(err.Error())
-	}
-}
-
-// AssertEq fails the test if got != exp
-func AssertEq(t *testing.T, got any, exp any)  {
-	if got != exp {
-		t.Fatalf("%v != %v", got, exp)
-	}
-}
-
-// AssertNotEq fails the test if got == exp
-func AssertNotEq(t *testing.T, got any, exp any)  {
-	if got == exp {
-		t.Fatalf("%v == %v", got, exp)
-	}
 }

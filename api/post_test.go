@@ -3,9 +3,10 @@ package api_test
 import (
 	"fmt"
 	"net/http"
-	"regexp"
+	"strings"
 	"testing"
 
+	"gopgrest/assert"
 	"gopgrest/tests"
 	"gopgrest/types"
 )
@@ -29,34 +30,25 @@ func Test_POST(t *testing.T) {
 	}
 
 	rr, err := tests.MakeHttpRequest(ah, http.MethodPost, "/authors", newRows)
-	if err != nil {
-		t.Error(err.Error())
-	}
 
-	if http.StatusOK != rr.Code {
-		t.Errorf("\nExp StatusCode: %d\nGot: %d", http.StatusOK, rr.Code)
-	}
+	assert.Try(t, err)
+	assert.IsEq(t, rr.Code, http.StatusOK)
 
 	// Expect that we got back an array of ids, like `[4, 5]`
-	reInsertedIds := regexp.MustCompile(`^\[(.*)\]$`)
-	match := reInsertedIds.FindStringSubmatch(rr.Body.String())
-	if len(match) != 2 {
-		t.Errorf("Expected resp body match on pattern: %v\nGot: %v", reInsertedIds, match)
-	}
-	ids := match[1]
+	tests.ParseIDArrayResponse(t, rr.Body.String())
 
 	// Check for inserted rows in DB
-	gotRows, err := tests.SelectRows(ah.Repo, fmt.Sprintf("SELECT * FROM authors WHERE id IN (%s)", ids))
-	if err != nil {
-		t.Error(err.Error())
-	}
+	ids := strings.Trim(rr.Body.String(), "[]")
+	gotRows, err := tests.SelectRows(
+		ah.Repo,
+		fmt.Sprintf("SELECT * FROM authors WHERE id IN (%s)", ids),
+	)
+	assert.Try(t, err)
 
 	for idx, expAuthor := range newRows {
 		gotAuthor := gotRows[idx]
 		for k, v := range expAuthor {
-			if v != gotAuthor[k] {
-				t.Errorf("Exp %s %v %T:\nGot %v %T", k, v, v, gotAuthor[k], gotAuthor[k])
-			}
+			assert.IsEq(t, v, gotAuthor[k])
 		}
 	}
 }
