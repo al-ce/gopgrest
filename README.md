@@ -6,16 +6,16 @@ based query language.
 
 ## API
 
-| Endpoint                     | Method | Description                 | Request            | Response                                  |
-| ---------------------------- | ------ | --------------------------- | ------------------ | ----------------------------------------- |
-| `/`                          | GET    | Get structure of all tables | ---                | `application/json` (tables)               |
-| `/{tablename}`               | POST   | Insert new row(s)           | `application/json` | `application/json` (new row ids)          |
-| `/{tablename}/{id}`          | GET    | Get a row by ID             | ---                | `application/json` (found row)            |
-| `/{tablename}?{querystring}` | GET    | Get rows by query params    | ---                | `application/json` (matching rows)        |
-| `/{tablename}/{id}`          | PUT    | Update a row by ID          | `application/json` | `row {id} deleted from table {tablename}` |
-| `/{tablename}?{querystring}` | PUT    | Update rows by query params | `application/json` | `rows updated in table {tablename}: {n}`  |
-| `/{tablename}/{id}`          | DELETE | Delete a row by ID          | ---                | `row {id} deleted from table {tablename}` |
-| `/{tablename}?{querystring}` | DELETE | Delete rows by query params | ---                | `rows deleted in table {tablename}: {n}`  |
+| Endpoint                     | Method | Description                 | Request            | Response                                    |
+| ---------------------------- | ------ | --------------------------- | ------------------ | ------------------------------------------- |
+| `/`                          | GET    | Get structure of all tables | ---                | `application/json` tables and their columns |
+| `/{tablename}`               | POST   | Insert new row(s)           | `application/json` | `application/json` new row id(s)            |
+| `/{tablename}/{id}`          | GET    | Get a row by ID             | ---                | `application/json` found row                |
+| `/{tablename}?{querystring}` | GET    | Get rows by query params    | ---                | `application/json` matching rows            |
+| `/{tablename}/{id}`          | PUT    | Update a row by ID          | `application/json` | `application/json` array of updated row id  |
+| `/{tablename}?{querystring}` | PUT    | Update rows by query params | `application/json` | `application/json` array of updated row ids |
+| `/{tablename}/{id}`          | DELETE | Delete a row by ID          | ---                | `application/json` array of deleted row id  |
+| `/{tablename}?{querystring}` | DELETE | Delete rows by query params | ---                | `application/json` array of deleted row ids |
 
 ## REST Query language (based on restSQL)
 
@@ -122,8 +122,6 @@ For example, the following SQL query and GET request are equivalent:
 ```bash
 curl -X GET -s 'http://localhost:8090/authors?where=forename==Anne;born>=1900' | jq
 ```
-
-responds with:
 
 ```json
 [
@@ -386,6 +384,7 @@ Example (single JSON object):
 curl -X POST -s http://localhost:8090/authors \
       --data '{ "surname": "Woolf", "forename": "Virginia" }'
 ```
+
 ```json
 [3]
 ```
@@ -483,7 +482,7 @@ curl -X GET -s 'http://localhost:8090/authors?where=forename==Anne;born>=1900'
 
 ### Update
 
-Update a row by ID or by query parameters, responding with the number of rows updated.
+Update a row by ID or by query parameters, responding with an array of IDs of the updated rows as JSON.
 
 By id:
 
@@ -496,8 +495,10 @@ Accept: application/json
 curl -X PUT -s http://localhost:8090/authors/3 --data '{"surname" : "Woolf"}'
 ```
 
-```
-"rows updated in table authors: 1"
+responds with:
+
+```json
+[3]
 ```
 
 By query parameters:
@@ -508,8 +509,12 @@ PUT http://{HOST}:{PORT}/{tablename}?{querystring}
 
 ```bash
 curl -X PUT 'http://localhost:8090/authors?forename==Anne;born<1900' --data '{"forename": "Emily"}'
-# stdout: "rows updated in table authors: 1"
+```
 
+responds with:
+
+```json
+[1, 2]
 ```
 
 ### Delete
@@ -522,7 +527,12 @@ DELETE http://{HOST}:{PORT}/{tablename}/{id}
 
 ```bash
 curl -X DELETE -s http://localhost:8090/authors/5
-# stdout: "row 5 deleted from table authors"
+```
+
+responds with
+
+```json
+[1]
 ```
 
 By query parameters:
@@ -533,8 +543,13 @@ PUT http://{HOST}:{PORT}/{tablename}?{querystring}
 
 ```bash
 curl -X DELETE 'http://localhost:8090/books?title=like=Autobiography%'
-# stdout: "rows deleted in table books: 1"
 
+```
+
+responds with
+
+```json
+[1, 2]
 ```
 
 ## Setup
