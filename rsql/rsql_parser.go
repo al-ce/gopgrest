@@ -262,6 +262,9 @@ func newJoins(joinType, joinRelations string) ([]JoinRelation, error) {
 
 	// Multiple joins allowed with ; separator
 	for join := range strings.SplitSeq(joinRelations, ITEM_SEP) {
+		if !ReJoin.MatchString(join) {
+			return []JoinRelation{}, fmt.Errorf("Malformed JOIN clause: %s", join)
+		}
 		matches := ReJoin.FindStringSubmatch(join)
 		jr = append(jr, JoinRelation{
 			Type:           strings.ToUpper(joinType),
