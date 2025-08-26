@@ -84,8 +84,8 @@ func newPathQuery(url string) (*PathQuery, error) {
 		return nil, nil
 	}
 	// Has table in URL and query
-	queryMatches := repatterns.ReqHasParams.FindStringSubmatch(url)
 	if repatterns.ReqHasParams.MatchString(url) {
+		queryMatches := repatterns.ReqHasParams.FindStringSubmatch(url)
 		return &PathQuery{Resource: queryMatches[1], Query: queryMatches[2]}, nil
 	}
 	// Bad URL
