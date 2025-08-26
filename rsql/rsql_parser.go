@@ -10,7 +10,18 @@ import (
 	"gopgrest/repatterns"
 )
 
-// newRSQLQuery builds a ParsedURL from the URL
+// Separator characters in query
+var (
+	CLAUSE_ASSIGN   = "=" // assign value `name` to clause `select`: `select=name`
+	CLAUSE_SEP      = "&" // separate `select=...` and `where=...`: `select=name&where=name==bob`
+	ITEM_SEP        = ";" // separate multiple equality checks: `where=name==bob;age==42`
+	ALIAS_SEP       = ":" // separate column name and alias: `select=surname:last_name`
+	QUALIFIER_SEP   = "." // qualify column `surname` w/ table `authors`: `select=authors.surname`
+	JOIN_ON_ASSIGN  = ":" // `JOIN ON authors WHERE...`: `join=authors:books.author_id==authors.id`
+	VALUES_LIST_SEP = "," // separate list of values e.g. `select=surname,forename,died`
+)
+
+// newRSQLQuery builds a Pars from the URL
 func NewRSQLQuery(url string) (QueryParams, error) {
 	// Separate table (t) from URL query params (p)
 	pq, err := newPathQuery(url)
@@ -25,7 +36,7 @@ func NewRSQLQuery(url string) (QueryParams, error) {
 
 	// Parse clauses from URL query params, split at "&"
 	// e.g. "where=..." + "select=..."
-	for clause := range strings.SplitSeq(pq.Query, "&") {
+	for clause := range strings.SplitSeq(pq.Query, CLAUSE_SEP) {
 		keyword, namedArgs, err := parseClause(clause)
 		if err != nil {
 			return QueryParams{}, err
@@ -86,7 +97,7 @@ func newPathQuery(url string) (*PathQuery, error) {
 // and the keyword (lhs) should be an implemented clause keyword
 func parseClause(clauseStr string) (string, string, error) {
 	// Split clause at assignment '=' char, not equality '==' chars
-	clause := strings.SplitN(clauseStr, "=", 2)
+	clause := strings.SplitN(clauseStr, CLAUSE_ASSIGN, 2)
 	// Clause requires values on left and right of assignment
 	if len(clause) != 2 {
 		return "", "", fmt.Errorf("Malformed clause: %s\n", clauseStr)
@@ -105,7 +116,7 @@ func parseClause(clauseStr string) (string, string, error) {
 func NewWhereConditions(whereConditions string) ([]Condition, error) {
 	conditions := []Condition{}
 	// Multiple conditions allowed with ; separator
-	for cond := range strings.SplitSeq(whereConditions, ";") {
+	for cond := range strings.SplitSeq(whereConditions, ITEM_SEP) {
 		f, err := newCondition(cond)
 		if err != nil {
 			return []Condition{}, err
@@ -126,16 +137,16 @@ func newCondition(cond string) (*Condition, error) {
 	}
 	operator := ReConditionOperator.FindString(cond)
 	conditionCol := splitCondition[0]
-	conditionVals := strings.Split(splitCondition[1], ",")
+	conditionVals := strings.Split(splitCondition[1], VALUES_LIST_SEP)
 
 	// Build column
 	column := Column{}
-	prefixedCol := strings.Split(splitCondition[0], ".")
+	qualifiedCol := strings.Split(splitCondition[0], QUALIFIER_SEP)
 	// Add qualifier if the column was qualified with a table, e.g.
 	// `authors.forename`
-	if len(prefixedCol) == 2 {
-		column.Qualifier = prefixedCol[0]
-		column.Name = prefixedCol[1]
+	if len(qualifiedCol) == 2 {
+		column.Qualifier = qualifiedCol[0]
+		column.Name = qualifiedCol[1]
 	} else {
 		column.Name = splitCondition[0]
 	}
@@ -193,7 +204,7 @@ func hasNullCheck(operator string) bool {
 // e.g. the rhs of `select=forename,surename`
 func newSelect(selectedColumns string) ([]Column, error) {
 	columns := []Column{}
-	for sf := range strings.SplitSeq(selectedColumns, ",") {
+	for sf := range strings.SplitSeq(selectedColumns, VALUES_LIST_SEP) {
 		if sf == "" {
 			return nil, fmt.Errorf("Empty column in %s", selectedColumns)
 		}
@@ -201,7 +212,7 @@ func newSelect(selectedColumns string) ([]Column, error) {
 		column := Column{}
 
 		// Check for alias indicated by `:` e.g. `genres.name:genre`
-		alias := strings.Split(sf, ":")
+		alias := strings.Split(sf, ALIAS_SEP)
 		if len(alias) > 2 {
 			return nil, fmt.Errorf("Too many alias separators in %s", sf)
 		} else if len(alias) == 2 {
@@ -212,7 +223,7 @@ func newSelect(selectedColumns string) ([]Column, error) {
 		}
 
 		// Check for column quailifier indicated by `.` e.g. `books.author_id`
-		col := strings.Split(alias[0], ".")
+		col := strings.Split(alias[0], QUALIFIER_SEP)
 		if len(col) > 2 {
 			return nil, fmt.Errorf("Too many qualifier separators in %s", sf)
 		} else if len(col) == 2 {
@@ -242,10 +253,15 @@ func newJoins(joinType, joinRelations string) ([]JoinRelation, error) {
 	// Example:
 	// GET /books?join=authors:books.author_id==authors.id;genres:books.genres_id==genres.id
 	// Note that this enforces qualified column names in a JOIN statement
-	ReJoin := regexp.MustCompile(`(\w+):(\w+)\.(\w+)==(\w+)\.(\w+)`)
+	ReJoin := regexp.MustCompile(
+		fmt.Sprintf(`(\w+)%s(\w+)\%s(\w+)==(\w+)\%s(\w+)`,
+			JOIN_ON_ASSIGN,
+			QUALIFIER_SEP,
+			QUALIFIER_SEP),
+	)
 
 	// Multiple joins allowed with ; separator
-	for join := range strings.SplitSeq(joinRelations, ";") {
+	for join := range strings.SplitSeq(joinRelations, ITEM_SEP) {
 		matches := ReJoin.FindStringSubmatch(join)
 		jr = append(jr, JoinRelation{
 			Type:           strings.ToUpper(joinType),
