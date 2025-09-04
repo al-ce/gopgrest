@@ -28,28 +28,23 @@ The following example contains:
 - a `select` subquery to select columns to return, with qualifiers and aliases on some columns
 - a `left_join` subquery to add two join relations
 - a `where` subquery to add conditions to the query
+- a `limit` and `offset` subquery to limit and offset the rows returned by the
+  SQL query
 
 ```bash
-curl -X GET -s 'http://localhost:8090/books?select=title,genres.name:genre,authors.surname:author&left_join=authors:books.author_id==authors.id;genres:books.genre_id==genres.id&where=born<1900' | jq
+curl -X GET -s 'http://localhost:8090/books?select=title,genres.name:genre,authors.surname:author&left_join=authors:books.author_id==authors.id;genres:books.genre_id==genres.id&where=born<1900&limit=3&offset=2' | jq
 ```
 
-```json
+This endpoint responds with an array of JSON objects:
+
+```jsonc
 [
-  {
-    "author": "Brontë",
-    "genre": "Epistolary",
-    "title": "The Tenant of Wildfell Hall"
-  },
-  {
-    "author": "Woolf",
-    "genre": "Modernism",
-    "title": "To The Lighthouse"
-  },
   {
     "author": "Woolf",
     "genre": null,
     "title": "Mrs. Dalloway"
-  }
+  },
+  // etc.
 ]
 ```
 
@@ -60,6 +55,8 @@ SELECT title,name AS genre, surname AS author FROM books
 LEFT JOIN authors ON books.author_id = authors.id
 LEFT JOIN genres ON books.genre_id = genres.id
 WHERE authors.born < 1900
+LIMIT 3
+OFFSET 2
 ```
 
 The following query keys are supported:
@@ -120,20 +117,9 @@ where the right of the `=` is a `;` separated list of conditional expressions eq
 For example, the following SQL query and GET request are equivalent:
 
 ```bash
-curl -X GET -s 'http://localhost:8090/authors?where=forename==Anne;born>=1900' | jq
+curl -X GET -s 'http://localhost:8090/authors?where=forename==Anne;born>=1900'
 ```
 
-```json
-[
-  {
-    "born": 1950,
-    "died": null,
-    "forename": "Anne",
-    "id": 1,
-    "surname": "Carson"
-  }
-]
-```
 
 ```sql
 SELECT * FROM author
@@ -215,25 +201,8 @@ For example, the following queries and GET request are equivalent:
 curl -X GET -s 'http://localhost:8090/authors?select=surname:last_name,forename' | jq
 ```
 
-```json
-[
-  {
-    "forename": "Anne",
-    "last_name": "Carson"
-  },
-  {
-    "forename": "Anne",
-    "last_name": "Brontë"
-  },
-  {
-    "forename": "Virginia",
-    "last_name": "Woolf"
-  }
-]
-```
-
 ```sql
-SELECT surname, forename FROM authors
+SELECT surname AS last_name, forename FROM authors
 ```
 
 ```
@@ -271,30 +240,6 @@ For example, the following queries and GET request are equivalent:
 curl -X GET -s 'http://localhost:8090/books?select=title,name,surname&left_join=authors:books.author_id==authors.id;genres:books.genre_id==genres.id' | jq
 ```
 
-```json
-[
-  {
-    "name": "Romance",
-    "surname": "Carson",
-    "title": "Autobiography of Red"
-  },
-  {
-    "name": "Epistolary",
-    "surname": "Brontë",
-    "title": "The Tenant of Wildfell Hall"
-  },
-  {
-    "name": "Modernism",
-    "surname": "Woolf",
-    "title": "To The Lighthouse"
-  },
-  {
-    "name": null,
-    "surname": "Woolf",
-    "title": "Mrs. Dalloway"
-  }
-]
-```
 
 ```sql
 SELECT name, surname, title FROM books
@@ -310,6 +255,20 @@ LEFT JOIN genres ON books.genre_id=genres.id"
  Modernism  | Woolf   | To The Lighthouse
             | Woolf   | Mrs. Dalloway
 (4 rows)
+```
+
+### Limits and Offsets
+
+Queries can be limited and offset with the `limit=` and `select=` keywords.
+
+For example, the following query and GET request are equivalent:
+
+```bash
+curl -X GET -s 'http://localhost:8090/books?limit=1'
+```
+
+```sql
+SELECT * FROM books LIMIT 12 OFFSET 12
 ```
 
 ## Example usage
