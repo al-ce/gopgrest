@@ -10,6 +10,8 @@ var VALIDKEYWORDS = []string{
 	INNERJOIN,
 	LEFTJOIN,
 	RIGHTJOIN,
+	LIMIT,
+	OFFSET,
 }
 
 const (
@@ -19,6 +21,8 @@ const (
 	INNERJOIN = "inner_join"
 	LEFTJOIN  = "left_join"
 	RIGHTJOIN = "right_join"
+	LIMIT     = "limit"
+	OFFSET    = "offset"
 )
 
 // OperatorToSQLMap is a map of RSQL operators to their SQL counterpart
@@ -64,6 +68,8 @@ type QueryParams struct {
 	Columns    []Column       // Columns to return in SELECT query
 	Conditions []Condition    // Conditionals for WHERE clause
 	Joins      []JoinRelation // Relations for JOIN clauses
+	Limit      int            // LIMIT value
+	Offset     int            // OFFSET value
 }
 
 // Condition is the parsed result of one of any `;` separated 'where' conditions in
