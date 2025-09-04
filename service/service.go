@@ -45,14 +45,16 @@ func (s *Service) GetRowByID(tableName, idAsStr string) (types.RowData, error) {
 	if err != nil {
 		return nil, err
 	}
-	rowData, err := ScanRows(rows)
+	queryResults, err := ScanRows(rows)
 	if err != nil {
 		return nil, err
 	}
-	if len(rowData) != 1 {
+	if len(queryResults) != 1 {
 		return types.RowData{}, fmt.Errorf("%s (id: %s)", apperrors.GetByIdNotUnique, idAsStr)
 	}
-	return rowData[0], err
+
+	log.Println("Results:", queryResults)
+	return queryResults[0], err
 }
 
 // GetRowsByRSQL gets rows from a table with optional 'where' params
@@ -81,11 +83,12 @@ func (s *Service) GetRowsByRSQL(tableName string, url string) ([]types.RowData, 
 	}()
 
 	// Scan rows into struct slice
-	listQueryResults, err := ScanRows(rows)
+	queryResults, err := ScanRows(rows)
 	if err != nil {
 		return nil, err
 	}
-	return listQueryResults, nil
+	log.Println("Results:", queryResults)
+	return queryResults, nil
 }
 
 // InsertRows inserts new rows in a specified table If multiple rows are
@@ -141,7 +144,11 @@ func (s *Service) InsertRows(newRows []types.RowData, tableName string) ([]int64
 		}
 	}
 
-	return s.Repo.InsertRows(tableName, newRows)
+	insertedIDs, err := s.Repo.InsertRows(tableName, newRows)
+	if err != nil {
+		log.Println("Results:", insertedIDs)
+	}
+	return insertedIDs, err
 }
 
 // UpdateRowsByRSQL updates any number of rows that match the optional query
@@ -174,7 +181,11 @@ func (s *Service) UpdateRowsByRSQL(tableName, url string, updateData *types.RowD
 	}
 
 	// Update row
-	return s.Repo.UpdateRowsByRSQL(tableName, conditions, updateData)
+	updatedIDs, err := s.Repo.UpdateRowsByRSQL(tableName, conditions, updateData)
+	if err == nil {
+		log.Println("Results:", updatedIDs)
+	}
+	return updatedIDs, err
 }
 
 func (s *Service) DeleteRowsByRSQL(tableName, url string) ([]int64, error) {
@@ -187,7 +198,11 @@ func (s *Service) DeleteRowsByRSQL(tableName, url string) ([]int64, error) {
 	if err != nil {
 		return []int64{}, err
 	}
-	return s.Repo.DeleteRowsByRSQL(tableName, conditions)
+	deletedIDs, err := s.Repo.DeleteRowsByRSQL(tableName, conditions)
+	if err != nil {
+		log.Println("Results:", deletedIDs)
+	}
+	return deletedIDs, err
 }
 
 // parsWhereClause parses and validates any 'WHERE' conditions found in a url

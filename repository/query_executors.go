@@ -40,7 +40,7 @@ func (r *Repository) GetRowsByRSQL(tableName string, query rsql.QueryParams) (*s
 	joins := buildJoinRelations(query)
 
 	listStmt := fmt.Sprintf("SELECT %s FROM %s %s %s", cols, tableName, joins, conditional)
-	log.Printf("Exec query\n\t%s\nValues: %v\n", listStmt, values)
+	log.Printf("Exec: %s", replacePlaceholders(listStmt, values))
 
 	// Execute list query
 	rows, err := r.DB.Query(listStmt, values...)
@@ -58,7 +58,7 @@ func (r *Repository) InsertRows(tableName string, newRows []types.RowData) ([]in
 	}
 
 	var cols []string         // column names for `INSERT INTO (col1, col2...)`
-	var args []any            // values to pass to QueryRow
+	var values []any            // values to pass to QueryRow
 	var placeholders []string // incrementing placeholders e.g. `VALUES (($1, $2), ($3, $4)...)`
 	var p int                 // tracks the value of the placeholder
 
@@ -74,7 +74,7 @@ func (r *Repository) InsertRows(tableName string, newRows []types.RowData) ([]in
 		// Append values in corresponding order of cols
 		for _, col := range cols {
 			val := newRow[col]
-			args = append(args, val)
+			values = append(values, val)
 			rowPlaceholders[colIdx] = fmt.Sprintf("$%d", p+1)
 			p++
 			colIdx++
@@ -89,10 +89,10 @@ func (r *Repository) InsertRows(tableName string, newRows []types.RowData) ([]in
 		strings.Join(placeholders, ",") +
 		" RETURNING id"
 
-	log.Printf("Exec query\n\t%s\nValues: %v\n", createStmnt, args)
+	log.Printf("Exec: %s", replacePlaceholders(createStmnt, values))
 
 	// Execute insert query
-	rows, err := r.DB.Query(createStmnt, args...)
+	rows, err := r.DB.Query(createStmnt, values...)
 	if err != nil {
 		return insertedIDs, err
 	}
@@ -138,7 +138,7 @@ func (r *Repository) UpdateRowsByRSQL(tableName string, conditions []rsql.Condit
 		conditional,
 	)
 
-	log.Printf("Exec query\n\t%s\nValues: %v", updateStmnt, values)
+	log.Printf("Exec: %s", replacePlaceholders(updateStmnt, values))
 
 	// Execute update query
 	rows, err := r.DB.Query(updateStmnt, values...)
@@ -168,10 +168,10 @@ func (r *Repository) DeleteRowsByRSQL(tableName string, conditions []rsql.Condit
 	if err != nil {
 		return []int64{}, err
 	}
-	deleteStmt := fmt.Sprintf("DELETE FROM %s %s RETURNING id", tableName, conditional)
-	log.Printf("Exec query\n\t%s\nValues: %v\n", deleteStmt, values)
+	deleteStmnt := fmt.Sprintf("DELETE FROM %s %s RETURNING id", tableName, conditional)
+	log.Printf("Exec: %s", replacePlaceholders(deleteStmnt, values))
 	// Execute delete query
-	rows, err := r.DB.Query(deleteStmt, values...)
+	rows, err := r.DB.Query(deleteStmnt, values...)
 	if err != nil {
 		return []int64{}, err
 	}
@@ -186,4 +186,11 @@ func (r *Repository) DeleteRowsByRSQL(tableName string, conditions []rsql.Condit
 	}
 
 	return deletedIDs, nil
+}
+
+func replacePlaceholders(stmnt string, values []any) string {
+	for idx, v := range values {
+		stmnt = strings.Replace(stmnt, fmt.Sprintf("$%d", idx+1), fmt.Sprintf("%v", v), 1)
+	}
+	return stmnt
 }
