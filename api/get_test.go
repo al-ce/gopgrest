@@ -124,6 +124,34 @@ func Test_GET_Rows_RSQL_INNER_JOIN(t *testing.T) {
 	})
 }
 
+func Test_GET_Rows_RSQL_LIMIT(t *testing.T) {
+	repo := tests.NewTestRepo(t)
+	expBookCount, err := tests.CountRows(repo, "books", "")
+	assert.Try(t, err)
+
+	for i := range expBookCount + 1 {
+		t.Run(fmt.Sprintf("LIMIT %d", i), func(t *testing.T) {
+			rawQuery := fmt.Sprintf("SELECT * FROM books LIMIT %d", i)
+			url := fmt.Sprintf("/books?limit=%d", i)
+			apiGetRowsTester(t, rawQuery, url)
+		})
+	}
+}
+
+func Test_GET_Rows_RSQL_OFFSET(t *testing.T) {
+	repo := tests.NewTestRepo(t)
+	expBookCount, err := tests.CountRows(repo, "books", "")
+	assert.Try(t, err)
+
+	for i := range expBookCount + 1 {
+		t.Run(fmt.Sprintf("OFFSET %d", i), func(t *testing.T) {
+			rawQuery := fmt.Sprintf("SELECT * FROM books OFFSET %d", i)
+			url := fmt.Sprintf("/books?offset=%d", i)
+			apiGetRowsTester(t, rawQuery, url)
+		})
+	}
+}
+
 // Test_GET_Tables checks if the "/" route returns a map of tables and their
 // columns. For now, just tests that the request returns 200 and that the map
 // has a key for each table

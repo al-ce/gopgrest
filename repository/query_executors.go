@@ -29,17 +29,18 @@ func (r *Repository) GetRowByID(tableName string, id int64) (*sql.Rows, error) {
 func (r *Repository) GetRowsByRSQL(tableName string, query rsql.QueryParams) (*sql.Rows, error) {
 	// Build list of columns to select
 	cols := buildSelectColumns(query)
-
 	// Build list query with optional WHERE conditional statements
 	conditional, values, err := buildWhereConditions(query.Conditions, 0)
 	if err != nil {
 		return nil, err
 	}
-
 	// Build list of optional JOIN relations
 	joins := buildJoinRelations(query)
+	limit := buildLimitClause(query)
+	offset := buildOffsetClause(query)
 
-	listStmt := fmt.Sprintf("SELECT %s FROM %s %s %s", cols, tableName, joins, conditional)
+	clauses := strings.Join([]string{joins, conditional, limit, offset}, " ")
+	listStmt := fmt.Sprintf("SELECT %s FROM %s %s", cols, tableName, clauses)
 	log.Printf("Exec: %s", replacePlaceholders(listStmt, values))
 
 	// Execute list query

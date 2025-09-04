@@ -1,6 +1,7 @@
 package repository_test
 
 import (
+	"fmt"
 	"testing"
 
 	"gopgrest/assert"
@@ -31,7 +32,7 @@ func Test_RepoGetRows_NoQuery(t *testing.T) {
 	// GET /authors
 	t.Run("No RSQL query", func(t *testing.T) {
 		rawQuery := "SELECT * from authors"
-		repoGetRowsTester(t, rawQuery, "authors", rsql.QueryParams{})
+		repoGetRowsTester(t, rawQuery, "authors", rsql.QueryParams{Limit: -1})
 	})
 }
 
@@ -46,7 +47,7 @@ func Test_RepoGetRows_Where(t *testing.T) {
 			},
 		}
 		rawQuery := "SELECT * FROM authors WHERE forename = 'Anne'"
-		rsqlQuery := rsql.QueryParams{Conditions: conditions}
+		rsqlQuery := rsql.QueryParams{Limit: -1, Conditions: conditions}
 		repoGetRowsTester(t, rawQuery, "authors", rsqlQuery)
 	})
 
@@ -60,7 +61,7 @@ func Test_RepoGetRows_Where(t *testing.T) {
 			},
 		}
 		rawQuery := "SELECT * FROM authors WHERE surname != 'Carson'"
-		rsqlQuery := rsql.QueryParams{Conditions: conditions}
+		rsqlQuery := rsql.QueryParams{Limit: -1, Conditions: conditions}
 		repoGetRowsTester(t, rawQuery, "authors", rsqlQuery)
 	})
 
@@ -74,7 +75,7 @@ func Test_RepoGetRows_Where(t *testing.T) {
 			},
 		}
 		rawQuery := "SELECT * FROM authors WHERE surname IN ('Carson', 'Woolf')"
-		rsqlQuery := rsql.QueryParams{Conditions: conditions}
+		rsqlQuery := rsql.QueryParams{Limit: -1, Conditions: conditions}
 		repoGetRowsTester(t, rawQuery, "authors", rsqlQuery)
 	})
 
@@ -88,7 +89,7 @@ func Test_RepoGetRows_Where(t *testing.T) {
 			},
 		}
 		rawQuery := "SELECT * FROM authors WHERE surname NOT IN ('Carson', 'Woolf')"
-		rsqlQuery := rsql.QueryParams{Conditions: conditions}
+		rsqlQuery := rsql.QueryParams{Limit: -1, Conditions: conditions}
 		repoGetRowsTester(t, rawQuery, "authors", rsqlQuery)
 	})
 
@@ -102,7 +103,7 @@ func Test_RepoGetRows_Where(t *testing.T) {
 			},
 		}
 		rawQuery := "SELECT * FROM authors WHERE forename LIKE 'Ann%'"
-		rsqlQuery := rsql.QueryParams{Conditions: conditions}
+		rsqlQuery := rsql.QueryParams{Limit: -1, Conditions: conditions}
 		repoGetRowsTester(t, rawQuery, "authors", rsqlQuery)
 	})
 
@@ -116,7 +117,7 @@ func Test_RepoGetRows_Where(t *testing.T) {
 			},
 		}
 		rawQuery := "SELECT * FROM authors WHERE forename NOT LIKE 'Ann%'"
-		rsqlQuery := rsql.QueryParams{Conditions: conditions}
+		rsqlQuery := rsql.QueryParams{Limit: -1, Conditions: conditions}
 		repoGetRowsTester(t, rawQuery, "authors", rsqlQuery)
 	})
 
@@ -130,7 +131,7 @@ func Test_RepoGetRows_Where(t *testing.T) {
 			},
 		}
 		rawQuery := "SELECT * FROM authors WHERE died IS NULL"
-		rsqlQuery := rsql.QueryParams{Conditions: conditions}
+		rsqlQuery := rsql.QueryParams{Limit: -1, Conditions: conditions}
 		repoGetRowsTester(t, rawQuery, "authors", rsqlQuery)
 	})
 
@@ -144,7 +145,7 @@ func Test_RepoGetRows_Where(t *testing.T) {
 			},
 		}
 		rawQuery := "SELECT * FROM authors WHERE died IS NOT NULL"
-		rsqlQuery := rsql.QueryParams{Conditions: conditions}
+		rsqlQuery := rsql.QueryParams{Limit: -1, Conditions: conditions}
 		repoGetRowsTester(t, rawQuery, "authors", rsqlQuery)
 	})
 
@@ -158,7 +159,7 @@ func Test_RepoGetRows_Where(t *testing.T) {
 			},
 		}
 		rawQuery := "SELECT * FROM authors WHERE born <= 1882"
-		rsqlQuery := rsql.QueryParams{Conditions: conditions}
+		rsqlQuery := rsql.QueryParams{Limit: -1, Conditions: conditions}
 		repoGetRowsTester(t, rawQuery, "authors", rsqlQuery)
 	})
 
@@ -172,7 +173,7 @@ func Test_RepoGetRows_Where(t *testing.T) {
 			},
 		}
 		rawQuery := "SELECT * FROM authors WHERE born < 1882"
-		rsqlQuery := rsql.QueryParams{Conditions: conditions}
+		rsqlQuery := rsql.QueryParams{Limit: -1, Conditions: conditions}
 		repoGetRowsTester(t, rawQuery, "authors", rsqlQuery)
 	})
 
@@ -186,7 +187,7 @@ func Test_RepoGetRows_Where(t *testing.T) {
 			},
 		}
 		rawQuery := "SELECT * FROM authors WHERE born >= 1882"
-		rsqlQuery := rsql.QueryParams{Conditions: conditions}
+		rsqlQuery := rsql.QueryParams{Limit: -1, Conditions: conditions}
 		repoGetRowsTester(t, rawQuery, "authors", rsqlQuery)
 	})
 
@@ -200,7 +201,7 @@ func Test_RepoGetRows_Where(t *testing.T) {
 			},
 		}
 		rawQuery := "SELECT * FROM authors WHERE born > 1882"
-		rsqlQuery := rsql.QueryParams{Conditions: conditions}
+		rsqlQuery := rsql.QueryParams{Limit: -1, Conditions: conditions}
 		repoGetRowsTester(t, rawQuery, "authors", rsqlQuery)
 	})
 
@@ -215,7 +216,7 @@ func Test_RepoGetRows_Where(t *testing.T) {
 			{Column: rsql.Column{Name: "surname"}, Values: []string{"Carson"}, SQLOperator: "="},
 		}
 		rawQuery := "SELECT * FROM authors WHERE forename = 'Anne' AND surname = 'Carson'"
-		rsqlQuery := rsql.QueryParams{Conditions: conditions}
+		rsqlQuery := rsql.QueryParams{Limit: -1, Conditions: conditions}
 		repoGetRowsTester(t, rawQuery, "authors", rsqlQuery)
 	})
 
@@ -229,7 +230,7 @@ func Test_RepoGetRows_Where(t *testing.T) {
 			},
 		}
 		rawQuery := "SELECT * FROM authors WHERE authors.forename = 'Anne'"
-		rsqlQuery := rsql.QueryParams{Conditions: conditions}
+		rsqlQuery := rsql.QueryParams{Limit: -1, Conditions: conditions}
 		repoGetRowsTester(t, rawQuery, "authors", rsqlQuery)
 	})
 }
@@ -242,7 +243,7 @@ func Test_RepoGetRows_Select(t *testing.T) {
 			{Name: "surname"},
 		}
 		rawQuery := "SELECT forename, surname FROM authors"
-		rsqlQuery := rsql.QueryParams{Columns: columns}
+		rsqlQuery := rsql.QueryParams{Limit: -1, Columns: columns}
 		repoGetRowsTester(t, rawQuery, "authors", rsqlQuery)
 	})
 
@@ -253,7 +254,7 @@ func Test_RepoGetRows_Select(t *testing.T) {
 			{Name: "surname", Alias: "last_name"},
 		}
 		rawQuery := "SELECT forename AS first_name, surname AS last_name FROM authors"
-		rsqlQuery := rsql.QueryParams{Columns: columns}
+		rsqlQuery := rsql.QueryParams{Limit: -1, Columns: columns}
 		repoGetRowsTester(t, rawQuery, "authors", rsqlQuery)
 	})
 
@@ -264,7 +265,7 @@ func Test_RepoGetRows_Select(t *testing.T) {
 			{Name: "surname", Qualifier: "authors"},
 		}
 		rawQuery := "SELECT authors.forename, authors.surname FROM authors"
-		rsqlQuery := rsql.QueryParams{Columns: columns}
+		rsqlQuery := rsql.QueryParams{Limit: -1, Columns: columns}
 		repoGetRowsTester(t, rawQuery, "authors", rsqlQuery)
 	})
 
@@ -275,7 +276,7 @@ func Test_RepoGetRows_Select(t *testing.T) {
 			{Name: "surname", Alias: "last_name", Qualifier: "authors"},
 		}
 		rawQuery := "SELECT authors.forename AS first_name, authors.surname AS last_name FROM authors"
-		rsqlQuery := rsql.QueryParams{Columns: columns}
+		rsqlQuery := rsql.QueryParams{Limit: -1, Columns: columns}
 		repoGetRowsTester(t, rawQuery, "authors", rsqlQuery)
 	})
 }
@@ -298,7 +299,7 @@ func Test_RepoGetRows_Joins(t *testing.T) {
 			},
 		}
 		rawQuery := "SELECT title, name AS genre FROM books JOIN genres ON books.genre_id = genres.id"
-		rsqlQuery := rsql.QueryParams{Columns: columns, Joins: joins}
+		rsqlQuery := rsql.QueryParams{Limit: -1, Columns: columns, Joins: joins}
 		repoGetRowsTester(t, rawQuery, "books", rsqlQuery)
 	})
 
@@ -329,7 +330,7 @@ func Test_RepoGetRows_Joins(t *testing.T) {
 				},
 			}
 			rawQuery := "SELECT title, name AS genre, surname FROM books JOIN authors ON books.author_id = authors.id JOIN genres ON books.genre_id = genres.id"
-			rsqlQuery := rsql.QueryParams{Columns: columns, Joins: joins}
+			rsqlQuery := rsql.QueryParams{Limit: -1, Columns: columns, Joins: joins}
 			repoGetRowsTester(t, rawQuery, "books", rsqlQuery)
 		})
 
@@ -350,7 +351,7 @@ func Test_RepoGetRows_Joins(t *testing.T) {
 			},
 		}
 		rawQuery := "SELECT title, name AS genre FROM books INNER JOIN genres on books.genre_id = genres.id"
-		rsqlQuery := rsql.QueryParams{Columns: columns, Joins: joins}
+		rsqlQuery := rsql.QueryParams{Limit: -1, Columns: columns, Joins: joins}
 		repoGetRowsTester(t, rawQuery, "books", rsqlQuery)
 	})
 
@@ -371,7 +372,7 @@ func Test_RepoGetRows_Joins(t *testing.T) {
 			},
 		}
 		rawQuery := "SELECT title, name AS genre FROM books LEFT JOIN genres ON books.genre_id = genres.id"
-		rsqlQuery := rsql.QueryParams{Columns: columns, Joins: joins}
+		rsqlQuery := rsql.QueryParams{Limit: -1, Columns: columns, Joins: joins}
 		repoGetRowsTester(t, rawQuery, "books", rsqlQuery)
 	})
 
@@ -392,9 +393,39 @@ func Test_RepoGetRows_Joins(t *testing.T) {
 			},
 		}
 		rawQuery := "SELECT title, name AS genre FROM books RIGHT JOIN genres ON books.genre_id = genres.id"
-		rsqlQuery := rsql.QueryParams{Columns: columns, Joins: joins}
+		rsqlQuery := rsql.QueryParams{Limit: -1, Columns: columns, Joins: joins}
 		repoGetRowsTester(t, rawQuery, "books", rsqlQuery)
 	})
+
+}
+
+func Test_RepoGetRows_LIMIT(t *testing.T) {
+	repo := tests.NewTestRepo(t)
+	expBookCount, err := tests.CountRows(repo, "books", "")
+	assert.Try(t, err)
+	// GET /books?limit=n
+	for i := range expBookCount + 1 {
+		t.Run(fmt.Sprintf("LIMIT %d", i), func(t *testing.T) {
+			rawQuery := fmt.Sprintf("SELECT * FROM books LIMIT %d", i)
+			rsqlQuery := rsql.QueryParams{Limit: i}
+			repoGetRowsTester(t, rawQuery, "books", rsqlQuery)
+		})
+	}
+}
+
+func Test_RepoGetRows_OFFSET(t *testing.T) {
+	repo := tests.NewTestRepo(t)
+	expBookCount, err := tests.CountRows(repo, "books", "")
+	assert.Try(t, err)
+	// GET /books?offset=n
+	for i := range expBookCount + 1 {
+		t.Run(fmt.Sprintf("OFFSET %d", i), func(t *testing.T) {
+			rawQuery := fmt.Sprintf("SELECT * FROM books OFFSET %d", i)
+			rsqlQuery := rsql.QueryParams{Limit: -1, Offset: i}
+			repoGetRowsTester(t, rawQuery, "books", rsqlQuery)
+		})
+	}
+
 }
 
 func repoGetRowsTester(

@@ -176,6 +176,32 @@ func Test_ServiceGetRows_Joins(t *testing.T) {
 	})
 }
 
+func Test_ServiceGetRows_LIMIT(t *testing.T) {
+	repo := tests.NewTestRepo(t)
+	expBookCount, err := tests.CountRows(repo, "books", "")
+	assert.Try(t, err)
+	for i := range expBookCount + 1 {
+		t.Run(fmt.Sprintf("LIMIT %d", i), func(t *testing.T) {
+			rawQuery := fmt.Sprintf("SELECT * FROM books LIMIT %d", i)
+			url := fmt.Sprintf("/books?limit=%d", i)
+			serviceGetRowsTester(t, rawQuery, "books", url)
+		})
+	}
+}
+
+func Test_ServiceGetRows_OFFSET(t *testing.T) {
+	repo := tests.NewTestRepo(t)
+	expBookCount, err := tests.CountRows(repo, "books", "")
+	assert.Try(t, err)
+	for i := range expBookCount + 1 {
+		t.Run(fmt.Sprintf("OFFSET %d", i), func(t *testing.T) {
+			rawQuery := fmt.Sprintf("SELECT * FROM books OFFSET %d", i)
+			url := fmt.Sprintf("/books?offset=%d", i)
+			serviceGetRowsTester(t, rawQuery, "books", url)
+		})
+	}
+}
+
 func serviceGetRowsTester(
 	t *testing.T,
 	rawQuery string,

@@ -5,6 +5,7 @@ import (
 	"maps"
 	"regexp"
 	"slices"
+	"strconv"
 	"strings"
 
 	"gopgrest/repatterns"
@@ -23,12 +24,16 @@ var (
 
 // newRSQLQuery builds a Pars from the URL
 func NewRSQLQuery(url string) (QueryParams, error) {
+	query := QueryParams{}
+	// If Limit is still -1 before executing the query, then no limit was set
+	// by user
+	query.Limit = -1
+
 	// Separate table (t) from URL query params (p)
 	pq, err := newPathQuery(url)
 	if err != nil || pq == nil {
-		return QueryParams{}, err
+		return query, err
 	}
-	query := QueryParams{}
 	query.Tables = append(query.Tables, pq.Resource)
 
 	// Example URL query:
@@ -37,7 +42,7 @@ func NewRSQLQuery(url string) (QueryParams, error) {
 	// Parse clauses from URL query params, split at "&"
 	// e.g. "where=..." + "select=..."
 	for clause := range strings.SplitSeq(pq.Query, CLAUSE_SEP) {
-		keyword, namedArgs, err := parseClause(clause)
+		keyword, assignment, err := parseClause(clause)
 		if err != nil {
 			return QueryParams{}, err
 		}
@@ -46,12 +51,12 @@ func NewRSQLQuery(url string) (QueryParams, error) {
 		switch keyword {
 		case WHERE: // e.g ?where=
 			// WHERE conditions are split at ";" and checked with "==" or "=in="
-			conditions, err := NewWhereConditions(namedArgs)
+			conditions, err := NewWhereConditions(assignment)
 			clauseErr = err
 			query.Conditions = conditions
 		case SELECT: // e.g. ?select=
 			// Select columns are split at ","
-			columns, err := newSelect(namedArgs)
+			columns, err := newSelect(assignment)
 			clauseErr = err
 			query.Columns = columns
 		case JOIN:
@@ -61,13 +66,21 @@ func NewRSQLQuery(url string) (QueryParams, error) {
 		case LEFTJOIN:
 			fallthrough
 		case RIGHTJOIN:
-			joins, err := newJoins(keyword, namedArgs)
+			joins, err := newJoins(keyword, assignment)
 			clauseErr = err
 			query.Joins = joins
 			// Add all referenced tables to the query
 			for _, j := range joins {
 				query.Tables = append(query.Tables, j.Table)
 			}
+		case LIMIT:
+			var limit int
+			limit, clauseErr = strconv.Atoi(assignment)
+			query.Limit = limit
+		case OFFSET:
+			var offset int
+			offset, clauseErr = strconv.Atoi(assignment)
+			query.Offset = offset
 		}
 		if clauseErr != nil {
 			return QueryParams{}, clauseErr

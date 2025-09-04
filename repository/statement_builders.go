@@ -92,3 +92,22 @@ func buildJoinRelations(query rsql.QueryParams) string {
 	}
 	return strings.Join(joins, " ")
 }
+
+// buildLimitClause builds SQL LIMIT clause. query.Limit is initially set to -1
+// instead of the default `0` value for an int. If Limit is still -1 by the
+// time we are creating this clause, then no Limit was set by the user, so
+// return an empty string.
+func buildLimitClause(query rsql.QueryParams) string {
+	if query.Limit == -1 {
+		return ""
+	}
+	return fmt.Sprintf("LIMIT %d", query.Limit)
+}
+
+// buildOffsetClause builds SQL OFFSET clause if one was set (non-zero).
+func buildOffsetClause(query rsql.QueryParams) string {
+	if query.Offset == 0 {
+		return ""
+	}
+	return fmt.Sprintf("OFFSET %d", query.Offset)
+}
