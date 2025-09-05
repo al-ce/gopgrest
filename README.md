@@ -69,6 +69,8 @@ The following query keys are supported:
 | `join`       | add `INNER JOIN` relations to a `SELECT` query |
 | `left_join`  | add `LEFT JOIN` relations to a `SELECT` query  |
 | `right_join` | add `RIGHT JOIN` relations to a `SELECT` query |
+| `limit`      | add `LIMIT` to a `SELECT` query          |
+| `offset`     | add `OFFSET` to a `SELECT` query |
 
 Query parameters matching the `where` format for an RSQL query can be added to PUT and DELETE requests to update/delete rows matching the conditions.
 
